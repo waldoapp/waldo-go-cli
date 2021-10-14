@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-const waldoGoCLIVersion = "0.1.0"
+const waldoGoCLIVersion = "0.2.0"
 
 var waldoBuildFlavor string
 var waldoBuildPath string
@@ -47,7 +47,11 @@ func checkBuildPath() {
         fail(err)
     }
 
-    waldoBuildSuffix = filepath.Ext(waldoBuildPath)[1:]
+    waldoBuildSuffix = filepath.Ext(waldoBuildPath)
+
+    if strings.HasPrefix(waldoBuildSuffix, ".") {
+        waldoBuildSuffix = waldoBuildSuffix[1:]
+    }
 
     switch waldoBuildSuffix {
     case "apk":
@@ -286,12 +290,28 @@ func getCI() string {
         return "CircleCI"
     }
 
+    if len(os.Getenv("CODEBUILD_BUILD_ID")) > 0 {
+        return "CodeBuild"
+    }
+
     if os.Getenv("GITHUB_ACTIONS") == "true" {
         return "GitHub Actions"
     }
 
+    if len(os.Getenv("JENKINS_URL")) > 0 {
+        return "Jenkins"
+    }
+
+    if len(os.Getenv("TEAMCITY_VERSION")) > 0 {
+        return "TeamCity"
+    }
+
     if os.Getenv("TRAVIS") == "true" {
         return "Travis CI"
+    }
+
+    if len(os.Getenv("CI_BUILD_ID")) > 0 {
+        return "Xcode Cloud"
     }
 
     return "Go CLI"
@@ -366,7 +386,7 @@ func makeBuildURL() string {
 
     url := "https://api.waldo.io/versions"
 
-    if len(query) > 0 {
+    if len(query) > 1 {
         url += "?"
         url += query[1:]
     }
