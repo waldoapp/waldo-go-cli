@@ -22,9 +22,9 @@ This project adheres to [Semantic Versioning].
 
 Limited public pre-release.
 
-[Unreleased]:   https://github.com/waldoapp/waldo-cli/compare/0.2.0...HEAD
-[0.2.0]:        https://github.com/waldoapp/waldo-cli/compare/0.1.0...0.2.0
-[0.1.0]:        https://github.com/waldoapp/waldo-cli/compare/f05ec68...0.1.0
+[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/0.2.0...HEAD
+[0.2.0]:        https://github.com/waldoapp/waldo-go-cli/compare/0.1.0...0.2.0
+[0.1.0]:        https://github.com/waldoapp/waldo-go-cli/compare/f05ec68...0.1.0
 
 [Keep a Changelog]:     https://keepachangelog.com
 [Semantic Versioning]:  https://semver.org
