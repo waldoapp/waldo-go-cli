@@ -7,6 +7,22 @@ This project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [0.3.0] - 2021-10-27
+
+### Added
+
+- Added `--git_branch`, `--git_commit`, and `--version` options.
+
+### Changed
+
+- Reworked internal API endpoints.
+
+### Removed
+
+- Removed `--include_symbols` option.
+- Removed optional `symbols-path` parameter.
+- Removed support for `WALDO_VARIANT_NAME` environment variable.
+
 ## [0.2.0] - 2021-10-14
 
 ### Changed
@@ -22,7 +38,8 @@ This project adheres to [Semantic Versioning].
 
 Limited public pre-release.
 
-[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/0.2.0...HEAD
+[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/0.3.0...HEAD
+[0.3.0]:        https://github.com/waldoapp/waldo-go-cli/compare/0.2.0...0.3.0
 [0.2.0]:        https://github.com/waldoapp/waldo-go-cli/compare/0.1.0...0.2.0
 [0.1.0]:        https://github.com/waldoapp/waldo-go-cli/compare/f05ec68...0.1.0
 

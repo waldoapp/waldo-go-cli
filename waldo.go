@@ -1,13 +1,16 @@
 package main
 
 import (
-    "archive/zip"
+	"archive/zip"
+	"bytes"
 	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
-    "net/http/httputil"
+	"net/http/httputil"
+	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -15,628 +18,794 @@ import (
 	"strings"
 )
 
-const waldoGoCLIVersion = "0.2.0"
+const (
+	waldoAgentName        = "Waldo"
+	waldoAgentVersion     = "0.3.0"
+	waldoAPIBuildEndpoint = "https://api.waldo.io/versions"
+	waldoAPIErrorEndpoint = "https://api.waldo.io/uploadError"
+	waldoWrapperName      = "Go CLI"
+	waldoWrapperVersion   = waldoAgentVersion
+)
 
-var waldoBuildFlavor string
-var waldoBuildPath string
-var waldoBuildPayloadPath string
-var waldoBuildSuffix string
-var waldoBuildUploadID string
-var waldoHistory string
-var waldoHistoryError string
-var waldoIncludeSymbols bool
-var waldoPlatform string
-var waldoSymbolsPath string
-var waldoSymbolsPayloadPath string
-var waldoSymbolsSuffix string
-var waldoUploadToken string
-var waldoVariantName string
-var waldoVerbose bool
-var waldoWorkingPath string
+var (
+	waldoBuildPath        string
+	waldoBuildPayloadPath string
+	waldoBuildSuffix      string
+	waldoFlavor           string
+	waldoGitAccess        string
+	waldoGitBranch        string
+	waldoGitCommit        string
+	waldoPlatform         string
+	waldoUploadToken      string
+	waldoUserGitBranch    string
+	waldoUserGitCommit    string
+	waldoVariantName      string
+	waldoVerbose          bool
+	waldoWorkingPath      string
+)
+
+func addIfNotEmpty(query *url.Values, key string, value string) {
+	if len(value) > 0 {
+		query.Add(key, value)
+	}
+}
 
 func checkBuildPath() {
-    if len(waldoBuildPath) == 0 {
-        failUsage(fmt.Errorf("Missing required argument: ‘path’"))
-    }
+	if len(waldoBuildPath) == 0 {
+		failUsage(fmt.Errorf("Missing required argument: ‘build-path’"))
+	}
 
-    var err error
+	var err error
 
-    waldoBuildPath, err = filepath.Abs(waldoBuildPath)
+	waldoBuildPath, err = filepath.Abs(waldoBuildPath)
 
-    if err != nil {
-        fail(err)
-    }
+	if err != nil {
+		fail(err)
+	}
 
-    waldoBuildSuffix = filepath.Ext(waldoBuildPath)
+	waldoBuildSuffix = filepath.Ext(waldoBuildPath)
 
-    if strings.HasPrefix(waldoBuildSuffix, ".") {
-        waldoBuildSuffix = waldoBuildSuffix[1:]
-    }
+	if strings.HasPrefix(waldoBuildSuffix, ".") {
+		waldoBuildSuffix = waldoBuildSuffix[1:]
+	}
 
-    switch waldoBuildSuffix {
-    case "apk":
-        waldoBuildFlavor = "Android"
+	switch waldoBuildSuffix {
+	case "apk":
+		waldoFlavor = "Android"
 
-    case "app", "ipa":
-        waldoBuildFlavor = "iOS"
+	case "app", "ipa":
+		waldoFlavor = "iOS"
 
-    default:
-        fail(fmt.Errorf("File extension of build at ‘%s’ is not recognized", waldoBuildPath))
-    }
+	default:
+		fail(fmt.Errorf("File extension of build at ‘%s’ is not recognized", waldoBuildPath))
+	}
 }
 
 func checkBuildStatus(resp *http.Response) {
-    body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 
-    if err != nil {
-        fail(err)
-    }
+	if err != nil {
+		fail(err)
+	}
 
-    bodyString := string(body)
+	bodyString := string(body)
 
-    statusRegex := regexp.MustCompile(`"status":([0-9]+)`)
-    statusMatches := statusRegex.FindStringSubmatch(bodyString)
+	statusRegex := regexp.MustCompile(`"status":([0-9]+)`)
+	statusMatches := statusRegex.FindStringSubmatch(bodyString)
 
-    if len(statusMatches) > 0 {     // status is numeric _only_ on failure
-        var status = 0
+	if len(statusMatches) > 0 { // status is numeric _only_ on failure
+		var status = 0
 
-        status, err = strconv.Atoi(statusMatches[1])
+		status, err = strconv.Atoi(statusMatches[1])
 
-        if err != nil {
-            fail(err)
-        }
+		if err != nil {
+			fail(err)
+		}
 
-        if status == 401 {
-            fail(fmt.Errorf("Upload token is invalid or missing!"))
-        }
+		if status == 401 {
+			fail(fmt.Errorf("Upload token is invalid or missing!"))
+		}
 
-        if status < 200 || status > 299 {
-            fail(fmt.Errorf("Unable to upload build to Waldo, HTTP status: %d", status))
-        }
-    }
-
-    idRegex := regexp.MustCompile(`"id":"(appv-[0-9a-f]+)"`)
-    idMatches := idRegex.FindStringSubmatch(bodyString)
-
-    if len(idMatches) > 0 {
-        waldoBuildUploadID = idMatches[1]
-    }
+		if status < 200 || status > 299 {
+			fail(fmt.Errorf("Unable to upload build to Waldo, HTTP status: %d", status))
+		}
+	}
 }
 
-func checkHistory() {
-}
-
-func checkPlatform() {
-}
-
-func checkSymbolsPath() {
-}
-
-func checkSymbolsStatus(resp *http.Response) {
+func checkGit() {
+	if !isGitInstalled() {
+		waldoGitAccess = "noGitCommandFound"
+	} else if !hasGitRepository() {
+		waldoGitAccess = "notGitRepository"
+	} else {
+		waldoGitAccess = "ok"
+		waldoGitCommit = getGitCommit() // MUST do first
+		waldoGitBranch = getGitBranch()
+	}
 }
 
 func checkUploadToken() {
-    if len(waldoUploadToken) == 0 {
-        waldoUploadToken = os.Getenv("WALDO_UPLOAD_TOKEN")
-    }
+	if len(waldoUploadToken) == 0 {
+		waldoUploadToken = os.Getenv("WALDO_UPLOAD_TOKEN")
+	}
 
-    if len(waldoUploadToken) == 0 {
-        failUsage(fmt.Errorf("Missing required option: ‘--upload_token’"))
-    }
+	if len(waldoUploadToken) == 0 {
+		failUsage(fmt.Errorf("Missing required option: ‘--upload_token’"))
+	}
 }
 
 func checkVariantName() {
-    if len(waldoVariantName) == 0 {
-        waldoVariantName = os.Getenv("WALDO_VARIANT_NAME")
-    }
 }
 
 func createBuildPayload() {
-    parentPath := filepath.Dir(waldoBuildPath)
-    buildName := filepath.Base(waldoBuildPath)
+	parentPath := filepath.Dir(waldoBuildPath)
+	buildName := filepath.Base(waldoBuildPath)
 
-    fi, err := os.Stat(waldoBuildPath)
+	switch waldoBuildSuffix {
+	case "app":
+		if !isDir(waldoBuildPath) {
+			fail(fmt.Errorf("Unable to read build at ‘%s’", waldoBuildPath))
+		}
 
-    if err != nil {
-        fail(err)
-    }
+		waldoBuildPayloadPath = filepath.Join(waldoWorkingPath, buildName+".zip")
 
-    mode := fi.Mode()
+		err := zipDir(waldoBuildPayloadPath, parentPath, buildName)
 
-    switch waldoBuildSuffix {
-        case "app":
-            if !mode.IsDir() {
-                fail(fmt.Errorf("Unable to read build at ‘%s’", waldoBuildPath))
-            }
+		if err != nil {
+			fail(err)
+		}
 
-            waldoBuildPayloadPath = filepath.Join(waldoWorkingPath, buildName + ".zip")
+	default:
+		if !isRegular(waldoBuildPath) {
+			fail(fmt.Errorf("Unable to read build at ‘%s’", waldoBuildPath))
+		}
 
-            err = zipDir(waldoBuildPayloadPath, parentPath, buildName)
-
-            if err != nil {
-                fail(err)
-            }
-
-        default:
-            if !mode.IsRegular() {
-                fail(fmt.Errorf("Unable to read build at ‘%s’", waldoBuildPath))
-            }
-
-            waldoBuildPayloadPath = waldoBuildPath
-    }
-}
-
-func createSymbolsPayload() {
+		waldoBuildPayloadPath = waldoBuildPath
+	}
 }
 
 func createWorkingPath() {
-    var err error
+	var err error
 
-    waldoWorkingPath, err = os.MkdirTemp("", "WaldoCLI-*")
+	waldoWorkingPath, err = os.MkdirTemp("", "WaldoGoCLI-*")
 
-    if err != nil {
-        fail(err)
-    }
+	if err != nil {
+		fail(err)
+	}
 
-    os.RemoveAll(waldoWorkingPath)
-    os.MkdirAll(waldoWorkingPath, 0755)
+	os.RemoveAll(waldoWorkingPath)
+	os.MkdirAll(waldoWorkingPath, 0755)
 }
 
 func deleteWorkingPath() {
-    if len(waldoWorkingPath) > 0 {
-        os.RemoveAll(waldoWorkingPath)
-    }
+	if len(waldoWorkingPath) > 0 {
+		os.RemoveAll(waldoWorkingPath)
+	}
 }
 
 func displaySummary() {
-    fmt.Printf("\n")
-    fmt.Printf("Build path:   %s\n", summarize(waldoBuildPath))
-    fmt.Printf("Symbols path: %s\n", summarize(waldoSymbolsPath))
-    fmt.Printf("Variant name: %s\n", summarize(waldoVariantName))
-    fmt.Printf("Upload token: %s\n", summarizeSecure(waldoUploadToken))
-    fmt.Printf("\n")
+	fmt.Printf("\n")
+	fmt.Printf("Build path:          %s\n", summarize(waldoBuildPath))
+	fmt.Printf("Git branch:          %s\n", summarize(waldoUserGitBranch))
+	fmt.Printf("Git commit:          %s\n", summarize(waldoUserGitCommit))
+	fmt.Printf("Upload token:        %s\n", summarizeSecure(waldoUploadToken))
+	fmt.Printf("Variant name:        %s\n", summarize(waldoVariantName))
+	fmt.Printf("\n")
 
-    if waldoVerbose {
-        fmt.Printf("Build payload path:   %s\n", summarize(waldoBuildPayloadPath))
-        fmt.Printf("Symbols payload path: %s\n", summarize(waldoSymbolsPayloadPath))
-        fmt.Printf("\n")
-    }
+	if waldoVerbose {
+		fmt.Printf("Build payload path:  %s\n", summarize(waldoBuildPayloadPath))
+		fmt.Printf("Inferred git branch: %s\n", summarize(waldoGitBranch))
+		fmt.Printf("Inferred git commit: %s\n", summarize(waldoGitCommit))
+		fmt.Printf("\n")
+	}
 }
 
 func displayUsage() {
-    fmt.Printf(`
+	fmt.Printf(`
 OVERVIEW: Upload build to Waldo
 
-USAGE: waldo [options] <build-path> [<symbols-path>]
+USAGE: waldo [options] <build-path>
 
 OPTIONS:
 
-  --help                  Display available options
-  --include_symbols       Include symbols with the build upload
-  --upload_token <value>  Waldo upload token (overrides WALDO_UPLOAD_TOKEN)
-  --variant_name <value>  Waldo variant name (overrides WALDO_VARIANT_NAME)
+  --git_branch <value>    Branch name for originating git commit
+  --git_commit <value>    Hash of originating git commit
+  --help                  Display available options and exit
+  --upload_token <value>  Upload token (overrides WALDO_UPLOAD_TOKEN)
+  --variant_name <value>  Variant name
   --verbose               Display extra verbiage
+  --version               Display version and exit
 `)
 }
 
 func displayVersion() {
-    waldoPlatform=getPlatform()
+	waldoPlatform = getPlatform()
 
-    fmt.Printf("Waldo Go CLI %s (%s)\n", waldoGoCLIVersion, waldoPlatform)
+	fmt.Printf("%s %s %s (%s)\n", waldoAgentName, waldoWrapperName, waldoWrapperVersion, waldoPlatform)
+}
+
+func dumpRequest(req *http.Request, body bool) {
+	if waldoVerbose {
+		dump, err := httputil.DumpRequestOut(req, body)
+
+		if err == nil {
+			fmt.Printf("\n--- Request ---\n%s\n", dump)
+		}
+	}
+}
+
+func dumpResponse(resp *http.Response, body bool) {
+	if waldoVerbose {
+		dump, err := httputil.DumpResponse(resp, body)
+
+		if err == nil {
+			fmt.Printf("\n--- Response ---\n%s\n", dump)
+		}
+	}
 }
 
 func fail(err error) {
-    message := fmt.Sprintf("waldo: %v", err)
+	message := fmt.Sprintf("waldo: %v", err)
 
-    if len(waldoUploadToken) > 0 {
-        if uploadError(err) {
-            message += " -- Waldo team has been informed"
-        }
-    }
+	if len(waldoUploadToken) > 0 {
+		if uploadError(err) {
+			message += " -- Waldo team has been informed"
+		}
+	}
 
-    fmt.Printf("\n")    // flush stdout
+	fmt.Printf("\n") // flush stdout
 
-    os.Stderr.WriteString(fmt.Sprintf("%s\n", message))
+	os.Stderr.WriteString(fmt.Sprintf("%s\n", message))
 
-    os.Exit(1)
+	os.Exit(1)
 }
 
 func failUsage(err error) {
-    if len(waldoUploadToken) > 0 {
-        uploadError(err)
-    }
+	if len(waldoUploadToken) > 0 {
+		uploadError(err)
+	}
 
-    fmt.Printf("\n")    // flush stdout
+	fmt.Printf("\n") // flush stdout
 
-    os.Stderr.WriteString(fmt.Sprintf("waldo: %v\n", err))
+	os.Stderr.WriteString(fmt.Sprintf("waldo: %v\n", err))
 
-    displayUsage()
+	displayUsage()
 
-    os.Exit(1)
+	os.Exit(1)
 }
 
-func findSymbolsPath() string {
-    return ""
+func getArch() string {
+	arch := runtime.GOARCH
+
+	switch runtime.GOARCH {
+	case "amd64":
+		return "x86_64"
+
+	default:
+		return arch
+	}
 }
 
 func getAuthorization() string {
-    return fmt.Sprintf("Upload-Token %s", waldoUploadToken)
+	return fmt.Sprintf("Upload-Token %s", waldoUploadToken)
 }
 
 func getBuildContentType() string {
-    switch waldoBuildSuffix {
-        case "app":
-            return "application/zip"
+	switch waldoBuildSuffix {
+	case "app":
+		return "application/zip"
 
-        default:
-            return "application/octet-stream"
-    }
+	default:
+		return "application/octet-stream"
+	}
 }
 
 func getCI() string {
-    if len(os.Getenv("APPCENTER_BUILD_ID")) > 0 {
-        return "App Center"
-    }
+	if len(os.Getenv("APPCENTER_BUILD_ID")) > 0 {
+		return "App Center"
+	}
 
-    if os.Getenv("BITRISE_IO") == "true" {
-        return "Bitrise"
-    }
+	if os.Getenv("BITRISE_IO") == "true" {
+		return "Bitrise"
+	}
 
-    if len(os.Getenv("BUDDYBUILD_BUILD_ID")) > 0 {
-        return "buddybuild"
-    }
+	if len(os.Getenv("BUDDYBUILD_BUILD_ID")) > 0 {
+		return "buddybuild"
+	}
 
-    if os.Getenv("CIRCLECI") == "true" {
-        return "CircleCI"
-    }
+	if os.Getenv("CIRCLECI") == "true" {
+		return "CircleCI"
+	}
 
-    if len(os.Getenv("CODEBUILD_BUILD_ID")) > 0 {
-        return "CodeBuild"
-    }
+	if len(os.Getenv("CODEBUILD_BUILD_ID")) > 0 {
+		return "CodeBuild"
+	}
 
-    if os.Getenv("GITHUB_ACTIONS") == "true" {
-        return "GitHub Actions"
-    }
+	if os.Getenv("GITHUB_ACTIONS") == "true" {
+		return "GitHub Actions"
+	}
 
-    if len(os.Getenv("JENKINS_URL")) > 0 {
-        return "Jenkins"
-    }
+	if len(os.Getenv("JENKINS_URL")) > 0 {
+		return "Jenkins"
+	}
 
-    if len(os.Getenv("TEAMCITY_VERSION")) > 0 {
-        return "TeamCity"
-    }
+	if len(os.Getenv("TEAMCITY_VERSION")) > 0 {
+		return "TeamCity"
+	}
 
-    if os.Getenv("TRAVIS") == "true" {
-        return "Travis CI"
-    }
+	if os.Getenv("TRAVIS") == "true" {
+		return "Travis CI"
+	}
 
-    if len(os.Getenv("CI_BUILD_ID")) > 0 {
-        return "Xcode Cloud"
-    }
+	if len(os.Getenv("CI_BUILD_ID")) > 0 {
+		return "Xcode Cloud"
+	}
 
-    return "Go CLI"
+	return ""
 }
 
 func getErrorContentType() string {
-    return "application/json"
+	return "application/json"
+}
+
+func getGitBranch() string {
+	if len(waldoGitCommit) > 0 {
+		name, _, err := run("git", "name-rev", "--refs=heads/*", "--name-only", waldoGitCommit)
+
+		if err == nil && name != "HEAD" {
+			return name
+		}
+	}
+
+	name, _, err := run("git", "rev-parse", "--abbrev-ref", "HEAD")
+
+	if err == nil && name != "HEAD" {
+		return name
+	}
+
+	return ""
+}
+
+func getGitCommit() string {
+	skip := fmt.Sprintf("--skip=%d", getSkipCount())
+
+	hash, _, err := run("git", "log", "--format=%H", skip, "-1")
+
+	if err != nil {
+		return ""
+	}
+
+	return hash
 }
 
 func getPlatform() string {
-    osName := runtime.GOOS
+	platform := runtime.GOOS
 
-    switch osName {
-        case "darwin":
-            return "macOS"
+	switch platform {
+	case "darwin":
+		return "macOS"
 
-        default:
-            return strings.Title(osName)
-    }
+	default:
+		return strings.Title(platform)
+	}
 }
 
-func getSymbolsContentType() string {
-    return "application/zip"
+func getSkipCount() int {
+	if os.Getenv("GITHUB_ACTIONS") == "true" &&
+		os.Getenv("GITHUB_EVENT_NAME") == "pull_request" {
+		return 1
+	}
+
+	return 0
 }
 
 func getUserAgent() string {
-    return fmt.Sprintf("Waldo %s/%s v%s", getCI(), waldoBuildFlavor, waldoGoCLIVersion)
+	ci := getCI()
+
+	if len(ci) == 0 {
+		ci = waldoWrapperName
+	}
+
+	return fmt.Sprintf("%s %s/%s v%s", waldoAgentName, ci, waldoFlavor, waldoAgentVersion)
+}
+
+func hasGitRepository() bool {
+	_, _, err := run("git", "rev-parse")
+
+	return err == nil
+}
+
+func isDir(path string) bool {
+
+	fi, err := os.Stat(path)
+
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	return fi.Mode().IsDir()
+}
+
+func isGitInstalled() bool {
+	var name string
+
+	if runtime.GOOS == "windows" {
+		name = "git.exe"
+	} else {
+		name = "git"
+	}
+
+	_, err := exec.LookPath(name)
+
+	return err == nil
+}
+
+func isRegular(path string) bool {
+
+	fi, err := os.Stat(path)
+
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	return fi.Mode().IsRegular()
 }
 
 func main() {
-    displayVersion()
+	displayVersion()
 
-    parseArgs()
+	parseArgs()
 
-    checkPlatform()
-    checkBuildPath()
-    checkSymbolsPath()
-    checkHistory()
-    checkUploadToken()
-    checkVariantName()
+	checkBuildPath()
+	checkGit()
+	checkUploadToken()
+	checkVariantName()
 
-    createWorkingPath()
+	createWorkingPath()
 
-    defer deleteWorkingPath()
+	defer deleteWorkingPath()
 
-    createBuildPayload()
-    createSymbolsPayload()
+	createBuildPayload()
 
-    displaySummary()
+	displaySummary()
 
-    uploadBuild()
-    uploadSymbols()
+	uploadBuild()
 }
 
 func makeBuildURL() string {
-    query := ""
+	buildURL := os.Getenv("WALDO_API_BUILD_ENDPOINT_OVERRIDE")
 
-    if len(waldoHistory) > 0 {
-        query += "&history="
-        query += waldoHistory
-    }
+	if len(buildURL) == 0 {
+		buildURL = waldoAPIBuildEndpoint
+	}
 
-    if len(waldoHistoryError) > 0 {
-        query += "&historyError="
-        query += waldoHistoryError
-    }
+	query := make(url.Values)
 
-    if len(waldoVariantName) > 0 {
-        query += "&waldoVariantName="
-        query += waldoVariantName
-    }
+	addIfNotEmpty(&query, "agentName", waldoAgentName)
+	addIfNotEmpty(&query, "agentVersion", waldoAgentVersion)
+	addIfNotEmpty(&query, "arch", getArch())
+	addIfNotEmpty(&query, "ci", getCI())
+	addIfNotEmpty(&query, "flavor", waldoFlavor)
+	addIfNotEmpty(&query, "gitAccess", waldoGitAccess)
+	addIfNotEmpty(&query, "gitBranch", waldoGitBranch)
+	addIfNotEmpty(&query, "gitCommit", waldoGitCommit)
+	addIfNotEmpty(&query, "platform", getPlatform())
+	addIfNotEmpty(&query, "userGitBranch", waldoUserGitBranch)
+	addIfNotEmpty(&query, "userGitCommit", waldoUserGitCommit)
+	addIfNotEmpty(&query, "variantName", waldoVariantName)
+	addIfNotEmpty(&query, "wrapperName", waldoWrapperName)
+	addIfNotEmpty(&query, "wrapperVersion", waldoWrapperVersion)
 
-    url := "https://api.waldo.io/versions"
+	buildURL += "?" + query.Encode()
 
-    if len(query) > 1 {
-        url += "?"
-        url += query[1:]
-    }
+	return buildURL
+}
 
-    return url
+func makeErrorPayload(err error) string {
+	payload := fmt.Sprintf(`{"message":"%s"`, err.Error())
+
+	if len(waldoAgentName) > 0 {
+		payload += fmt.Sprintf(`,"agentName":"%s"`, waldoAgentName)
+	}
+
+	if len(waldoAgentVersion) > 0 {
+		payload += fmt.Sprintf(`,"agentVersion":"%s"`, waldoAgentVersion)
+	}
+
+	arch := getArch()
+
+	if len(arch) > 0 {
+		payload += fmt.Sprintf(`,"arch":"%s"`, arch)
+	}
+
+	ci := getCI()
+
+	if len(ci) > 0 {
+		payload += fmt.Sprintf(`,"ci":"%s"`, ci)
+	}
+
+	platform := getPlatform()
+
+	if len(platform) > 0 {
+		payload += fmt.Sprintf(`,"platform":"%s"`, platform)
+	}
+
+	if len(waldoWrapperName) > 0 {
+		payload += fmt.Sprintf(`,"wrapperName":"%s"`, waldoWrapperName)
+	}
+
+	if len(waldoWrapperVersion) > 0 {
+		payload += fmt.Sprintf(`,"wrapperVersion":"%s"`, waldoWrapperVersion)
+	}
+
+	payload += "}"
+
+	return payload
+
+	return ""
 }
 
 func makeErrorURL() string {
-    return "https://api.waldo.io/uploadError"
-}
+	errorURL := os.Getenv("WALDO_API_ERROR_ENDPOINT_OVERRIDE")
 
-func makeSymbolsURL() string {
-    return fmt.Sprintf("https://api.waldo.io/versions/%s/symbols", waldoBuildUploadID)
+	if len(errorURL) == 0 {
+		errorURL = waldoAPIErrorEndpoint
+	}
+
+	return errorURL
 }
 
 func parseArgs() {
-    args := os.Args[1:]
+	args := os.Args[1:]
 
-    if len(args) == 0 {
-        displayUsage()
+	if len(args) == 0 {
+		displayUsage()
 
-        os.Exit(0)
-    }
+		os.Exit(0)
+	}
 
-    for len(args) > 0 {
-        arg := args[0]
-        args = args[1:]
+	for len(args) > 0 {
+		arg := args[0]
+		args = args[1:]
 
-        switch arg {
-            case "--help":
-                displayUsage()
+		switch arg {
+		case "--help":
+			displayUsage()
 
-                os.Exit(0)
+			os.Exit(0)
 
-            case "--include_symbols":
-                waldoIncludeSymbols = true
+		case "--git_branch":
+			if len(args) == 0 || len(args[0]) == 0 || strings.HasPrefix(args[0], "-") {
+				failUsage(fmt.Errorf("Missing required value for option: ‘%s’", arg))
+			}
 
-            case "--upload_token":
-                if len(args) == 0 || len(args[0]) == 0 || strings.HasPrefix(args[0], "-") {
-                    failUsage(fmt.Errorf("Missing required value for option: ‘%s’", arg))
-                }
+			waldoUserGitBranch = args[0]
 
-                waldoUploadToken = args[0]
+			args = args[1:]
 
-                args = args[1:]
+		case "--git_commit":
+			if len(args) == 0 || len(args[0]) == 0 || strings.HasPrefix(args[0], "-") {
+				failUsage(fmt.Errorf("Missing required value for option: ‘%s’", arg))
+			}
 
+			waldoUserGitCommit = args[0]
 
-            case "--variant_name":
-                if len(args) == 0 || len(args[0]) == 0 || strings.HasPrefix(args[0], "-") {
-                    failUsage(fmt.Errorf("Missing required value for option: ‘%s’", arg))
-                }
+			args = args[1:]
 
-                waldoVariantName = args[0]
+		case "--upload_token":
+			if len(args) == 0 || len(args[0]) == 0 || strings.HasPrefix(args[0], "-") {
+				failUsage(fmt.Errorf("Missing required value for option: ‘%s’", arg))
+			}
 
-                args = args[1:]
+			waldoUploadToken = args[0]
 
-            case "--verbose":
-                waldoVerbose = true
+			args = args[1:]
 
-            default:
-                if strings.HasPrefix(arg, "-") {
-                    failUsage(fmt.Errorf("Unknown option: ‘%s’", arg))
-                }
+		case "--variant_name":
+			if len(args) == 0 || len(args[0]) == 0 || strings.HasPrefix(args[0], "-") {
+				failUsage(fmt.Errorf("Missing required value for option: ‘%s’", arg))
+			}
 
-                if len(waldoBuildPath) == 0 {
-                    waldoBuildPath = arg
-                } else if len(waldoSymbolsPath) == 0 {
-                    waldoSymbolsPath = arg
-                } else {
-                    failUsage(fmt.Errorf("Unknown argument: ‘%s’", arg))
-                }
-        }
-    }
+			waldoVariantName = args[0]
+
+			args = args[1:]
+
+		case "--verbose":
+			waldoVerbose = true
+
+		case "--version":
+			os.Exit(0) // version already displayed
+
+		default:
+			if strings.HasPrefix(arg, "-") {
+				failUsage(fmt.Errorf("Unknown option: ‘%s’", arg))
+			}
+
+			if len(waldoBuildPath) == 0 {
+				waldoBuildPath = arg
+			} else {
+				failUsage(fmt.Errorf("Unknown argument: ‘%s’", arg))
+			}
+		}
+	}
+}
+
+func run(name string, args ...string) (string, string, error) {
+	var (
+		stderrBuffer bytes.Buffer
+		stdoutBuffer bytes.Buffer
+	)
+
+	cmd := exec.Command(name, args...)
+
+	cmd.Stderr = &stderrBuffer
+	cmd.Stdout = &stdoutBuffer
+
+	err := cmd.Run()
+
+	stderr := strings.TrimRight(stderrBuffer.String(), "\n")
+	stdout := strings.TrimRight(stdoutBuffer.String(), "\n")
+
+	return stdout, stderr, err
 }
 
 func summarize(value string) string {
-    if len(value) > 0 {
-        return fmt.Sprintf("‘%s’", value)
-    } else {
-        return "(none)"
-    }
+	if len(value) > 0 {
+		return fmt.Sprintf("‘%s’", value)
+	} else {
+		return "(none)"
+	}
 }
 
 func summarizeSecure(value string) string {
-    if !waldoVerbose {
-        prefix := value[0:6]
-        suffixLen := len(value) - len(prefix)
-        secure := "********************************"
+	if len(value) == 0 {
+		return "(none)"
+	}
 
-        return prefix + secure[0:suffixLen]
-    }
+	if !waldoVerbose {
+		prefixLen := len(value)
 
-    return value
+		if prefixLen > 6 {
+			prefixLen = 6
+		}
+
+		prefix := value[0:prefixLen]
+		suffixLen := len(value) - len(prefix)
+		secure := "********************************"
+
+		value = prefix + secure[0:suffixLen]
+	}
+
+	return fmt.Sprintf("‘%s’", value)
 }
 
 func uploadBuild() {
-    fmt.Printf("Uploading build to Waldo\n")
+	fmt.Printf("Uploading build to Waldo\n")
 
-    buildName := filepath.Base(waldoBuildPath)
+	buildName := filepath.Base(waldoBuildPath)
 
-    url := makeBuildURL()
+	url := makeBuildURL()
 
-    file, err := os.Open(waldoBuildPayloadPath)
+	file, err := os.Open(waldoBuildPayloadPath)
 
-    if err != nil {
-        fail(fmt.Errorf("Unable to upload build to Waldo, error: %v, url: %s", err, url))
-    }
+	if err != nil {
+		fail(fmt.Errorf("Unable to upload build to Waldo, error: %v, url: %s", err, url))
+	}
 
-    defer file.Close()
+	defer file.Close()
 
-    client := &http.Client{}
+	client := &http.Client{}
 
-    req, err := http.NewRequest("POST", url, file)
+	req, err := http.NewRequest("POST", url, file)
 
-    if err != nil {
-        fail(fmt.Errorf("Unable to upload build to Waldo, error: %v, url: %s", err, url))
-    }
+	if err != nil {
+		fail(fmt.Errorf("Unable to upload build to Waldo, error: %v, url: %s", err, url))
+	}
 
-    req.Header.Add("Authorization", getAuthorization())
-    req.Header.Add("Content-Type", getBuildContentType())
-    req.Header.Add("User-Agent", getUserAgent())
+	req.Header.Add("Authorization", getAuthorization())
+	req.Header.Add("Content-Type", getBuildContentType())
+	req.Header.Add("User-Agent", getUserAgent())
 
-    if waldoVerbose {
-        dump, err := httputil.DumpRequestOut(req, false)
+	dumpRequest(req, false)
 
-        if err == nil {
-            fmt.Printf("\n--- Request ---\n%s\n", dump)
-        }
-    }
+	resp, err := client.Do(req)
 
-    resp, err := client.Do(req)
+	if err != nil {
+		fail(fmt.Errorf("Unable to upload build to Waldo, error: %v, url: %s", err, url))
+	}
 
-    if err != nil {
-        fail(fmt.Errorf("Unable to upload build to Waldo, error: %v, url: %s", err, url))
-    }
+	dumpResponse(resp, true)
 
-    if waldoVerbose {
-        dump, err := httputil.DumpResponse(resp, true)
+	checkBuildStatus(resp)
 
-        if err == nil {
-            fmt.Printf("\n--- Response ---\n%s\n", dump)
-        }
-    }
+	defer resp.Body.Close()
 
-    checkBuildStatus(resp)
-
-    defer resp.Body.Close()
-
-    fmt.Printf("\nBuild ‘%s’ successfully uploaded to Waldo!\n", buildName)
+	fmt.Printf("\nBuild ‘%s’ successfully uploaded to Waldo!\n", buildName)
 }
 
 func uploadError(err error) bool {
-    body := fmt.Sprintf("{\"message\":\"%s\",\"ci\":\"%s\"}", err.Error(), getCI())
+	url := makeErrorURL()
+	body := makeErrorPayload(err)
 
-    url := makeErrorURL()
+	client := &http.Client{}
 
-    client := &http.Client{}
+	req, err := http.NewRequest("POST", url, strings.NewReader(body))
 
-    req, err := http.NewRequest("POST", url, strings.NewReader(body))
+	if err != nil {
+		return false
+	}
 
-    if err != nil {
-        return false
-    }
+	req.Header.Add("Authorization", getAuthorization())
+	req.Header.Add("Content-Type", getErrorContentType())
+	req.Header.Add("User-Agent", getUserAgent())
 
-    req.Header.Add("Authorization", getAuthorization())
-    req.Header.Add("Content-Type", getErrorContentType())
-    req.Header.Add("User-Agent", getUserAgent())
+	dumpRequest(req, true)
 
-//    if waldoVerbose {
-//        dump, err := httputil.DumpRequestOut(req, true)
-//
-//        if err == nil {
-//            fmt.Printf("\n--- Request ---\n%s\n", dump)
-//        }
-//    }
+	resp, err := client.Do(req)
 
-    resp, err := client.Do(req)
+	if err != nil {
+		return false
+	}
 
-    if err != nil {
-        return false
-    }
+	defer resp.Body.Close()
 
-    defer resp.Body.Close()
+	dumpResponse(resp, true)
 
-//    if waldoVerbose {
-//        dump, err := httputil.DumpResponse(resp, true)
-//
-//        if err == nil {
-//            fmt.Printf("\n--- Response ---\n%s\n", dump)
-//        }
-//    }
-
-    return true
-}
-
-func uploadSymbols() {
+	return true
 }
 
 func zipDir(zipPath string, dirPath string, basePath string) error {
-    err := os.Chdir(dirPath)
+	err := os.Chdir(dirPath)
 
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 
-    zipFile, err := os.Create(zipPath)
+	zipFile, err := os.Create(zipPath)
 
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 
-    defer zipFile.Close()
+	defer zipFile.Close()
 
-    zipWriter := zip.NewWriter(zipFile)
+	zipWriter := zip.NewWriter(zipFile)
 
-    walker := func(path string, entry fs.DirEntry, err error) error {
-        if err != nil {
-            return err
-        }
+	walker := func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
 
-        if entry.IsDir() {
-            return nil
-        }
+		if entry.IsDir() {
+			return nil
+		}
 
-        file, err := os.Open(path)
+		file, err := os.Open(path)
 
-        if err != nil {
-            return err
-        }
+		if err != nil {
+			return err
+		}
 
-        defer file.Close()
+		defer file.Close()
 
-        zipEntry, err := zipWriter.Create(path)
+		zipEntry, err := zipWriter.Create(path)
 
-        if err != nil {
-            return err
-        }
+		if err != nil {
+			return err
+		}
 
-        _, err = io.Copy(zipEntry, file)
+		_, err = io.Copy(zipEntry, file)
 
-        return err
-    }
+		return err
+	}
 
-    err = filepath.WalkDir(basePath, walker)
+	err = filepath.WalkDir(basePath, walker)
 
-    err2 := zipWriter.Close()
+	err2 := zipWriter.Close()
 
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 
-    return err2
+	return err2
 }
