@@ -5,7 +5,7 @@ INSTALL_DIR?=$(PREFIX)/bin
 
 .PHONY: all build clean install uninstall
 
-all: clean build
+all: clean build install
 
 build: build_linux build_macos build_windows
 

@@ -18,6 +18,8 @@
 
 FROM alpine:latest
 
-COPY bin/waldo-linux-amd64 /usr/local/bin/waldo
+RUN apk add --no-cache git
+
+COPY .build/waldo-linux-x86_64 /usr/local/bin/waldo
 
 RUN chmod a+x /usr/local/bin/waldo

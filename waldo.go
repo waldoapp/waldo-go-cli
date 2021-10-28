@@ -305,6 +305,10 @@ func getCI() string {
 		return "App Center"
 	}
 
+	if len(os.Getenv("AGENT_ID")) > 0 {
+		return "Azure DevOps"
+	}
+
 	if os.Getenv("BITRISE_IO") == "true" {
 		return "Bitrise"
 	}
@@ -452,6 +456,12 @@ func isRegular(path string) bool {
 }
 
 func main() {
+	defer func() {
+		if err := recover(); err != nil {
+			fail(fmt.Errorf("Unhandled panic: %v", err))
+		}
+	}()
+
 	displayVersion()
 
 	parseArgs()
@@ -739,7 +749,7 @@ func uploadError(err error) bool {
 	req.Header.Add("Content-Type", getErrorContentType())
 	req.Header.Add("User-Agent", getUserAgent())
 
-	dumpRequest(req, true)
+	// dumpRequest(req, true)
 
 	resp, err := client.Do(req)
 
@@ -749,7 +759,7 @@ func uploadError(err error) bool {
 
 	defer resp.Body.Close()
 
-	dumpResponse(resp, true)
+	// dumpResponse(resp, true)
 
 	return true
 }
