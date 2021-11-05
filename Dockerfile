@@ -1,6 +1,6 @@
 # This creates a minimal Docker image to allow easy testing of Waldo Go CLI on
-# Linux. It is based on the Alpine Linux image. It also installs the `waldo`
-# executable into `/usr/local/bin`.
+# Linux. It is based on the Alpine Linux image adding in `bash`, `curl`, and
+# `git`. It also installs the `waldo` executable into `/usr/local/bin`.
 #
 # To build the image, issue the following commands from the project directory:
 #
@@ -18,7 +18,7 @@
 
 FROM alpine:latest
 
-RUN apk add --no-cache git
+RUN apk add --no-cache bash curl git
 
 COPY .build/waldo-linux-x86_64 /usr/local/bin/waldo
 

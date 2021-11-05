@@ -132,17 +132,10 @@ Waldo integration with [App Center] requires you only to add a couple of
 In all cases, add the following to `appcenter-post-clone.sh`:
 
 ```bash
-WALDO_CLI_BIN=/usr/local/bin
-WALDO_CLI_URL=https://github.com/waldoapp/waldo-go-cli/releases/download/1.0.0
+export WALDO_CLI_BIN=/usr/local/bin
 
-curl -fLs ${WALDO_CLI_URL}/waldo-<platform>-<arch> > ${WALDO_CLI_BIN}/waldo
-chmod +x ${WALDO_CLI_BIN}/waldo
+bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
 ```
-
-> **Note:** You _must_ replace the “\<platform\>” and “\<arch\>” placeholders
-> in the above script with the appropriate values for your CI machine. For
-> example, you can replace “\<platform\>” with “linux” or “macos”, and replace
-> “\<arch\>” with “arm64” or “x86\_64”.
 
 ### <a name="upload_ac_ios_sim">Uploading an iOS Simulator Build</a>
 
@@ -276,17 +269,10 @@ Waldo integration with [buddybuild] requires you only to add a couple of
 In all cases, add the following to `buddybuild_postclone.sh`:
 
 ```bash
-WALDO_CLI_BIN=/usr/local/bin
-WALDO_CLI_URL=https://github.com/waldoapp/waldo-go-cli/releases/download/1.0.0
+export WALDO_CLI_BIN=/usr/local/bin
 
-curl -fLs ${WALDO_CLI_URL}/waldo-<platform>-<arch> > ${WALDO_CLI_BIN}/waldo
-chmod +x ${WALDO_CLI_BIN}/waldo
+bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
 ```
-
-> **Note:** You _must_ replace the “\<platform\>” and “\<arch\>” placeholders
-> in the above script with the appropriate values for your CI machine. For
-> example, you can replace “\<platform\>” with “linux” or “macos”, and replace
-> “\<arch\>” with “arm64” or “x86\_64”.
 
 ### <a name="upload_bb_ios_sim">Uploading an iOS Simulator Build</a>
 
@@ -336,10 +322,9 @@ jobs:
       - run:
         name: Download Waldo CLI
         command: |
-          curl -fLs ${WALDO_CLI_URL}/waldo-<platform>-<arch> > .circleci/waldo
-          chmod +x .circleci/waldo
+          bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
         environment:
-          WALDO_CLI_URL: https://github.com/waldoapp/waldo-go-cli/releases/download/1.0.0
+          WALDO_CLI_BIN: .circleci/waldo
 
       #...
       #... (generate .app)
@@ -353,11 +338,6 @@ jobs:
           WALDO_BUILD_PATH: /path/to/YourApp.app
 ```
 
-> **Note:** You _must_ replace the “\<platform\>” and “\<arch\>” placeholders
-> in the above configuration with the appropriate values for your CI machine.
-> For example, you can replace “\<platform\>” with “linux” or “macos”, and
-> replace “\<arch\>” with “arm64” or “x86\_64”.
-
 ### <a name="upload_cc_ios_dev">Uploading an iOS Device Build</a>
 
 Waldo integration with [CircleCI] requires you only to add a couple of steps to
@@ -370,10 +350,9 @@ jobs:
       - run:
         name: Download Waldo CLI
         command: |
-          curl -fLs ${WALDO_CLI_URL}/waldo-<platform>-<arch> > .circleci/waldo
-          chmod +x .circleci/waldo
+          bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
         environment:
-          WALDO_CLI_URL: https://github.com/waldoapp/waldo-go-cli/releases/download/1.0.0
+          WALDO_CLI_BIN: .circleci/waldo
 
       #...
       #... (generate .ipa)
@@ -387,11 +366,6 @@ jobs:
           WALDO_BUILD_PATH: /path/to/YourApp.ipa
 ```
 
-> **Note:** You _must_ replace the “\<platform\>” and “\<arch\>” placeholders
-> in the above configuration with the appropriate values for your CI machine.
-> For example, you can replace “\<platform\>” with “linux” or “macos”, and
-> replace “\<arch\>” with “arm64” or “x86\_64”.
-
 ### <a name="upload_cc_android">Uploading an Android Build</a>
 
 Waldo integration with [CircleCI] requires you only to add a couple of steps to
@@ -404,10 +378,9 @@ jobs:
       - run:
         name: Download Waldo CLI
         command: |
-          curl -fLs ${WALDO_CLI_URL}/waldo-<platform>-<arch> > .circleci/waldo
-          chmod +x .circleci/waldo
+          bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
         environment:
-          WALDO_CLI_URL: https://github.com/waldoapp/waldo-go-cli/releases/download/1.0.0
+          WALDO_CLI_BIN: .circleci/waldo
 
       #...
       #... (generate .apk)
@@ -420,11 +393,6 @@ jobs:
           WALDO_UPLOAD_TOKEN: 0123456789abcdef0123456789abcdef
           WALDO_BUILD_PATH: /path/to/YourApp.apk
 ```
-
-> **Note:** You _must_ replace the “\<platform\>” and “\<arch\>” placeholders
-> in the above configuration with the appropriate values for your CI machine.
-> For example, you can replace “\<platform\>” with “linux” or “macos”, and
-> replace “\<arch\>” with “arm64” or “x86\_64”.
 
 ----------
 
@@ -447,21 +415,14 @@ jobs:
         env:
           WALDO_BUILD_PATH: /path/to/YourApp.app
           WALDO_CLI_BIN: /usr/local/bin
-          WALDO_CLI_URL: https://github.com/waldoapp/waldo-go-cli/releases/download/1.0.0
           WALDO_UPLOAD_TOKEN: 0123456789abcdef0123456789abcdef
         run: |
           if [ ! -e ${WALDO_CLI_BIN}/waldo ]; then
-            curl -fLs ${WALDO_CLI_URL}/waldo-<platform>-<arch>-<platform>-<arch> > ${WALDO_CLI_BIN}/waldo
-            chmod +x ${WALDO_CLI_BIN}/waldo
+            bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
           fi
 
           ${WALDO_CLI_BIN}/waldo "$WALDO_BUILD_PATH"
 ```
-
-> **Note:** You _must_ replace the “\<platform\>” and “\<arch\>” placeholders
-> in the above workflow with the appropriate values for your CI machine. For
-> example, you can replace “\<platform\>” with “linux” or “macos”, and replace
-> “\<arch\>” with “arm64” or “x86\_64”.
 
 > **Important:** If you use the [Checkout V2][gha_checkout] action in your
 > workflow, you _must_ set `fetch-depth: 0`. Otherwise, Waldo CLI will _not_ be
@@ -485,21 +446,14 @@ jobs:
         env:
           WALDO_BUILD_PATH: /path/to/YourApp.ipa
           WALDO_CLI_BIN: /usr/local/bin
-          WALDO_CLI_URL: https://github.com/waldoapp/waldo-go-cli/releases/download/1.0.0
           WALDO_UPLOAD_TOKEN: 0123456789abcdef0123456789abcdef
         run: |
           if [ ! -e ${WALDO_CLI_BIN}/waldo ]; then
-            curl -fLs ${WALDO_CLI_URL}/waldo-<platform>-<arch> > ${WALDO_CLI_BIN}/waldo
-            chmod +x ${WALDO_CLI_BIN}/waldo
+            bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
           fi
 
           ${WALDO_CLI_BIN}/waldo "$WALDO_BUILD_PATH"
 ```
-
-> **Note:** You _must_ replace the “\<platform\>” and “\<arch\>” placeholders
-> in the above workflow with the appropriate values for your CI machine. For
-> example, you can replace “\<platform\>” with “linux” or “macos”, and replace
-> “\<arch\>” with “arm64” or “x86\_64”.
 
 > **Important:** If you use the [Checkout V2][gha_checkout] action in your
 > workflow, you _must_ set `fetch-depth: 0`. Otherwise, Waldo CLI will _not_ be
@@ -523,21 +477,14 @@ jobs:
         env:
           WALDO_BUILD_PATH: /path/to/YourApp.apk
           WALDO_CLI_BIN: /usr/local/bin
-          WALDO_CLI_URL: https://github.com/waldoapp/waldo-go-cli/releases/download/1.0.0
           WALDO_UPLOAD_TOKEN: 0123456789abcdef0123456789abcdef
         run: |
           if [ ! -e ${WALDO_CLI_BIN}/waldo ]; then
-            curl -fLs ${WALDO_CLI_URL}/waldo-<platform>-<arch> > ${WALDO_CLI_BIN}/waldo
-            chmod +x ${WALDO_CLI_BIN}/waldo
+            bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
           fi
 
           ${WALDO_CLI_BIN}/waldo "$WALDO_BUILD_PATH"
 ```
-
-> **Note:** You _must_ replace the “\<platform\>” and “\<arch\>” placeholders
-> in the above workflow with the appropriate values for your CI machine. For
-> example, you can replace “\<platform\>” with “linux” or “macos”, and replace
-> “\<arch\>” with “arm64” or “x86\_64”.
 
 > **Important:** If you use the [Checkout V2][gha_checkout] action in your
 > workflow, you _must_ set `fetch-depth: 0`. Otherwise, Waldo CLI will _not_ be
@@ -557,11 +504,9 @@ Waldo integration with [Travis CI] requires you only to add a few steps to your
 env:
   global:
     - WALDO_CLI_BIN=/usr/local/bin
-    - WALDO_CLI_URL=https://github.com/waldoapp/waldo-go-cli/releases/download/1.0.0
     - WALDO_UPLOAD_TOKEN=0123456789abcdef0123456789abcdef
 install:
-  - curl -fLs ${WALDO_CLI_URL}/waldo-<platform>-<arch> > ${WALDO_CLI_BIN}/waldo
-  - chmod +x ${WALDO_CLI_BIN}/waldo
+  - bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
 script:
   #...
   #... Build your app for simulator with:
@@ -572,11 +517,6 @@ script:
   - ${WALDO_CLI_BIN}/waldo "$BUILD_PATH"
 ```
 
-> **Note:** You _must_ replace the “\<platform\>” and “\<arch\>” placeholders
-> in the above configuration with the appropriate values for your CI machine.
-> For example, you can replace “\<platform\>” with “linux” or “macos”, and
-> replace “\<arch\>” with “arm64” or “x86\_64”.
-
 ### <a name="upload_tc_ios_dev">Uploading an iOS Device Build</a>
 
 Waldo integration with [Travis CI] requires you only to add a few steps to your
@@ -586,11 +526,9 @@ Waldo integration with [Travis CI] requires you only to add a few steps to your
 env:
   global:
     - WALDO_CLI_BIN=/usr/local/bin
-    - WALDO_CLI_URL=https://github.com/waldoapp/waldo-go-cli/releases/download/1.0.0
     - WALDO_UPLOAD_TOKEN=0123456789abcdef0123456789abcdef
 install:
-  - curl -fLs ${WALDO_CLI_URL}/waldo-<platform>-<arch> > ${WALDO_CLI_BIN}/waldo
-  - chmod +x ${WALDO_CLI_BIN}/waldo
+  - bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
 script:
   #...
   #... Build your IPA with:
@@ -602,11 +540,6 @@ script:
   - ${WALDO_CLI_BIN}/waldo "$BUILD_PATH"
 ```
 
-> **Note:** You _must_ replace the “\<platform\>” and “\<arch\>” placeholders
-> in the above configuration with the appropriate values for your CI machine.
-> For example, you can replace “\<platform\>” with “linux” or “macos”, and
-> replace “\<arch\>” with “arm64” or “x86\_64”.
-
 ### <a name="upload_tc_android">Uploading an Android Build</a>
 
 Waldo integration with [Travis CI] requires you only to add a few steps to your
@@ -616,22 +549,15 @@ Waldo integration with [Travis CI] requires you only to add a few steps to your
 env:
   global:
     - WALDO_CLI_BIN=/usr/local/bin
-    - WALDO_CLI_URL=https://github.com/waldoapp/waldo-go-cli/releases/download/1.0.0
     - WALDO_UPLOAD_TOKEN=0123456789abcdef0123456789abcdef
 install:
-  - curl -fLs ${WALDO_CLI_URL}/waldo-<platform>-<arch> > ${WALDO_CLI_BIN}/waldo
-  - chmod +x ${WALDO_CLI_BIN}/waldo
+  - bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
 script:
   #...
   #... Build your APK
   #...
   - ${WALDO_CLI_BIN}/waldo "/path/to/YourApp.apk"
 ```
-
-> **Note:** You _must_ replace the “\<platform\>” and “\<arch\>” placeholders
-> in the above configuration with the appropriate values for your CI machine.
-> For example, you can replace “\<platform\>” with “linux” or “macos”, and
-> replace “\<arch\>” with “arm64” or “x86\_64”.
 
 ----------
 
@@ -643,12 +569,10 @@ upload your iOS build manually using Waldo CLI.
 ### <a name="upload_m_ios_sim">Uploading an iOS Simulator Build</a>
 
 ```
-WALDO_CLI_BIN=/usr/local/bin
+export WALDO_CLI_BIN=/usr/local/bin
 
 if [ ! -e ${WALDO_CLI_BIN}/waldo ]; then
-  WALDO_CLI_URL=https://github.com/waldoapp/waldo-go-cli/releases/download/1.0.0
-  curl -fLs ${WALDO_CLI_URL}/waldo-<platform>-<arch> > ${WALDO_CLI_BIN}/waldo
-  chmod +x ${WALDO_CLI_BIN}/waldo
+  bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
 fi
 
 #...
@@ -662,20 +586,13 @@ BUILD_PATH=/path/to/YourApp.app
 ${WALDO_CLI_BIN}/waldo "$BUILD_PATH"
 ```
 
-> **Note:** You _must_ replace the “\<platform\>” and “\<arch\>” placeholders
-> in the above script with the appropriate values for your CI machine. For
-> example, you can replace “\<platform\>” with “linux” or “macos”, and replace
-> “\<arch\>” with “arm64” or “x86\_64”.
-
 ### <a name="upload_m_ios_dev">Uploading an iOS Device Build</a>
 
 ```
-WALDO_CLI_BIN=/usr/local/bin
+export WALDO_CLI_BIN=/usr/local/bin
 
 if [ ! -e ${WALDO_CLI_BIN}/waldo ]; then
-  WALDO_CLI_URL=https://github.com/waldoapp/waldo-go-cli/releases/download/1.0.0
-  curl -fLs ${WALDO_CLI_URL}/waldo-<platform>-<arch> > ${WALDO_CLI_BIN}/waldo
-  chmod +x ${WALDO_CLI_BIN}/waldo
+  bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
 fi
 
 #...
@@ -689,20 +606,13 @@ BUILD_PATH=/path/to/YourApp.ipa
 ${WALDO_CLI_BIN}/waldo "$BUILD_PATH"
 ```
 
-> **Note:** You _must_ replace the “\<platform\>” and “\<arch\>” placeholders
-> in the above script with the appropriate values for your CI machine. For
-> example, you can replace “\<platform\>” with “linux” or “macos”, and replace
-> “\<arch\>” with “arm64” or “x86\_64”.
-
 ### <a name="upload_m_android">Uploading an Android Build</a>
 
 ```
-WALDO_CLI_BIN=/usr/local/bin
+export WALDO_CLI_BIN=/usr/local/bin
 
 if [ ! -e ${WALDO_CLI_BIN}/waldo ]; then
-  WALDO_CLI_URL=https://github.com/waldoapp/waldo-go-cli/releases/download/1.0.0
-  curl -fLs ${WALDO_CLI_URL}/waldo-<platform>-<arch> > ${WALDO_CLI_BIN}/waldo
-  chmod +x ${WALDO_CLI_BIN}/waldo
+  bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
 fi
 
 #...
@@ -715,11 +625,6 @@ BUILD_PATH=/path/to/YourApp.apk
 
 ${WALDO_CLI_BIN}/waldo "$BUILD_PATH"
 ```
-
-> **Note:** You _must_ replace the “\<platform\>” and “\<arch\>” placeholders
-> in the above script with the appropriate values for your CI machine. For
-> example, you can replace “\<platform\>” with “linux” or “macos”, and replace
-> “\<arch\>” with “arm64” or “x86\_64”.
 
 [App Center]:       https://appcenter.ms
 [Bitrise]:          https://www.bitrise.io

@@ -14,24 +14,14 @@ It requires you only to add a couple of [custom build scripts][build_scripts].
 First, add the following to `appcenter-post-clone.sh`:
 
 ```bash
-WALDO_CLI_BIN=/usr/local/bin
-WALDO_CLI_URL=https://github.com/waldoapp/waldo-go-cli/releases/download/1.0.0
+export WALDO_CLI_BIN=/usr/local/bin
 
-curl -fLs ${WALDO_CLI_URL}/waldo-<platform>-<arch> > ${WALDO_CLI_BIN}/waldo
-chmod +x ${WALDO_CLI_BIN}/waldo
-
-curl -fLs ${WALDO_CLI_URL}/sim_appcenter_build_and_upload.sh > ${WALDO_CLI_BIN}/sim_appcenter_build_and_upload.sh
-chmod +x ${WALDO_CLI_BIN}/sim_appcenter_build_and_upload.sh
+bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
 ```
 
-> **Note 1:** You _must_ replace the “\<platform\>” and “\<arch\>” placeholders
-> in the above script with the appropriate values for your CI machine. For
-> example, you can replace “\<platform\>” with “Linux” or “macOS”, and replace
-> “\<arch\>” with “arm64” or “x86\_64”.
-
-> **Note 2:** This downloads a special Bash script that you can find in
-> https://github.com/waldoapp/waldo-go-cli/releases/download/1.0.0/sim_appcenter_build_and_upload.sh,
-> in addition to the `waldo` executable binary.
+> **Note:** This downloads a special Bash script,
+> `sim_appcenter_build_and_upload.sh`, in addition to the `waldo` executable
+> binary.
 
 ## Step 2
 
@@ -127,7 +117,7 @@ Thus, there are three options you can choose for the pre-build script:
 
 We _strongly_ recommend that you choose option 2 unless you actually desire the
 device build operation to be run. In this way, the build displays a `Canceled`
-status and thereby reserves the `Failed` status for true build failures.
+status, and thereby reserves the `Failed` status for true build failures.
 
 [App Center]:   https://appcenter.ms
 
