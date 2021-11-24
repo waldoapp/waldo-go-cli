@@ -64,7 +64,7 @@ You can then find your app relative to the derived data path:
 app_path = File.join(derived_data_path,
                      'Build',
                      'Products',
-                     'ReleaseSim-iphonesimulator',
+                     'Release-iphonesimulator',
                      'YourApp.app')
 ```
 
