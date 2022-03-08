@@ -7,7 +7,12 @@
 
 [Waldo](https://www.waldo.io) provides fast, reliable, and maintainable tests
 for the most critical flows in your app. Waldo CLI is a command-line tool which
-allows you to upload an iOS or Android build to Waldo for processing.
+allows you to:
+
+- Upload an iOS or Android build to Waldo for processing. Read on for full
+  details.
+- Trigger a run of of one or more test flows for your app. See [RUNS.md][runs]
+  for full details.
 
 ## Installation
 
@@ -52,10 +57,10 @@ file extensions:
 - `.apk` for all Android builds (emulator or device)
 
 Finally, specify the path to your new build (along with your Waldo upload
-token) on the `waldo` command invocation:
+token) on the `waldo upload` command invocation:
 
 ```bash
-$ waldo /path/to/YourApp.app --upload_token 0123456789abcdef0123456789abcdef
+$ waldo upload /path/to/YourApp.app --upload_token 0123456789abcdef0123456789abcdef
 ```
 
 > **Important:** Make sure you replace the fake upload token value shown above
@@ -66,8 +71,12 @@ CLI:
 
 ```bash
 $ export WALDO_UPLOAD_TOKEN=0123456789abcdef0123456789abcdef
-$ waldo /path/to/YourApp.app
+$ waldo upload /path/to/YourApp.app
 ```
+
+> **Note:** For backward compatibility, you can omit the `upload` verb from the
+> command invocation; however, we strongly recommend that you include it for
+> clarity.
 
 ### Advanced Usage
 
@@ -93,3 +102,4 @@ See [CI_INTEGRATION.md][ci] for full details.
 
 [ci]:       https://github.com/waldoapp/waldo-go-cli/blob/master/CI_INTEGRATION.md
 [license]:  https://github.com/waldoapp/waldo-go-cli/blob/master/LICENSE
+[runs]:     https://github.com/waldoapp/waldo-go-cli/blob/master/RUNS.md

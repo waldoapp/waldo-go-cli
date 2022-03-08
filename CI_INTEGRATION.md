@@ -154,7 +154,7 @@ export WALDO_UPLOAD_TOKEN=0123456789abcdef0123456789abcdef
 
 BUILD_PATH=${APPCENTER_OUTPUT_DIRECTORY}/YourApp.ipa
 
-${WALDO_CLI_BIN}/waldo "$BUILD_PATH"
+${WALDO_CLI_BIN}/waldo load "$BUILD_PATH"
 ```
 
 ### <a name="upload_ac_android">Uploading an Android Build</a>
@@ -168,7 +168,7 @@ export WALDO_UPLOAD_TOKEN=0123456789abcdef0123456789abcdef
 
 BUILD_PATH=${APPCENTER_OUTPUT_DIRECTORY}/YourApp.apk
 
-${WALDO_CLI_BIN}/waldo "$BUILD_PATH"
+${WALDO_CLI_BIN}/waldo load "$BUILD_PATH"
 ```
 
 ----------
@@ -285,7 +285,7 @@ export WALDO_UPLOAD_TOKEN=0123456789abcdef0123456789abcdef
 
 BUILD_PATH=/path/to/YourApp.app
 
-${WALDO_CLI_BIN}/waldo "$BUILD_PATH"
+${WALDO_CLI_BIN}/waldo load "$BUILD_PATH"
 ```
 
 ### <a name="upload_bb_ios_dev">Uploading an iOS Device Build</a>
@@ -299,7 +299,7 @@ export WALDO_UPLOAD_TOKEN=0123456789abcdef0123456789abcdef
 
 cd $BUDDYBUILD_PRODUCT_DIR
 
-${WALDO_CLI_BIN}/waldo "$BUDDYBUILD_IPA_PATH"
+${WALDO_CLI_BIN}/waldo load "$BUDDYBUILD_IPA_PATH"
 ```
 
 ### <a name="upload_bb_android">Uploading an Android Build</a>
@@ -332,7 +332,7 @@ jobs:
 
       - run:
         name: Upload build to Waldo
-        command: .circleci/waldo "$WALDO_BUILD_PATH"
+        command: .circleci/waldo load "$WALDO_BUILD_PATH"
         environment:
           WALDO_UPLOAD_TOKEN: 0123456789abcdef0123456789abcdef
           WALDO_BUILD_PATH: /path/to/YourApp.app
@@ -360,7 +360,7 @@ jobs:
 
       - run:
         name: Upload build to Waldo
-        command: .circleci/waldo "$WALDO_BUILD_PATH"
+        command: .circleci/waldo load "$WALDO_BUILD_PATH"
         environment:
           WALDO_UPLOAD_TOKEN: 0123456789abcdef0123456789abcdef
           WALDO_BUILD_PATH: /path/to/YourApp.ipa
@@ -388,7 +388,7 @@ jobs:
 
       - run:
         name: Upload build to Waldo
-        command: .circleci/waldo "$WALDO_BUILD_PATH"
+        command: .circleci/waldo load "$WALDO_BUILD_PATH"
         environment:
           WALDO_UPLOAD_TOKEN: 0123456789abcdef0123456789abcdef
           WALDO_BUILD_PATH: /path/to/YourApp.apk
@@ -421,7 +421,7 @@ jobs:
             bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
           fi
 
-          ${WALDO_CLI_BIN}/waldo "$WALDO_BUILD_PATH"
+          ${WALDO_CLI_BIN}/waldo load "$WALDO_BUILD_PATH"
 ```
 
 > **Important:** If you use the [Checkout V2][gha_checkout] action in your
@@ -452,7 +452,7 @@ jobs:
             bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
           fi
 
-          ${WALDO_CLI_BIN}/waldo "$WALDO_BUILD_PATH"
+          ${WALDO_CLI_BIN}/waldo load "$WALDO_BUILD_PATH"
 ```
 
 > **Important:** If you use the [Checkout V2][gha_checkout] action in your
@@ -483,7 +483,7 @@ jobs:
             bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
           fi
 
-          ${WALDO_CLI_BIN}/waldo "$WALDO_BUILD_PATH"
+          ${WALDO_CLI_BIN}/waldo load "$WALDO_BUILD_PATH"
 ```
 
 > **Important:** If you use the [Checkout V2][gha_checkout] action in your
@@ -514,7 +514,7 @@ script:
   #...     - xcodebuild [...] -derivedDataPath "$TRAVIS_BUILD_DIR" [...] build
   #...
   - BUILD_PATH="$TRAVIS_BUILD_DIR"/Build/Products/Release-iphonesimulator/YourApp.app
-  - ${WALDO_CLI_BIN}/waldo "$BUILD_PATH"
+  - ${WALDO_CLI_BIN}/waldo load "$BUILD_PATH"
 ```
 
 ### <a name="upload_tc_ios_dev">Uploading an iOS Device Build</a>
@@ -537,7 +537,7 @@ script:
   #...     - xcodebuild -exportArchive [...] -archivePath /path/to/YourApp.xcarchive -exportPath /path/to/export [...]
   #...
   - BUILD_PATH=/path/to/export/YourApp-release.ipa
-  - ${WALDO_CLI_BIN}/waldo "$BUILD_PATH"
+  - ${WALDO_CLI_BIN}/waldo load "$BUILD_PATH"
 ```
 
 ### <a name="upload_tc_android">Uploading an Android Build</a>
@@ -556,7 +556,7 @@ script:
   #...
   #... Build your APK
   #...
-  - ${WALDO_CLI_BIN}/waldo "/path/to/YourApp.apk"
+  - ${WALDO_CLI_BIN}/waldo load "/path/to/YourApp.apk"
 ```
 
 ----------
@@ -583,7 +583,7 @@ export WALDO_UPLOAD_TOKEN=0123456789abcdef0123456789abcdef
 
 BUILD_PATH=/path/to/YourApp.app
 
-${WALDO_CLI_BIN}/waldo "$BUILD_PATH"
+${WALDO_CLI_BIN}/waldo load "$BUILD_PATH"
 ```
 
 ### <a name="upload_m_ios_dev">Uploading an iOS Device Build</a>
@@ -603,7 +603,7 @@ export WALDO_UPLOAD_TOKEN=0123456789abcdef0123456789abcdef
 
 BUILD_PATH=/path/to/YourApp.ipa
 
-${WALDO_CLI_BIN}/waldo "$BUILD_PATH"
+${WALDO_CLI_BIN}/waldo load "$BUILD_PATH"
 ```
 
 ### <a name="upload_m_android">Uploading an Android Build</a>
@@ -623,7 +623,7 @@ export WALDO_UPLOAD_TOKEN=0123456789abcdef0123456789abcdef
 
 BUILD_PATH=/path/to/YourApp.apk
 
-${WALDO_CLI_BIN}/waldo "$BUILD_PATH"
+${WALDO_CLI_BIN}/waldo load "$BUILD_PATH"
 ```
 
 [App Center]:       https://appcenter.ms

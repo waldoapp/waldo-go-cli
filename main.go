@@ -12,18 +12,20 @@ import (
 const (
 	defaultWrapperName     = "Go CLI"
 	defaultWrapperNameFull = "Waldo Go CLI"
-	defaultWrapperVersion  = "1.0.0"
+	defaultWrapperVersion  = "1.1.0"
 )
 
 var (
 	waldoBuildPath        string
 	waldoBuildPayloadPath string
 	waldoBuildSuffix      string
+	waldoCommand          string
 	waldoFlavor           string
 	waldoGitAccess        string
 	waldoGitBranch        string
 	waldoGitCommit        string
 	waldoPlatform         string
+	waldoRuleName         string
 	waldoUploadToken      string
 	waldoVariantName      string
 	waldoVerbose          bool
@@ -32,7 +34,7 @@ var (
 
 func checkBuildPath() {
 	if len(waldoBuildPath) == 0 {
-		failUsage(fmt.Errorf("Missing required argument: ‘build-path’"))
+		failMissingArg("build-path")
 	}
 }
 
@@ -42,33 +44,66 @@ func checkUploadToken() {
 	}
 
 	if len(waldoUploadToken) == 0 {
-		failUsage(fmt.Errorf("Missing required option: ‘--upload_token’"))
+		failMissingOpt("--upload_token")
 	}
 }
 
-func displaySummary(uploader *waldo.Uploader) {
-	fmt.Printf("\n")
-	fmt.Printf("Build path:          %s\n", summarize(uploader.BuildPath()))
-	fmt.Printf("Git branch:          %s\n", summarize(uploader.GitBranch()))
-	fmt.Printf("Git commit:          %s\n", summarize(uploader.GitCommit()))
-	fmt.Printf("Upload token:        %s\n", summarizeSecure(uploader.UploadToken()))
-	fmt.Printf("Variant name:        %s\n", summarize(uploader.VariantName()))
+func displaySummary(context interface{}) {
+	switch {
+	case isTrigger():
+		t := context.(*waldo.Triggerer)
 
-	if waldoVerbose {
 		fmt.Printf("\n")
-		fmt.Printf("Build payload path:  %s\n", summarize(uploader.BuildPayloadPath()))
-		fmt.Printf("Inferred git branch: %s\n", summarize(uploader.InferredGitBranch()))
-		fmt.Printf("Inferred git commit: %s\n", summarize(uploader.InferredGitCommit()))
-	}
+		fmt.Printf("Rule name:           %s\n", summarize(t.RuleName()))
+		fmt.Printf("Upload token:        %s\n", summarizeSecure(t.UploadToken()))
+		fmt.Printf("\n")
 
-	fmt.Printf("\n")
+	case isUpload():
+		u := context.(*waldo.Uploader)
+
+		fmt.Printf("\n")
+		fmt.Printf("Build path:          %s\n", summarize(u.BuildPath()))
+		fmt.Printf("Git branch:          %s\n", summarize(u.GitBranch()))
+		fmt.Printf("Git commit:          %s\n", summarize(u.GitCommit()))
+		fmt.Printf("Upload token:        %s\n", summarizeSecure(u.UploadToken()))
+		fmt.Printf("Variant name:        %s\n", summarize(u.VariantName()))
+
+		if waldoVerbose {
+			fmt.Printf("\n")
+			fmt.Printf("Build payload path:  %s\n", summarize(u.BuildPayloadPath()))
+			fmt.Printf("Inferred git branch: %s\n", summarize(u.InferredGitBranch()))
+			fmt.Printf("Inferred git commit: %s\n", summarize(u.InferredGitCommit()))
+		}
+
+		fmt.Printf("\n")
+	}
 }
 
 func displayUsage() {
-	fmt.Printf(`
+	switch {
+	case isTrigger():
+		fmt.Printf(`
+OVERVIEW: Trigger run on Waldo
+
+USAGE: waldo trigger [options]
+
+OPTIONS:
+
+  --help                  Display available options and exit
+  --rule_name <value>     Rule name
+  --upload_token <value>  Upload token (overrides WALDO_UPLOAD_TOKEN)
+  --verbose               Display extra verbiage
+  --version               Display version and exit
+`)
+
+	case isUpload():
+		fallthrough
+
+	default:
+		fmt.Printf(`
 OVERVIEW: Upload build to Waldo
 
-USAGE: waldo [options] <build-path>
+USAGE: waldo upload [options] <build-path>
 
 OPTIONS:
 
@@ -80,6 +115,7 @@ OPTIONS:
   --verbose               Display extra verbiage
   --version               Display version and exit
 `)
+	}
 }
 
 func displayVersion() {
@@ -92,6 +128,26 @@ func fail(err error) {
 	os.Stderr.WriteString(fmt.Sprintf("waldo: %v\n", err))
 
 	os.Exit(1)
+}
+
+func failMissingArg(arg string) {
+	failUsage(fmt.Errorf("Missing required argument: ‘%s’", arg))
+}
+
+func failMissingOpt(opt string) {
+	failUsage(fmt.Errorf("Missing required option: ‘%s’", opt))
+}
+
+func failMissingOptValue(opt string) {
+	failUsage(fmt.Errorf("Missing required value for option: ‘%s’", opt))
+}
+
+func failUnknownArg(arg string) {
+	failUsage(fmt.Errorf("Unknown argument: ‘%s’", arg))
+}
+
+func failUnknownOpt(opt string) {
+	failUsage(fmt.Errorf("Unknown option: ‘%s’", opt))
 }
 
 func failUsage(err error) {
@@ -129,7 +185,19 @@ func getOverrides() map[string]string {
 		overrides["apiErrorEndpoint"] = apiErrorEndpoint
 	}
 
+	if apiTriggerEndpoint := os.Getenv("WALDO_API_TRIGGER_ENDPOINT_OVERRIDE"); len(apiTriggerEndpoint) > 0 {
+		overrides["apiTriggerEndpoint"] = apiTriggerEndpoint
+	}
+
 	return overrides
+}
+
+func isTrigger() bool {
+	return waldoCommand == "trigger"
+}
+
+func isUpload() bool {
+	return waldoCommand == "upload"
 }
 
 func main() {
@@ -143,6 +211,130 @@ func main() {
 
 	parseArgs()
 
+	switch {
+	case isTrigger():
+		performTrigger()
+
+	case isUpload():
+		performUpload()
+	}
+}
+
+func parseArgs() {
+	args := os.Args[1:]
+
+	if len(args) == 0 {
+		displayUsage()
+
+		os.Exit(0)
+	}
+
+	waldoCommand, args = parseCommand(args)
+
+	for len(args) > 0 {
+		arg := args[0]
+		args = args[1:]
+
+		switch arg {
+		case "--help":
+			displayUsage()
+
+			os.Exit(0)
+
+		case "--git_branch":
+			if isUpload() {
+				waldoGitBranch, args = parseOption(arg, args)
+			} else {
+				failUnknownOpt(arg)
+			}
+
+		case "--git_commit":
+			if isUpload() {
+				waldoGitCommit, args = parseOption(arg, args)
+			} else {
+				failUnknownOpt(arg)
+			}
+
+		case "--rule_name":
+			if isTrigger() {
+				waldoRuleName, args = parseOption(arg, args)
+			} else {
+				failUnknownOpt(arg)
+			}
+
+		case "--upload_token":
+			waldoUploadToken, args = parseOption(arg, args)
+
+		case "--variant_name":
+			if isUpload() {
+				waldoVariantName, args = parseOption(arg, args)
+			} else {
+				failUnknownOpt(arg)
+			}
+
+		case "--verbose":
+			waldoVerbose = true
+
+		case "--version":
+			os.Exit(0) // version already displayed
+
+		default:
+			if strings.HasPrefix(arg, "-") {
+				failUnknownOpt(arg)
+			}
+
+			if isUpload() && len(waldoBuildPath) == 0 {
+				waldoBuildPath = arg
+			} else {
+				failUnknownArg(arg)
+			}
+		}
+	}
+}
+
+func parseCommand(args []string) (string, []string) {
+	switch args[0] {
+	case "trigger", "upload":
+		return args[0], args[1:]
+
+	default:
+		return "upload", args
+	}
+}
+
+func parseOption(arg string, args []string) (string, []string) {
+	if len(args) == 0 || len(args[0]) == 0 || strings.HasPrefix(args[0], "-") {
+		failMissingOptValue(arg)
+	}
+
+	return args[0], args[1:]
+}
+
+func performTrigger() {
+	checkUploadToken()
+
+	triggerer := waldo.NewTriggerer(
+		waldoUploadToken,
+		waldoRuleName,
+		waldoVerbose,
+		getOverrides())
+
+	if err := triggerer.Validate(); err != nil {
+		fail(err)
+	}
+
+	displaySummary(triggerer)
+
+	fmt.Printf("Triggering run on Waldo\n")
+
+	if err := triggerer.Perform(); err != nil {
+		fail(err)
+	}
+
+	fmt.Printf("Run successfully triggered on Waldo!\n")
+}
+
+func performUpload() {
 	checkBuildPath()
 	checkUploadToken()
 
@@ -168,81 +360,6 @@ func main() {
 	}
 
 	fmt.Printf("\nBuild ‘%s’ successfully uploaded to Waldo!\n", filepath.Base(waldoBuildPath))
-}
-
-func parseArgs() {
-	args := os.Args[1:]
-
-	if len(args) == 0 {
-		displayUsage()
-
-		os.Exit(0)
-	}
-
-	for len(args) > 0 {
-		arg := args[0]
-		args = args[1:]
-
-		switch arg {
-		case "--help":
-			displayUsage()
-
-			os.Exit(0)
-
-		case "--git_branch":
-			if len(args) == 0 || len(args[0]) == 0 || strings.HasPrefix(args[0], "-") {
-				failUsage(fmt.Errorf("Missing required value for option: ‘%s’", arg))
-			}
-
-			waldoGitBranch = args[0]
-
-			args = args[1:]
-
-		case "--git_commit":
-			if len(args) == 0 || len(args[0]) == 0 || strings.HasPrefix(args[0], "-") {
-				failUsage(fmt.Errorf("Missing required value for option: ‘%s’", arg))
-			}
-
-			waldoGitCommit = args[0]
-
-			args = args[1:]
-
-		case "--upload_token":
-			if len(args) == 0 || len(args[0]) == 0 || strings.HasPrefix(args[0], "-") {
-				failUsage(fmt.Errorf("Missing required value for option: ‘%s’", arg))
-			}
-
-			waldoUploadToken = args[0]
-
-			args = args[1:]
-
-		case "--variant_name":
-			if len(args) == 0 || len(args[0]) == 0 || strings.HasPrefix(args[0], "-") {
-				failUsage(fmt.Errorf("Missing required value for option: ‘%s’", arg))
-			}
-
-			waldoVariantName = args[0]
-
-			args = args[1:]
-
-		case "--verbose":
-			waldoVerbose = true
-
-		case "--version":
-			os.Exit(0) // version already displayed
-
-		default:
-			if strings.HasPrefix(arg, "-") {
-				failUsage(fmt.Errorf("Unknown option: ‘%s’", arg))
-			}
-
-			if len(waldoBuildPath) == 0 {
-				waldoBuildPath = arg
-			} else {
-				failUsage(fmt.Errorf("Unknown argument: ‘%s’", arg))
-			}
-		}
-	}
 }
 
 func summarize(value string) string {
