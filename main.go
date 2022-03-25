@@ -12,7 +12,7 @@ import (
 const (
 	defaultWrapperName     = "Go CLI"
 	defaultWrapperNameFull = "Waldo Go CLI"
-	defaultWrapperVersion  = "1.1.0"
+	defaultWrapperVersion  = "1.1.1"
 )
 
 var (
@@ -71,6 +71,10 @@ func displaySummary(context interface{}) {
 		if waldoVerbose {
 			fmt.Printf("\n")
 			fmt.Printf("Build payload path:  %s\n", summarize(u.BuildPayloadPath()))
+			fmt.Printf("CI git branch:       %s\n", summarize(u.CIGitBranch()))
+			fmt.Printf("CI git commit:       %s\n", summarize(u.CIGitCommit()))
+			fmt.Printf("CI provider:         %s\n", summarize(u.CIProvider()))
+			fmt.Printf("Git access:          %s\n", summarize(u.GitAccess()))
 			fmt.Printf("Inferred git branch: %s\n", summarize(u.InferredGitBranch()))
 			fmt.Printf("Inferred git commit: %s\n", summarize(u.InferredGitCommit()))
 		}

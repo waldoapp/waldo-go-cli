@@ -2,7 +2,7 @@
 
 set -eu -o pipefail
 
-waldo_cli_version="1.1.0"
+waldo_cli_version="1.1.1"
 
 waldo_cli_bin="${WALDO_CLI_BIN:-/usr/local/bin}"
 waldo_cli_url="https://github.com/waldoapp/waldo-go-cli/releases/download/${waldo_cli_version}"

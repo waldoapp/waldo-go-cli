@@ -7,6 +7,12 @@ This project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [1.1.1] - 2022-03-25
+
+### Changed
+
+- Enhanced info gathered from CI provider.
+
 ## [1.1.0] - 2022-03-08
 
 ### Added
@@ -20,7 +26,8 @@ This project adheres to [Semantic Versioning].
 
 Initial public release.
 
-[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/1.1.0...HEAD
+[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/1.1.1...HEAD
+[1.1.1]:        https://github.com/waldoapp/waldo-go-cli/compare/1.1.0...1.1.1
 [1.1.0]:        https://github.com/waldoapp/waldo-go-cli/compare/1.0.0...1.1.0
 [1.0.0]:        https://github.com/waldoapp/waldo-go-cli/compare/f05ec68...1.0.0
 
