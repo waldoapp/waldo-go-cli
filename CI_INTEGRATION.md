@@ -408,26 +408,25 @@ jobs:
   build:
     steps:
       #...
-      #... (generate .app)
+      #... (generate .app and save path as APP_PATH to $GITHUB_ENV)
       #...
 
       - name: Upload build to Waldo
-        env:
-          WALDO_BUILD_PATH: /path/to/YourApp.app
-          WALDO_CLI_BIN: /usr/local/bin
-          WALDO_UPLOAD_TOKEN: 0123456789abcdef0123456789abcdef
-        run: |
-          if [ ! -e ${WALDO_CLI_BIN}/waldo ]; then
-            bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
-          fi
-
-          ${WALDO_CLI_BIN}/waldo upload "$WALDO_BUILD_PATH"
+        uses: waldoapp/gh-action-upload@v1
+        with:
+          build_path: ${{ env.APP_PATH }}
+          upload_token: ${{ secrets.WALDO_UPLOAD_TOKEN }}
 ```
 
-> **Important:** If you use the [Checkout V2][gha_checkout] action in your
-> workflow, you _must_ set `fetch-depth: 0`. Otherwise, Waldo CLI will _not_ be
-> able to correctly identify the git commit and branch associated with your
-> build.
+> **Important:** If you use the [Checkout V2 or V3][gha_checkout] action in
+> your workflow, you _must_ set `fetch-depth: 0`. Otherwise, Waldo CLI will
+> _not_ be able to correctly identify the git commit and branch associated with
+> your build.
+
+> **Note:** The value you supply to the `upload_token` input _should_ be
+> specified as a “secret” environment variable by going to the GitHub
+> **Settings** tab in your repository, selecting the **Secrets > Actions**
+> menu, and assigning your upload token to `WALDO_UPLOAD_TOKEN`.
 
 ### <a name="upload_gha_ios_dev">Uploading an iOS Device Build</a>
 
@@ -439,26 +438,25 @@ jobs:
   build:
     steps:
       #...
-      #... (generate .ipa)
+      #... (generate .ipa and save path as IPA_PATH to $GITHUB_ENV)
       #...
 
       - name: Upload build to Waldo
-        env:
-          WALDO_BUILD_PATH: /path/to/YourApp.ipa
-          WALDO_CLI_BIN: /usr/local/bin
-          WALDO_UPLOAD_TOKEN: 0123456789abcdef0123456789abcdef
-        run: |
-          if [ ! -e ${WALDO_CLI_BIN}/waldo ]; then
-            bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
-          fi
-
-          ${WALDO_CLI_BIN}/waldo upload "$WALDO_BUILD_PATH"
+        uses: waldoapp/gh-action-upload@v1
+        with:
+          build_path: ${{ env.IPA_PATH }}
+          upload_token: ${{ secrets.WALDO_UPLOAD_TOKEN }}
 ```
 
-> **Important:** If you use the [Checkout V2][gha_checkout] action in your
-> workflow, you _must_ set `fetch-depth: 0`. Otherwise, Waldo CLI will _not_ be
-> able to correctly identify the git commit and branch associated with your
-> build.
+> **Important:** If you use the [Checkout V2 or V3][gha_checkout] action in
+> your workflow, you _must_ set `fetch-depth: 0`. Otherwise, Waldo CLI will
+> _not_ be able to correctly identify the git commit and branch associated with
+> your build.
+
+> **Note:** The value you supply to the `upload_token` input _should_ be
+> specified as a “secret” environment variable by going to the GitHub
+> **Settings** tab in your repository, selecting the **Secrets > Actions**
+> menu, and assigning your upload token to `WALDO_UPLOAD_TOKEN`.
 
 ### <a name="upload_gha_android">Uploading an Android Build</a>
 
@@ -470,26 +468,25 @@ jobs:
   build:
     steps:
       #...
-      #... (generate .apk)
+      #... (generate .apk and save path as APK_PATH to $GITHUB_ENV)
       #...
 
       - name: Upload build to Waldo
-        env:
-          WALDO_BUILD_PATH: /path/to/YourApp.apk
-          WALDO_CLI_BIN: /usr/local/bin
-          WALDO_UPLOAD_TOKEN: 0123456789abcdef0123456789abcdef
-        run: |
-          if [ ! -e ${WALDO_CLI_BIN}/waldo ]; then
-            bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
-          fi
-
-          ${WALDO_CLI_BIN}/waldo upload "$WALDO_BUILD_PATH"
+        uses: waldoapp/gh-action-upload@v1
+        with:
+          build_path: ${{ env.APK_PATH }}
+          upload_token: ${{ secrets.WALDO_UPLOAD_TOKEN }}
 ```
 
-> **Important:** If you use the [Checkout V2][gha_checkout] action in your
-> workflow, you _must_ set `fetch-depth: 0`. Otherwise, Waldo CLI will _not_ be
-> able to correctly identify the git commit and branch associated with your
-> build.
+> **Important:** If you use the [Checkout V2 or V3][gha_checkout] action in
+> your workflow, you _must_ set `fetch-depth: 0`. Otherwise, Waldo CLI will
+> _not_ be able to correctly identify the git commit and branch associated with
+> your build.
+
+> **Note:** The value you supply to the `upload_token` input _should_ be
+> specified as a “secret” environment variable by going to the GitHub
+> **Settings** tab in your repository, selecting the **Secrets > Actions**
+> menu, and assigning your upload token to `WALDO_UPLOAD_TOKEN`.
 
 ----------
 
