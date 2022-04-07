@@ -39,7 +39,7 @@ clean:
 
 install: build_macos_x86_64
 	@ install -d $(INSTALL_DIR)
-	@ install -Cv $(BUILD_DIR)/waldo-macos-x86_64 $(INSTALL_DIR)/waldo
+	@ install -Cv $(BUILD_DIR)/waldo-macos-arm64 $(INSTALL_DIR)/waldo
 
 uninstall:
 	@ rm -fv $(INSTALL_DIR)/waldo
