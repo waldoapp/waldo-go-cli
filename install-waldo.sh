@@ -2,10 +2,8 @@
 
 set -eu -o pipefail
 
-waldo_cli_version="1.1.3"
-
 waldo_cli_bin="${WALDO_CLI_BIN:-/usr/local/bin}"
-waldo_cli_url="https://github.com/waldoapp/waldo-go-cli/releases/download/${waldo_cli_version}"
+waldo_cli_url="https://github.com/waldoapp/waldo-go-cli/releases/latest/download"
 
 waldo_asset1_name=""
 waldo_asset2_name="sim_appcenter_build_and_upload.sh"
