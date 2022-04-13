@@ -7,6 +7,12 @@ This project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [1.1.3] - 2022-04-13
+
+### Changed
+
+- Greatly improved git branch inference.
+
 ## [1.1.2] - 2022-04-07
 
 ### Fixed
@@ -33,7 +39,8 @@ This project adheres to [Semantic Versioning].
 
 Initial public release.
 
-[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/1.1.2...HEAD
+[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/1.1.3...HEAD
+[1.1.3]:        https://github.com/waldoapp/waldo-go-cli/compare/1.1.2...1.1.3
 [1.1.2]:        https://github.com/waldoapp/waldo-go-cli/compare/1.1.1...1.1.2
 [1.1.1]:        https://github.com/waldoapp/waldo-go-cli/compare/1.1.0...1.1.1
 [1.1.0]:        https://github.com/waldoapp/waldo-go-cli/compare/1.0.0...1.1.0

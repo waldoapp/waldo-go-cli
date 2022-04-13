@@ -12,7 +12,7 @@ import (
 const (
 	defaultWrapperName     = "Go CLI"
 	defaultWrapperNameFull = "Waldo Go CLI"
-	defaultWrapperVersion  = "1.1.2"
+	defaultWrapperVersion  = "1.1.3"
 )
 
 var (
