@@ -2,206 +2,209 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httputil"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
-
-	"github.com/waldoapp/waldo-go-lib"
 )
 
 const (
-	defaultWrapperName     = "Go CLI"
-	defaultWrapperNameFull = "Waldo Go CLI"
-	defaultWrapperVersion  = "1.1.3"
+	cliName    = "Waldo CLI"
+	cliVersion = "2.0.0"
+
+	cliAssetBaseURL = "https://github.com/waldoapp/waldo-go-agent/releases"
 )
 
 var (
-	waldoBuildPath        string
-	waldoBuildPayloadPath string
-	waldoBuildSuffix      string
-	waldoCommand          string
-	waldoFlavor           string
-	waldoGitAccess        string
-	waldoGitBranch        string
-	waldoGitCommit        string
-	waldoPlatform         string
-	waldoRuleName         string
-	waldoUploadToken      string
-	waldoVariantName      string
-	waldoVerbose          bool
-	waldoWorkingPath      string
+	cliAgentPath   string
+	cliAssetURL    string
+	cliWorkingPath string
+
+	cliArch         = detectArch()
+	cliAssetVersion = detectAssetVersion()
+	cliPlatform     = detectPlatform()
+	cliVerbose      = detectVerbose()
 )
 
-func checkBuildPath() {
-	if len(waldoBuildPath) == 0 {
-		failMissingArg("build-path")
-	}
+func cleanupTarget() {
+	os.RemoveAll(cliWorkingPath)
 }
 
-func checkUploadToken() {
-	if len(waldoUploadToken) == 0 {
-		waldoUploadToken = os.Getenv("WALDO_UPLOAD_TOKEN")
-	}
+func detectArch() string {
+	arch := runtime.GOARCH
 
-	if len(waldoUploadToken) == 0 {
-		failMissingOpt("--upload_token")
-	}
-}
-
-func displaySummary(context interface{}) {
-	switch {
-	case isTrigger():
-		t := context.(*waldo.Triggerer)
-
-		fmt.Printf("\n")
-		fmt.Printf("Rule name:           %s\n", summarize(t.RuleName()))
-		fmt.Printf("Upload token:        %s\n", summarizeSecure(t.UploadToken()))
-		fmt.Printf("\n")
-
-	case isUpload():
-		u := context.(*waldo.Uploader)
-
-		fmt.Printf("\n")
-		fmt.Printf("Build path:          %s\n", summarize(u.BuildPath()))
-		fmt.Printf("Git branch:          %s\n", summarize(u.GitBranch()))
-		fmt.Printf("Git commit:          %s\n", summarize(u.GitCommit()))
-		fmt.Printf("Upload token:        %s\n", summarizeSecure(u.UploadToken()))
-		fmt.Printf("Variant name:        %s\n", summarize(u.VariantName()))
-
-		if waldoVerbose {
-			fmt.Printf("\n")
-			fmt.Printf("Build payload path:  %s\n", summarize(u.BuildPayloadPath()))
-			fmt.Printf("CI git branch:       %s\n", summarize(u.CIGitBranch()))
-			fmt.Printf("CI git commit:       %s\n", summarize(u.CIGitCommit()))
-			fmt.Printf("CI provider:         %s\n", summarize(u.CIProvider()))
-			fmt.Printf("Git access:          %s\n", summarize(u.GitAccess()))
-			fmt.Printf("Inferred git branch: %s\n", summarize(u.InferredGitBranch()))
-			fmt.Printf("Inferred git commit: %s\n", summarize(u.InferredGitCommit()))
-		}
-
-		fmt.Printf("\n")
-	}
-}
-
-func displayUsage() {
-	switch {
-	case isTrigger():
-		fmt.Printf(`
-OVERVIEW: Trigger run on Waldo
-
-USAGE: waldo trigger [options]
-
-OPTIONS:
-
-  --help                  Display available options and exit
-  --rule_name <value>     Rule name
-  --upload_token <value>  Upload token (overrides WALDO_UPLOAD_TOKEN)
-  --verbose               Display extra verbiage
-  --version               Display version and exit
-`)
-
-	case isUpload():
-		fallthrough
+	switch arch {
+	case "amd64":
+		return "x86_64"
 
 	default:
-		fmt.Printf(`
-OVERVIEW: Upload build to Waldo
-
-USAGE: waldo upload [options] <build-path>
-
-OPTIONS:
-
-  --git_branch <value>    Branch name for originating git commit
-  --git_commit <value>    Hash of originating git commit
-  --help                  Display available options and exit
-  --upload_token <value>  Upload token (overrides WALDO_UPLOAD_TOKEN)
-  --variant_name <value>  Variant name
-  --verbose               Display extra verbiage
-  --version               Display version and exit
-`)
+		return arch
 	}
+}
+
+func detectAssetVersion() string {
+	if version := os.Getenv("WALDO_CLI_ASSET_VERSION"); len(version) > 0 {
+		return version
+	}
+
+	return "latest"
+}
+
+func detectPlatform() string {
+	platform := runtime.GOOS
+
+	switch platform {
+	case "darwin":
+		return "macOS"
+
+	default:
+		return strings.Title(platform)
+	}
+}
+
+func detectVerbose() bool {
+	if verbose := os.Getenv("WALDO_CLI_VERBOSE"); verbose == "1" {
+		return true
+	}
+
+	return false
+}
+
+func determineAgentPath() string {
+	agentName := "waldo-agent"
+
+	if cliPlatform == "windows" {
+		agentName += ".exe"
+	}
+
+	return filepath.Join(cliWorkingPath, "waldo-agent")
+}
+
+func determineAssetURL() string {
+	assetName := fmt.Sprintf("waldo-agent-%s-%s", cliPlatform, cliArch)
+
+	if cliPlatform == "windows" {
+		assetName += ".exe"
+	}
+
+	assetBaseURL := cliAssetBaseURL
+
+	if cliAssetVersion != "latest" {
+		assetBaseURL += "/download/" + cliAssetVersion
+	} else {
+		assetBaseURL += "/latest/download"
+	}
+
+	return assetBaseURL + "/" + assetName
+}
+
+func determineWorkingPath() string {
+	return filepath.Join(os.TempDir(), fmt.Sprintf("WaldoGoCLI-%d", os.Getpid()))
 }
 
 func displayVersion() {
-	fmt.Printf("%s %s / %s\n", defaultWrapperNameFull, defaultWrapperVersion, waldo.Version())
+	if cliVerbose {
+		fmt.Printf("%s %s (%s/%s)\n", cliName, cliVersion, cliPlatform, cliArch)
+	}
+}
+
+func downloadAgent() {
+	fmt.Printf("\nDownloading latest Waldo Agent…\n\n")
+
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", cliAssetURL, nil)
+
+	var resp *http.Response
+
+	if err == nil {
+		dumpRequest(req, false)
+
+		resp, err = client.Do(req)
+	}
+
+	if err == nil {
+		defer resp.Body.Close()
+
+		dumpResponse(resp, false)
+
+		if resp.StatusCode < 200 || resp.StatusCode > 299 {
+			fail(fmt.Errorf("Unable to download Waldo Agent, HTTP status: %s", resp.Status))
+		}
+	}
+
+	var file *os.File = nil
+
+	if err == nil {
+		file, err = os.OpenFile(cliAgentPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0775)
+	}
+
+	if err == nil {
+		defer file.Close()
+
+		_, err = io.Copy(file, resp.Body)
+	}
+
+	if err != nil {
+		fail(fmt.Errorf("Unable to download Waldo Agent, error: %v, url: %s", err, cliAssetURL))
+	}
+}
+
+func dumpRequest(req *http.Request, body bool) {
+	if cliVerbose {
+		dump, err := httputil.DumpRequestOut(req, body)
+
+		if err == nil {
+			fmt.Printf("\n--- Request ---\n%s\n", dump)
+		}
+	}
+}
+
+func dumpResponse(resp *http.Response, body bool) {
+	if cliVerbose {
+		dump, err := httputil.DumpResponse(resp, body)
+
+		if err == nil {
+			fmt.Printf("\n--- Response ---\n%s\n", dump)
+		}
+	}
+}
+
+func enrichEnvironment() []string {
+	env := os.Environ()
+
+	setEnvironVar(&env, "WALDO_WRAPPER_NAME_OVERRIDE", cliName)
+	setEnvironVar(&env, "WALDO_WRAPPER_VERSION_OVERRIDE", cliVersion)
+
+	return env
+}
+
+func execAgent() {
+	args := os.Args[1:]
+
+	cmd := exec.Command(cliAgentPath, args...)
+
+	cmd.Env = enrichEnvironment()
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	err := cmd.Run()
+
+	if ee, ok := err.(*exec.ExitError); ok {
+		os.Exit(ee.ExitCode())
+	}
 }
 
 func fail(err error) {
 	fmt.Printf("\n") // flush stdout
 
-	os.Stderr.WriteString(fmt.Sprintf("waldo: %v\n", err))
+	os.Stderr.WriteString(fmt.Sprintf("waldo-cli: %v\n", err))
 
 	os.Exit(1)
-}
-
-func failMissingArg(arg string) {
-	failUsage(fmt.Errorf("Missing required argument: ‘%s’", arg))
-}
-
-func failMissingOpt(opt string) {
-	failUsage(fmt.Errorf("Missing required option: ‘%s’", opt))
-}
-
-func failMissingOptValue(opt string) {
-	failUsage(fmt.Errorf("Missing required value for option: ‘%s’", opt))
-}
-
-func failUnknownArg(arg string) {
-	failUsage(fmt.Errorf("Unknown argument: ‘%s’", arg))
-}
-
-func failUnknownOpt(opt string) {
-	failUsage(fmt.Errorf("Unknown option: ‘%s’", opt))
-}
-
-func failUsage(err error) {
-	fmt.Printf("\n") // flush stdout
-
-	os.Stderr.WriteString(fmt.Sprintf("waldo: %v\n", err))
-
-	displayUsage()
-
-	os.Exit(1)
-}
-
-func getOverrides() map[string]string {
-	wrapperName := os.Getenv("WALDO_WRAPPER_NAME_OVERRIDE")
-
-	if len(wrapperName) == 0 {
-		wrapperName = defaultWrapperName
-	}
-
-	wrapperVersion := os.Getenv("WALDO_WRAPPER_VERSION_OVERRIDE")
-
-	if len(wrapperVersion) == 0 {
-		wrapperVersion = defaultWrapperVersion
-	}
-
-	overrides := map[string]string{
-		"wrapperName":    wrapperName,
-		"wrapperVersion": wrapperVersion}
-
-	if apiBuildEndpoint := os.Getenv("WALDO_API_BUILD_ENDPOINT_OVERRIDE"); len(apiBuildEndpoint) > 0 {
-		overrides["apiBuildEndpoint"] = apiBuildEndpoint
-	}
-
-	if apiErrorEndpoint := os.Getenv("WALDO_API_ERROR_ENDPOINT_OVERRIDE"); len(apiErrorEndpoint) > 0 {
-		overrides["apiErrorEndpoint"] = apiErrorEndpoint
-	}
-
-	if apiTriggerEndpoint := os.Getenv("WALDO_API_TRIGGER_ENDPOINT_OVERRIDE"); len(apiTriggerEndpoint) > 0 {
-		overrides["apiTriggerEndpoint"] = apiTriggerEndpoint
-	}
-
-	return overrides
-}
-
-func isTrigger() bool {
-	return waldoCommand == "trigger"
-}
-
-func isUpload() bool {
-	return waldoCommand == "upload"
 }
 
 func main() {
@@ -213,185 +216,42 @@ func main() {
 
 	displayVersion()
 
-	parseArgs()
+	prepareSource()
+	prepareTarget()
 
-	switch {
-	case isTrigger():
-		performTrigger()
+	defer cleanupTarget()
 
-	case isUpload():
-		performUpload()
+	downloadAgent()
+	execAgent()
+}
+
+func prepareSource() {
+	cliAssetURL = determineAssetURL()
+}
+
+func prepareTarget() {
+	cliWorkingPath = determineWorkingPath()
+	cliAgentPath = determineAgentPath()
+
+	err := os.RemoveAll(cliWorkingPath)
+
+	if err == nil {
+		err = os.MkdirAll(cliWorkingPath, 0755)
+	}
+
+	if err != nil {
+		fail(err)
 	}
 }
 
-func parseArgs() {
-	args := os.Args[1:]
+func setEnvironVar(env *[]string, key, value string) {
+	for idx := range *env {
+		if strings.HasPrefix((*env)[idx], key+"=") {
+			(*env)[idx] = key + "=" + value
 
-	if len(args) == 0 {
-		displayUsage()
-
-		os.Exit(0)
-	}
-
-	waldoCommand, args = parseCommand(args)
-
-	for len(args) > 0 {
-		arg := args[0]
-		args = args[1:]
-
-		switch arg {
-		case "--help":
-			displayUsage()
-
-			os.Exit(0)
-
-		case "--git_branch":
-			if isUpload() {
-				waldoGitBranch, args = parseOption(arg, args)
-			} else {
-				failUnknownOpt(arg)
-			}
-
-		case "--git_commit":
-			if isUpload() {
-				waldoGitCommit, args = parseOption(arg, args)
-			} else {
-				failUnknownOpt(arg)
-			}
-
-		case "--rule_name":
-			if isTrigger() {
-				waldoRuleName, args = parseOption(arg, args)
-			} else {
-				failUnknownOpt(arg)
-			}
-
-		case "--upload_token":
-			waldoUploadToken, args = parseOption(arg, args)
-
-		case "--variant_name":
-			if isUpload() {
-				waldoVariantName, args = parseOption(arg, args)
-			} else {
-				failUnknownOpt(arg)
-			}
-
-		case "--verbose":
-			waldoVerbose = true
-
-		case "--version":
-			os.Exit(0) // version already displayed
-
-		default:
-			if strings.HasPrefix(arg, "-") {
-				failUnknownOpt(arg)
-			}
-
-			if isUpload() && len(waldoBuildPath) == 0 {
-				waldoBuildPath = arg
-			} else {
-				failUnknownArg(arg)
-			}
+			return
 		}
 	}
-}
 
-func parseCommand(args []string) (string, []string) {
-	switch args[0] {
-	case "trigger", "upload":
-		return args[0], args[1:]
-
-	default:
-		return "upload", args
-	}
-}
-
-func parseOption(arg string, args []string) (string, []string) {
-	if len(args) == 0 || len(args[0]) == 0 || strings.HasPrefix(args[0], "-") {
-		failMissingOptValue(arg)
-	}
-
-	return args[0], args[1:]
-}
-
-func performTrigger() {
-	checkUploadToken()
-
-	triggerer := waldo.NewTriggerer(
-		waldoUploadToken,
-		waldoRuleName,
-		waldoVerbose,
-		getOverrides())
-
-	if err := triggerer.Validate(); err != nil {
-		fail(err)
-	}
-
-	displaySummary(triggerer)
-
-	fmt.Printf("Triggering run on Waldo\n")
-
-	if err := triggerer.Perform(); err != nil {
-		fail(err)
-	}
-
-	fmt.Printf("Run successfully triggered on Waldo!\n")
-}
-
-func performUpload() {
-	checkBuildPath()
-	checkUploadToken()
-
-	uploader := waldo.NewUploader(
-		waldoBuildPath,
-		waldoUploadToken,
-		waldoVariantName,
-		waldoGitCommit,
-		waldoGitBranch,
-		waldoVerbose,
-		getOverrides())
-
-	if err := uploader.Validate(); err != nil {
-		fail(err)
-	}
-
-	displaySummary(uploader)
-
-	fmt.Printf("Uploading build to Waldo\n")
-
-	if err := uploader.Upload(); err != nil {
-		fail(err)
-	}
-
-	fmt.Printf("\nBuild ‘%s’ successfully uploaded to Waldo!\n", filepath.Base(waldoBuildPath))
-}
-
-func summarize(value string) string {
-	if len(value) > 0 {
-		return fmt.Sprintf("‘%s’", value)
-	} else {
-		return "(none)"
-	}
-}
-
-func summarizeSecure(value string) string {
-	if len(value) == 0 {
-		return "(none)"
-	}
-
-	if !waldoVerbose {
-		prefixLen := len(value)
-
-		if prefixLen > 6 {
-			prefixLen = 6
-		}
-
-		prefix := value[0:prefixLen]
-		suffixLen := len(value) - len(prefix)
-		secure := "********************************"
-
-		value = prefix + secure[0:suffixLen]
-	}
-
-	return fmt.Sprintf("‘%s’", value)
+	*env = append(*env, key+"="+value)
 }

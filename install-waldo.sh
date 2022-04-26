@@ -5,8 +5,11 @@ set -eu -o pipefail
 waldo_cli_bin="${WALDO_CLI_BIN:-/usr/local/bin}"
 waldo_cli_url="https://github.com/waldoapp/waldo-go-cli/releases/latest/download"
 
+waldo_exec1_name="waldo"
+waldo_exec2_name="sim_appcenter_build_and_upload.sh"
+
 waldo_asset1_name=""
-waldo_asset2_name="sim_appcenter_build_and_upload.sh"
+waldo_asset2_name=""
 
 function check_platform() {
     if [[ -z $(which curl) ]]; then
@@ -14,7 +17,7 @@ function check_platform() {
     fi
 }
 
-function determine_asset_name() {
+function determine_asset_names() {
     local _platform=$(uname -s)
     local _arch=$(uname -m)
 
@@ -47,6 +50,7 @@ function determine_asset_name() {
     esac
 
     waldo_asset1_name="waldo-${_platform}-${_arch}"
+    waldo_asset2_name=waldo_exec2_name
 }
 
 function fail() {
@@ -54,36 +58,52 @@ function fail() {
     exit 1
 }
 
-function install_binary() {
+function install_binaries() {
     mkdir -p "$waldo_cli_bin" || return
 
     if [[ ! -w $waldo_cli_bin ]]; then
         fail "No write access to ‘${waldo_cli_bin}’"
     fi
 
-    curl --create-dirs --location --show-error --silent \
-         "${waldo_cli_url}/${waldo_asset1_name}"        \
-         --output "${waldo_cli_bin}/waldo" || return
-
-    chmod +x "${waldo_cli_bin}/waldo" || return
-
-    echo "Installed ‘${waldo_asset1_name}’ as ‘${waldo_cli_bin}/waldo’"
+    install_binary "${waldo_asset1_name}" "${waldo_exec1_name}" || return
 
     if [[ -n ${APPCENTER_BUILD_ID:-} ]]; then
-        curl --create-dirs --location --show-error --silent \
-             "${waldo_cli_url}/${waldo_asset2_name}"        \
-             --output "${waldo_cli_bin}/${waldo_asset2_name}" || return
-
-        chmod +x "${waldo_cli_bin}/${waldo_asset2_name}" || return
-
-        echo "Installed ‘${waldo_asset2_name}’ as ‘${waldo_cli_bin}/${waldo_asset2_name}’"
+        install_binary "${waldo_asset2_name}" "${waldo_exec2_name}" || return
     fi
 
     return
 }
 
+function install_binary() {
+    local _asset_url="${waldo_cli_url}/${1}"
+    local _exec_path="${waldo_cli_bin}/${2}"
+
+    curl --fail             \
+         --location         \
+         --show-error       \
+         --silent           \
+         "${_asset_url}"    \
+         --output "${_exec_path}"
+
+    local _curl_status=$?
+
+    if (( $_curl_status != 0 )); then
+        fail "Unable to download ‘${_asset_url}’"
+    fi
+
+    chmod +x "${_exec_path}"
+
+    local _chmod_status=$?
+
+    if (( $_chmod_status != 0 )); then
+        fail "Unable to install ‘${_exec_path}’"
+    fi
+
+    echo "Installed ‘${_asset_url}’ as ‘${_exec_path}’"
+}
+
 check_platform || exit
-determine_asset_name || exit
-install_binary || exit
+determine_asset_names || exit
+install_binaries || exit
 
 exit
