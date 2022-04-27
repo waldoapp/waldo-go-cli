@@ -7,6 +7,12 @@ This project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [2.0.1] - 2022-04-27
+
+### Fixed
+
+- Fixed edge case in determining correct wrapper name/version.
+
 ## [2.0.0] - 2022-04-26
 
 ### Changed
@@ -45,7 +51,8 @@ This project adheres to [Semantic Versioning].
 
 Initial public release.
 
-[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/2.0.0...HEAD
+[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/2.0.1...HEAD
+[2.0.1]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.0...2.0.1
 [2.0.0]:        https://github.com/waldoapp/waldo-go-cli/compare/1.1.3...2.0.0
 [1.1.3]:        https://github.com/waldoapp/waldo-go-cli/compare/1.1.2...1.1.3
 [1.1.3]:        https://github.com/waldoapp/waldo-go-cli/compare/1.1.2...1.1.3

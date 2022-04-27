@@ -14,7 +14,7 @@ import (
 
 const (
 	cliName    = "Waldo CLI"
-	cliVersion = "2.0.0"
+	cliVersion = "2.0.1"
 
 	cliAssetBaseURL = "https://github.com/waldoapp/waldo-go-agent/releases"
 )
@@ -177,8 +177,17 @@ func dumpResponse(resp *http.Response, body bool) {
 func enrichEnvironment() []string {
 	env := os.Environ()
 
-	setEnvironVar(&env, "WALDO_WRAPPER_NAME_OVERRIDE", cliName)
-	setEnvironVar(&env, "WALDO_WRAPPER_VERSION_OVERRIDE", cliVersion)
+	//
+	// If _both_ wrapper overrides are already set, do _not_ replace them with
+	// the CLI name/version:
+	//
+	wrapperName := os.Getenv("WALDO_WRAPPER_NAME_OVERRIDE")
+	wrapperVersion := os.Getenv("WALDO_WRAPPER_VERSION_OVERRIDE")
+
+	if len(wrapperName) == 0 || len(wrapperVersion) == 0 {
+		setEnvironVar(&env, "WALDO_WRAPPER_NAME_OVERRIDE", cliName)
+		setEnvironVar(&env, "WALDO_WRAPPER_VERSION_OVERRIDE", cliVersion)
+	}
 
 	return env
 }
