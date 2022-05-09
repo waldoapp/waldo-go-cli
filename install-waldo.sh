@@ -50,7 +50,7 @@ function determine_asset_names() {
     esac
 
     waldo_asset1_name="waldo-${_platform}-${_arch}"
-    waldo_asset2_name=waldo_exec2_name
+    waldo_asset2_name="$waldo_exec2_name"
 }
 
 function fail() {
