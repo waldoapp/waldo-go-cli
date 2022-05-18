@@ -44,8 +44,9 @@ function create_sim_build() {
 
 function upload_sim_build() {
     local _build_path="$SIM_XCODE_DATA_PATH"/Build/Products/"$SIM_XCODE_CONFIGURATION"-iphonesimulator/"$SIM_XCODE_APP_NAME"
+    local _advanced_variables=${SIM_APPCENTER_ADVANCED_VARIABLES:-}
 
-    ${WALDO_CLI_BIN}/waldo upload "$_build_path"
+    ${WALDO_CLI_BIN}/waldo upload "$_build_path" $_advanced_variables
 }
 
 create_sim_build || exit
