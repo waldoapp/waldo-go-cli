@@ -14,7 +14,7 @@ import (
 
 const (
 	cliName    = "Waldo CLI"
-	cliVersion = "2.0.1"
+	cliVersion = "2.0.2"
 
 	cliAssetBaseURL = "https://github.com/waldoapp/waldo-go-agent/releases"
 )

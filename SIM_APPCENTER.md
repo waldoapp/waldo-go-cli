@@ -39,6 +39,13 @@ export SIM_XCODE_APP_NAME=YourApp.app
 export WALDO_UPLOAD_TOKEN=0123456789abcdef0123456789abcdef
 
 #
+# Uncomment and define the following environment variable if you need to pass
+# extra options (for example, `--git_branch` or `--git_commit`) to the
+# underlying `waldo upload` invocation:
+#
+# export SIM_WALDO_UPLOAD_OPTIONS="--git_branch ${YOUR_GIT_BRANCH} --verbose"
+
+#
 # Uncomment and define the following three environment variables to disable the
 # device build operation from running and display as “Canceled” in the App
 # Center dashboard:
