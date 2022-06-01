@@ -79,6 +79,11 @@ waldo(upload_token: '0123456789abcdef0123456789abcdef',
 > **Note:** You _must_ specify _both_ the Waldo upload token _and_ the path of
 > the `.app`.
 
+> **Important:** If you call the `waldo` plugin from [GitHub Actions], the
+> plugin will _not_ automatically choose the correct git commit SHA on a PR.
+> Therefore, you _should_ supply the `git_commit` parameter to the `waldo`
+> call.
+
 ### <a name="upload_f_ios_dev">Uploading an iOS Device Build</a>
 
 Build a new IPA for your app. If you use `gym` (aka `build_ios_app`) to build
@@ -99,6 +104,11 @@ specify the IPA path to `waldo`:
 waldo(upload_token: '0123456789abcdef0123456789abcdef',
       ipa_path: '/path/to/YourApp.ipa')
 ```
+
+> **Important:** If you call the `waldo` plugin from [GitHub Actions], the
+> plugin will _not_ automatically choose the correct git commit SHA on a PR.
+> Therefore, you _should_ supply the `git_commit` parameter to the `waldo`
+> call.
 
 ### <a name="upload_f_android">Uploading an Android Build</a>
 
@@ -121,6 +131,11 @@ specify the APK path to `waldo`:
 waldo(upload_token: '0123456789abcdef0123456789abcdef',
       apk_path: '/path/to/YourApp.apk')
 ```
+
+> **Important:** If you call the `waldo` plugin from [GitHub Actions], the
+> plugin will _not_ automatically choose the correct git commit SHA on a PR.
+> Therefore, you _should_ supply the `git_commit` parameter to the `waldo`
+> call.
 
 ----------
 
