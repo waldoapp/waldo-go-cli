@@ -12,10 +12,6 @@
   * [Uploading an iOS Simulator Build](#upload_br_ios_sim)
   * [Uploading an iOS Device Build](#upload_br_ios_dev)
   * [Uploading an Android Build](#upload_br_android)
-* [Uploading a Build with buddybuild](#upload_bb)
-  * [Uploading an iOS Simulator Build](#upload_bb_ios_sim)
-  * [Uploading an iOS Device Build](#upload_bb_ios_dev)
-  * [Uploading an Android Build](#upload_bb_android)
 * [Uploading a Build with CircleCI](#upload_cc)
   * [Uploading an iOS Simulator Build](#upload_cc_ios_sim)
   * [Uploading an iOS Device Build](#upload_cc_ios_dev)
@@ -276,53 +272,6 @@ workflows:
 
 ----------
 
-## <a name="upload_bb">Uploading a Build with buddybuild</a>
-
-Waldo integration with [buddybuild] requires you only to add a couple of
-[custom build steps][bb_custom].
-
-In all cases, add the following to `buddybuild_postclone.sh`:
-
-```bash
-export WALDO_CLI_BIN=/usr/local/bin
-
-bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
-```
-
-### <a name="upload_bb_ios_sim">Uploading an iOS Simulator Build</a>
-
-Add the following to `buddybuild_postbuild.sh`:
-
-```bash
-WALDO_CLI_BIN=/usr/local/bin
-
-export WALDO_UPLOAD_TOKEN=0123456789abcdef0123456789abcdef
-
-BUILD_PATH=/path/to/YourApp.app
-
-${WALDO_CLI_BIN}/waldo upload "$BUILD_PATH"
-```
-
-### <a name="upload_bb_ios_dev">Uploading an iOS Device Build</a>
-
-Add the following to `buddybuild_postbuild.sh`:
-
-```bash
-WALDO_CLI_BIN=/usr/local/bin
-
-export WALDO_UPLOAD_TOKEN=0123456789abcdef0123456789abcdef
-
-cd $BUDDYBUILD_PRODUCT_DIR
-
-${WALDO_CLI_BIN}/waldo upload "$BUDDYBUILD_IPA_PATH"
-```
-
-### <a name="upload_bb_android">Uploading an Android Build</a>
-
-_Not supported by the CI._
-
-----------
-
 ## <a name="upload_cc">Uploading a Build with CircleCI</a>
 
 ### <a name="upload_cc_ios_sim">Uploading an iOS Simulator Build</a>
@@ -339,7 +288,7 @@ jobs:
         command: |
           bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
         environment:
-          WALDO_CLI_BIN: .circleci/waldo
+          WALDO_CLI_BIN: /usr/local/bin
 
       #...
       #... (generate .app)
@@ -347,8 +296,9 @@ jobs:
 
       - run:
         name: Upload build to Waldo
-        command: .circleci/waldo upload "$WALDO_BUILD_PATH"
+        command: ${WALDO_CLI_BIN}/waldo upload "$WALDO_BUILD_PATH"
         environment:
+          WALDO_CLI_BIN: /usr/local/bin
           WALDO_UPLOAD_TOKEN: 0123456789abcdef0123456789abcdef
           WALDO_BUILD_PATH: /path/to/YourApp.app
 ```
@@ -367,7 +317,7 @@ jobs:
         command: |
           bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
         environment:
-          WALDO_CLI_BIN: .circleci/waldo
+          WALDO_CLI_BIN: /usr/local/bin
 
       #...
       #... (generate .ipa)
@@ -375,8 +325,9 @@ jobs:
 
       - run:
         name: Upload build to Waldo
-        command: .circleci/waldo upload "$WALDO_BUILD_PATH"
+        command: ${WALDO_CLI_BIN}/waldo upload "$WALDO_BUILD_PATH"
         environment:
+          WALDO_CLI_BIN: /usr/local/bin
           WALDO_UPLOAD_TOKEN: 0123456789abcdef0123456789abcdef
           WALDO_BUILD_PATH: /path/to/YourApp.ipa
 ```
@@ -395,7 +346,7 @@ jobs:
         command: |
           bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
         environment:
-          WALDO_CLI_BIN: .circleci/waldo
+          WALDO_CLI_BIN: /usr/local/bin
 
       #...
       #... (generate .apk)
@@ -403,8 +354,9 @@ jobs:
 
       - run:
         name: Upload build to Waldo
-        command: .circleci/waldo upload "$WALDO_BUILD_PATH"
+        command: ${WALDO_CLI_BIN}/waldo upload "$WALDO_BUILD_PATH"
         environment:
+          WALDO_CLI_BIN: /usr/local/bin
           WALDO_UPLOAD_TOKEN: 0123456789abcdef0123456789abcdef
           WALDO_BUILD_PATH: /path/to/YourApp.apk
 ```
@@ -640,14 +592,12 @@ ${WALDO_CLI_BIN}/waldo upload "$BUILD_PATH"
 
 [App Center]:       https://appcenter.ms
 [Bitrise]:          https://www.bitrise.io
-[buddybuild]:       https://www.buddybuild.com
 [CircleCI]:         https://circleci.com
 [fastlane]:         https://fastlane.tools
 [GitHub Actions]:   https://github.com/features/actions
 [Travis CI]:        https://travis-ci.com
 
 [ac_scripts]:       https://docs.microsoft.com/en-us/appcenter/build/custom/scripts/
-[bb_custom]:        https://docs.buddybuild.com/builds/custom_build_steps.html
 [br_android_build]: https://app.bitrise.io/integrations/steps/android-build
 [br_waldo_upload]:  https://app.bitrise.io/integrations/steps/waldo-upload
 [br_xcode_archive]: https://app.bitrise.io/integrations/steps/xcode-archive
