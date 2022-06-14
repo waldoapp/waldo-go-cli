@@ -9,10 +9,13 @@
 for the most critical flows in your app. Waldo CLI is a command-line tool which
 allows you to:
 
-- Upload an iOS or Android build to Waldo for processing. Read on for full
-  details.
-- Trigger a run of of one or more test flows for your app. See [RUNS.md][runs]
-  for full details.
+- Upload an iOS or Android build to Waldo for processing. See
+  [here](https://docs.waldo.com/docs/ios-uploading-your-simulator-build-to-waldo)
+  and
+  [here](https://docs.waldo.com/docs/android-uploading-your-emulator-build-to-waldo)
+  for more details.
+- Trigger a run of of one or more test flows for your app. See
+  [here](https://docs.waldo.com/docs/ci-run) for more details.
 
 ## Installation
 
@@ -35,71 +38,13 @@ If you ever need to uninstall Waldo CLI, simply delete the executable from
 ### Windows
 
 To install Waldo CLI, simply navigate to the latest release on GitHub
-(https://github.com/waldoapp/waldo-go-cli/releases/latest) and download the
+(https://github.com/waldoapp/waldo-go-cli/releases/latest), download the
 appropriate `waldo` executable for your machine (either
-`waldo-windows-x86_64.exe` or `waldo-windows-arm64.exe`) and install it in a
+`waldo-windows-x86_64.exe` or `waldo-windows-arm64.exe`), and install it in a
 location known to `%PATH%`. You can verify that you have installed it correctly
 with the `waldo --help` command.
 
 If you ever need to uninstall Waldo CLI, simply delete the executable from that
 location.
 
-## Usage
-
-First, obtain an upload token from Waldo for your app. This is used to
-authenticate with the Waldo backend on each call.
-
-Next, generate a new build for your app. Waldo CLI recognizes the following
-file extensions:
-
-- `.app` for iOS simulator builds _only_
-- `.ipa` for iOS device builds _only_
-- `.apk` for all Android builds (emulator or device)
-
-Finally, specify the path to your new build (along with your Waldo upload
-token) on the `waldo upload` command invocation:
-
-```bash
-$ waldo upload /path/to/YourApp.app --upload_token 0123456789abcdef0123456789abcdef
-```
-
-> **Important:** Make sure you replace the fake upload token value shown above
-> with the _real_ value for your Waldo app.
-
-You can also use an environment variable to provide the upload token to Waldo
-CLI:
-
-```bash
-$ export WALDO_UPLOAD_TOKEN=0123456789abcdef0123456789abcdef
-$ waldo upload /path/to/YourApp.app
-```
-
-> **Note:** For backward compatibility, you can omit the `upload` verb from the
-> command invocation; however, we strongly recommend that you include it for
-> clarity.
-
-### Advanced Usage
-
-Whereas only the build path and upload token are _required_ to successfully
-upload your build to Waldo, there are a few other _non-required_ options
-recognized by Waldo CLI that you may find useful:
-
-- `--variant_name <value>` — This option instructs Waldo CLI to associate an
-  arbitrary string (provided by you) with your build.
-- `--verbose` — If you specify this option, Waldo CLI prints additional debug
-  information. This can shed more light on why your build is failing to upload.
-- `--git_commit <value>` and `--git_branch <value>` — If you have `git`
-  installed and you are running from the working directory of a git repository,
-  Waldo CLI attempts to “infer” the most likely commit SHA and branch name to
-  associate with your build. In most cases it works very well. However, some
-  CIs make it difficult or impossible for Waldo CLI to deduce this information.
-  In such cases, you can directly specify the git information to associate with
-  your build using these options.
-
-## Integrating Waldo CLI with Your CI
-
-See [CI_INTEGRATION.md][ci] for full details.
-
-[ci]:       https://github.com/waldoapp/waldo-go-cli/blob/master/CI_INTEGRATION.md
 [license]:  https://github.com/waldoapp/waldo-go-cli/blob/master/LICENSE
-[runs]:     https://github.com/waldoapp/waldo-go-cli/blob/master/RUNS.md
