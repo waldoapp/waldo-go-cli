@@ -7,6 +7,19 @@ This project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [2.0.4] - 2022-09-08
+
+### Fixed
+
+- Fixed issue introduced in prior change.
+
+## [2.0.3] - 2022-09-08
+
+### Changed
+
+- Enhanced `sim_appcenter_build_and_upload.sh` Bash script to allow specifying
+  extra options on the underlying `xcodebuild build` invocation.
+
 ## [2.0.2] - 2022-05-23
 
 ### Changed
@@ -58,7 +71,9 @@ This project adheres to [Semantic Versioning].
 
 Initial public release.
 
-[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/2.0.2...HEAD
+[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/2.0.4...HEAD
+[2.0.4]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.3...2.0.4
+[2.0.3]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.2...2.0.3
 [2.0.2]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.1...2.0.2
 [2.0.1]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.0...2.0.1
 [2.0.0]:        https://github.com/waldoapp/waldo-go-cli/compare/1.1.3...2.0.0
