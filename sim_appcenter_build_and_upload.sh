@@ -24,16 +24,17 @@ function cancel_appcenter_build() {
 
 function create_sim_build() {
     local _xcode_project_suffix=${SIM_XCODE_PROJECT##*.}
+    local _xcode_options=${SIM_XCODE_OPTIONS:-}
 
     if [[ $_xcode_project_suffix == "xcworkspace" ]]; then
-        xcodebuild $SIM_XCODE_OPTIONS -workspace "$SIM_XCODE_PROJECT"                  \
+        xcodebuild $_xcode_options -workspace "$SIM_XCODE_PROJECT"                  \
                    -scheme "$SIM_XCODE_SCHEME"                      \
                    -configuration "$SIM_XCODE_CONFIGURATION"        \
                    -destination 'generic/platform=iOS Simulator'    \
                    -derivedDataPath "$SIM_XCODE_DATA_PATH"          \
                    clean build
     else
-        xcodebuild $SIM_XCODE_OPTIONS -project "$SIM_XCODE_PROJECT"                    \
+        xcodebuild $_xcode_options -project "$SIM_XCODE_PROJECT"                    \
                    -scheme "$SIM_XCODE_SCHEME"                      \
                    -configuration "$SIM_XCODE_CONFIGURATION"        \
                    -destination 'generic/platform=iOS Simulator'    \
