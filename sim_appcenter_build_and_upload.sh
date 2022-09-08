@@ -26,14 +26,14 @@ function create_sim_build() {
     local _xcode_project_suffix=${SIM_XCODE_PROJECT##*.}
 
     if [[ $_xcode_project_suffix == "xcworkspace" ]]; then
-        xcodebuild -workspace "$SIM_XCODE_PROJECT"                  \
+        xcodebuild $SIM_XCODE_OPTIONS -workspace "$SIM_XCODE_PROJECT"                  \
                    -scheme "$SIM_XCODE_SCHEME"                      \
                    -configuration "$SIM_XCODE_CONFIGURATION"        \
                    -destination 'generic/platform=iOS Simulator'    \
                    -derivedDataPath "$SIM_XCODE_DATA_PATH"          \
                    clean build
     else
-        xcodebuild -project "$SIM_XCODE_PROJECT"                    \
+        xcodebuild $SIM_XCODE_OPTIONS -project "$SIM_XCODE_PROJECT"                    \
                    -scheme "$SIM_XCODE_SCHEME"                      \
                    -configuration "$SIM_XCODE_CONFIGURATION"        \
                    -destination 'generic/platform=iOS Simulator'    \
