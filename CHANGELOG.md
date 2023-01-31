@@ -7,6 +7,12 @@ This project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [2.0.5] - 2023-01-30
+
+### Added
+
+- Added support for network retry.
+
 ## [2.0.4] - 2022-09-08
 
 ### Fixed
@@ -71,7 +77,8 @@ This project adheres to [Semantic Versioning].
 
 Initial public release.
 
-[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/2.0.4...HEAD
+[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/2.0.5...HEAD
+[2.0.5]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.4...2.0.5
 [2.0.4]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.3...2.0.4
 [2.0.3]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.2...2.0.3
 [2.0.2]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.1...2.0.2

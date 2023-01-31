@@ -14,9 +14,11 @@ import (
 
 const (
 	cliName    = "Waldo CLI"
-	cliVersion = "2.0.4"
+	cliVersion = "2.0.5"
 
 	cliAssetBaseURL = "https://github.com/waldoapp/waldo-go-agent/releases"
+
+	cliMaxDownloadAttempts = 2
 )
 
 var (
@@ -108,12 +110,12 @@ func determineWorkingPath() string {
 
 func displayVersion() {
 	if cliVerbose {
-		fmt.Printf("%s %s (%s/%s)\n", cliName, cliVersion, cliPlatform, cliArch)
+		fmt.Printf("%s %s (%s/%s)\n\n", cliName, cliVersion, cliPlatform, cliArch)
 	}
 }
 
-func downloadAgent() {
-	fmt.Printf("\nDownloading latest Waldo Agent…\n\n")
+func downloadAgent(retryAllowed bool) bool {
+	fmt.Printf("Downloading latest Waldo Agent…\n\n")
 
 	client := &http.Client{}
 
@@ -127,13 +129,27 @@ func downloadAgent() {
 		resp, err = client.Do(req)
 	}
 
+	if retryAllowed && err != nil {
+		emitError(err)
+
+		return true // did not succeed but retry is allowed
+	}
+
 	if err == nil {
 		defer resp.Body.Close()
 
 		dumpResponse(resp, false)
 
 		if resp.StatusCode < 200 || resp.StatusCode > 299 {
-			fail(fmt.Errorf("Unable to download Waldo Agent, HTTP status: %s", resp.Status))
+			err = fmt.Errorf("Unable to download Waldo Agent, HTTP status: %s", resp.Status)
+
+			if retryAllowed && shouldRetry(resp) {
+				emitError(err)
+
+				return true // did not succeed but retry is allowed
+			}
+
+			fail(err)
 		}
 	}
 
@@ -151,6 +167,20 @@ func downloadAgent() {
 
 	if err != nil {
 		fail(fmt.Errorf("Unable to download Waldo Agent, error: %v, url: %s", err, cliAssetURL))
+	}
+
+	return false // don’t bother to retry
+}
+
+func downloadAgentWithRetry() {
+	for attempts := 1; attempts <= cliMaxDownloadAttempts; attempts++ {
+		retry := downloadAgent(attempts < cliMaxDownloadAttempts)
+
+		if !retry {
+			break
+		}
+
+		fmt.Printf("\nFailed download attempts: %d -- retrying…\n\n", attempts)
 	}
 }
 
@@ -174,12 +204,18 @@ func dumpResponse(resp *http.Response, body bool) {
 	}
 }
 
+func emitError(err error) {
+	fmt.Printf("\n") // flush stdout
+
+	os.Stderr.WriteString(fmt.Sprintf("waldo-cli: %v\n", err))
+}
+
 func enrichEnvironment() []string {
 	env := os.Environ()
 
 	//
-	// If _both_ wrapper overrides are already set, do _not_ replace them with
-	// the CLI name/version:
+	// If _either_ wrapper override environment variable is already set, do
+	// _not_ replace them with the CLI name/version:
 	//
 	wrapperName := os.Getenv("WALDO_WRAPPER_NAME_OVERRIDE")
 	wrapperVersion := os.Getenv("WALDO_WRAPPER_VERSION_OVERRIDE")
@@ -209,9 +245,7 @@ func execAgent() {
 }
 
 func fail(err error) {
-	fmt.Printf("\n") // flush stdout
-
-	os.Stderr.WriteString(fmt.Sprintf("waldo-cli: %v\n", err))
+	emitError(err)
 
 	os.Exit(1)
 }
@@ -230,7 +264,8 @@ func main() {
 
 	defer cleanupTarget()
 
-	downloadAgent()
+	downloadAgentWithRetry()
+
 	execAgent()
 }
 
@@ -263,4 +298,14 @@ func setEnvironVar(env *[]string, key, value string) {
 	}
 
 	*env = append(*env, key+"="+value)
+}
+
+func shouldRetry(resp *http.Response) bool {
+	switch resp.StatusCode {
+	case 408, 429, 500, 502, 503, 504:
+		return true
+
+	default:
+		return false
+	}
 }

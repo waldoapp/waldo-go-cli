@@ -80,6 +80,7 @@ function install_binary() {
 
     curl --fail             \
          --location         \
+         --retry 1          \
          --show-error       \
          --silent           \
          "${_asset_url}"    \
