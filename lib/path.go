@@ -75,17 +75,22 @@ func IsRegularFile(path string) bool {
 	return fi.Mode().IsRegular()
 }
 
+func MakeRelative(path, basePath string) string {
+	relPath, err := filepath.Rel(basePath, path)
+
+	if err != nil {
+		return path
+	}
+
+	return relPath
+}
+
 func MakeRelativeToCWD(path string) string {
 	cwd, err := os.Getwd()
 
-	if err == nil {
-		relPath, err := filepath.Rel(cwd, path)
-
-		if err == nil {
-			return relPath
-		}
-
+	if err != nil {
+		return path
 	}
 
-	return path
+	return MakeRelative(path, cwd)
 }

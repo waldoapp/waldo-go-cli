@@ -60,7 +60,7 @@ func (aa *AddAction) Perform() error {
 		return err
 	}
 
-	recipe, err := aa.makeRecipe(results)
+	recipe, err := aa.makeRecipe(cfg, results)
 
 	if err != nil {
 		return err
@@ -122,7 +122,7 @@ func (aa *AddAction) findBuildPaths(rootPath string) ([]*tool.FoundBuildPath, er
 	return results, nil
 }
 
-func (aa *AddAction) makeRecipe(items []*tool.FoundBuildPath) (*data.Recipe, error) {
+func (aa *AddAction) makeRecipe(cfg *data.Configuration, items []*tool.FoundBuildPath) (*data.Recipe, error) {
 	var (
 		item *tool.FoundBuildPath
 		err  error
@@ -139,7 +139,7 @@ func (aa *AddAction) makeRecipe(items []*tool.FoundBuildPath) (*data.Recipe, err
 		AppName:     aa.options.AppName,                    // for now…
 		Flavor:      data.BuildFlavor(aa.options.Platform), // ditto…
 		UploadToken: aa.options.UploadToken,                // ditto…
-		BasePath:    item.AbsPath}
+		BasePath:    lib.MakeRelative(item.AbsPath, cfg.BasePath())}
 
 	ios := aa.ioStreams
 	verbose := aa.options.Verbose

@@ -116,7 +116,7 @@ func fetchBranchNamesFromGitForEachRefResults(results string) []string {
 }
 
 func hasGitRepository() bool {
-	_, _, err := Run("git", "rev-parse")
+	_, _, err := NewTask("git", []string{"rev-parse"}).Run()
 
 	return err == nil
 }
@@ -140,7 +140,9 @@ func inferGitBranch(commit string) string {
 }
 
 func inferGitBranchFromForEachRef(commit string) string {
-	stdout, _, err := Run("git", "for-each-ref", fmt.Sprintf("--points-at=%s", commit), "--format=%(refname)")
+	args := []string{"for-each-ref", fmt.Sprintf("--points-at=%s", commit), "--format=%(refname)"}
+
+	stdout, _, err := NewTask("git", args).Run()
 
 	if err == nil {
 		branchNames := fetchBranchNamesFromGitForEachRefResults(stdout)
@@ -158,7 +160,9 @@ func inferGitBranchFromForEachRef(commit string) string {
 }
 
 func inferGitBranchFromNameRev(commit string) string {
-	name, _, err := Run("git", "name-rev", "--always", "--name-only", commit)
+	args := []string{"name-rev", "--always", "--name-only", commit}
+
+	name, _, err := NewTask("git", args).Run()
 
 	if err == nil {
 		return nameRevToBranchName(name)
@@ -168,7 +172,9 @@ func inferGitBranchFromNameRev(commit string) string {
 }
 
 func inferGitBranchFromRevParse() string {
-	name, _, err := Run("git", "rev-parse", "--abbrev-ref", "HEAD")
+	args := []string{"rev-parse", "--abbrev-ref", "HEAD"}
+
+	name, _, err := NewTask("git", args).Run()
 
 	if err == nil && name != "HEAD" {
 		return name
@@ -178,9 +184,9 @@ func inferGitBranchFromRevParse() string {
 }
 
 func inferGitCommit(skipCount int) string {
-	skip := fmt.Sprintf("--skip=%d", skipCount)
+	args := []string{"log", "--format=%H", fmt.Sprintf("--skip=%d", skipCount), "-1"}
 
-	hash, _, err := Run("git", "log", "--format=%H", skip, "-1")
+	hash, _, err := NewTask("git", args).Run()
 
 	if err != nil {
 		return ""

@@ -17,7 +17,7 @@ type Recipe struct {
 	AppName            string                   `yaml:"app_name"`
 	Flavor             BuildFlavor              `yaml:"platform"`
 	UploadToken        string                   `yaml:"upload_token"`
-	BasePath           string                   `yaml:"build_root"`
+	BasePath           string                   `yaml:"build_root"` // relative to Configuration.BasePath
 	BeforeBuild        *ShellScript             `yaml:"before_build,omitempty"`
 	CustomBuilder      *tool.CustomBuilder      `yaml:"custom_build,omitempty"`
 	ExpoBuilder        *tool.ExpoBuilder        `yaml:"expo_build,omitempty"`

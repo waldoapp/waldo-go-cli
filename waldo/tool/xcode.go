@@ -116,7 +116,9 @@ func (xb *XcodeBuilder) Build(basePath string, verbose bool, ios *lib.IOStreams)
 
 	args = append(args, "build")
 
-	return lib.ExecDir(basePath, "xcodebuild", args...)
+	lib.NewTaskCwd("xcodebuild", args, basePath).Execute()
+
+	return nil
 }
 
 func (xb *XcodeBuilder) Summarize() string {
@@ -305,7 +307,9 @@ func (xi *xcodeInfo) populate(basePath, fileName string) error {
 }
 
 func (xi *xcodeInfo) populateFromProject(basePath, project string) error {
-	jsonString, _, err := lib.RunDir(basePath, "xcodebuild", "-list", "-json", "-project", project)
+	args := []string{"-list", "-json", "-project", project}
+
+	jsonString, _, err := lib.NewTaskCwd("xcodebuild", args, basePath).Run()
 
 	if err == nil {
 		rawJson := lib.ParseTopLevelJsonObject([]byte(jsonString))
@@ -327,7 +331,9 @@ func (xi *xcodeInfo) populateFromProject(basePath, project string) error {
 }
 
 func (xi *xcodeInfo) populateFromWorkspace(basePath, workspace string) error {
-	jsonString, _, err := lib.RunDir(basePath, "xcodebuild", "-list", "-json", "-workspace", workspace)
+	args := []string{"-list", "-json", "-workspace", workspace}
+
+	jsonString, _, err := lib.NewTaskCwd("xcodebuild", args, basePath).Run()
 
 	if err == nil {
 		rawJson := lib.ParseTopLevelJsonObject([]byte(jsonString))

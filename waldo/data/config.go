@@ -22,8 +22,8 @@ type Configuration struct {
 	FormatVersion int       `yaml:"format_version"`
 	Recipes       []*Recipe `yaml:"recipes,omitempty"`
 
-	basePath   string
-	configPath string
+	basePath   string // absolute
+	configPath string // absolute
 }
 
 //-----------------------------------------------------------------------------

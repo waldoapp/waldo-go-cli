@@ -2,6 +2,7 @@ package waldo
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo/data"
@@ -49,7 +50,7 @@ func (ba *BuildAction) Perform() error {
 		return err
 	}
 
-	err = ba.buildRecipe(recipe)
+	err = ba.buildRecipe(cfg, recipe)
 
 	if err != nil {
 		return err
@@ -62,25 +63,27 @@ func (ba *BuildAction) Perform() error {
 
 //-----------------------------------------------------------------------------
 
-func (ba *BuildAction) buildRecipe(recipe *data.Recipe) error {
+func (ba *BuildAction) buildRecipe(cfg *data.Configuration, recipe *data.Recipe) error {
+	absBasePath := filepath.Join(cfg.BasePath(), recipe.BasePath)
+
 	switch recipe.BuildTool() {
 	case tool.BuildToolCustom:
-		return recipe.CustomBuilder.Build(recipe.BasePath, ba.options.Verbose, ba.ioStreams)
+		return recipe.CustomBuilder.Build(absBasePath, ba.options.Verbose, ba.ioStreams)
 
 	case tool.BuildToolExpo:
-		return recipe.ExpoBuilder.Build(recipe.BasePath, ba.options.Verbose, ba.ioStreams)
+		return recipe.ExpoBuilder.Build(absBasePath, ba.options.Verbose, ba.ioStreams)
 
 	case tool.BuildToolFlutter:
-		return recipe.FlutterBuilder.Build(recipe.BasePath, ba.options.Verbose, ba.ioStreams)
+		return recipe.FlutterBuilder.Build(absBasePath, ba.options.Verbose, ba.ioStreams)
 
 	case tool.BuildToolGradle:
-		return recipe.GradleBuilder.Build(recipe.BasePath, ba.options.Verbose, ba.ioStreams)
+		return recipe.GradleBuilder.Build(absBasePath, ba.options.Verbose, ba.ioStreams)
 
 	case tool.BuildToolReactNative:
-		return recipe.ReactNativeBuilder.Build(recipe.BasePath, ba.options.Verbose, ba.ioStreams)
+		return recipe.ReactNativeBuilder.Build(absBasePath, ba.options.Verbose, ba.ioStreams)
 
 	case tool.BuildToolXcode:
-		return recipe.XcodeBuilder.Build(recipe.BasePath, ba.options.Verbose, ba.ioStreams)
+		return recipe.XcodeBuilder.Build(absBasePath, ba.options.Verbose, ba.ioStreams)
 
 	default:
 		return fmt.Errorf("Don’t know how to build this app!")
