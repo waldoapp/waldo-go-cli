@@ -1,15 +1,7 @@
 package data
 
 import (
-	"github.com/waldoapp/waldo-go-cli/waldo/tool"
-)
-
-type BuildFlavor string
-
-const (
-	BuildFlavorAndroid = "Android"
-	BuildFlavorIos     = "iOS"
-	BuildFlavorUnknown = "Unknown"
+	"github.com/waldoapp/waldo-go-cli/waldo/data/tool"
 )
 
 type Recipe struct {
@@ -27,6 +19,8 @@ type Recipe struct {
 	XcodeBuilder       *tool.XcodeBuilder       `yaml:"xcode_build,omitempty"`
 	AfterBuild         *ShellScript             `yaml:"after_build,omitempty"`
 }
+
+//-----------------------------------------------------------------------------
 
 type ShellScript struct {
 	Script      string            `yaml:"script"`

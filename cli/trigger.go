@@ -26,8 +26,8 @@ func NewTriggerCommand() *cobra.Command {
 				data.Overrides()).Perform()
 		}}
 
-	cmd.Flags().StringVarP(&options.GitCommit, "git_commit", "c", "", "The originating git commit hash.")
-	cmd.Flags().StringVarP(&options.RuleName, "rule_name", "r", "", "The name of a rule.")
+	cmd.Flags().StringVar(&options.GitCommit, "git_commit", "", "The originating git commit hash.")
+	cmd.Flags().StringVar(&options.RuleName, "rule_name", "", "The name of a rule.")
 	cmd.Flags().StringVarP(&options.UploadToken, "upload_token", "u", "", "The upload token associated with your app.")
 	cmd.Flags().BoolVarP(&options.Verbose, "verbose", "v", false, "Display extra verbiage.")
 

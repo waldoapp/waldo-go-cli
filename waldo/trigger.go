@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
@@ -46,19 +47,23 @@ func NewTriggerAction(options *TriggerOptions, ioStreams *lib.IOStreams, overrid
 //-----------------------------------------------------------------------------
 
 func (ta *TriggerAction) Perform() error {
-	err := ta.validateUploadToken()
+	uploadToken, err := ta.determineUploadToken()
 
-	if err != nil {
-		return err
+	if err == nil {
+		err = ta.triggerRunWithRetry(uploadToken)
 	}
 
-	return ta.triggerRunWithRetry()
+	if err == nil {
+		ta.ioStreams.Printf("\nRun successfully triggered on Waldo!\n")
+	}
+
+	return err
 }
 
 //-----------------------------------------------------------------------------
 
-func (ta *TriggerAction) authorization() string {
-	return fmt.Sprintf("Upload-Token %s", ta.options.UploadToken)
+func (ta *TriggerAction) authorization(uploadToken string) string {
+	return fmt.Sprintf("Upload-Token %s", uploadToken)
 }
 
 func (ta *TriggerAction) checkTriggerStatus(rsp *http.Response) error {
@@ -77,6 +82,22 @@ func (ta *TriggerAction) checkTriggerStatus(rsp *http.Response) error {
 
 func (ta *TriggerAction) contentType() string {
 	return lib.JsonContentType
+}
+
+func (ta *TriggerAction) determineUploadToken() (string, error) {
+	uploadToken := ta.options.UploadToken
+
+	if len(uploadToken) == 0 {
+		uploadToken = os.Getenv("WALDO_UPLOAD_TOKEN")
+	}
+
+	err := data.ValidateUploadToken(uploadToken)
+
+	if err == nil {
+		return uploadToken, nil
+	}
+
+	return "", err
 }
 
 func (ta *TriggerAction) makePayload() string {
@@ -107,7 +128,7 @@ func (ta *TriggerAction) makeURL() string {
 	return triggerURL
 }
 
-func (ta *TriggerAction) triggerRun(retryAllowed bool) (bool, error) {
+func (ta *TriggerAction) triggerRun(uploadToken string, retryAllowed bool) (bool, error) {
 	ta.ioStreams.Printf("\nTriggering run on Waldo…\n")
 
 	url := ta.makeURL()
@@ -121,7 +142,7 @@ func (ta *TriggerAction) triggerRun(retryAllowed bool) (bool, error) {
 		return false, fmt.Errorf("Unable to trigger run on Waldo, error: %v, url: %s", err, url)
 	}
 
-	req.Header.Add("Authorization", ta.authorization())
+	req.Header.Add("Authorization", ta.authorization(uploadToken))
 	req.Header.Add("Content-Type", ta.contentType())
 	req.Header.Add("User-Agent", ta.userAgent())
 
@@ -144,9 +165,9 @@ func (ta *TriggerAction) triggerRun(retryAllowed bool) (bool, error) {
 	return retryAllowed && lib.ShouldRetry(rsp), ta.checkTriggerStatus(rsp)
 }
 
-func (ta *TriggerAction) triggerRunWithRetry() error {
+func (ta *TriggerAction) triggerRunWithRetry(uploadToken string) error {
 	for attempts := 1; attempts <= data.MaxPostAttempts; attempts++ {
-		retry, err := ta.triggerRun(attempts < data.MaxPostAttempts)
+		retry, err := ta.triggerRun(uploadToken, attempts < data.MaxPostAttempts)
 
 		if !retry || err == nil {
 			return err
@@ -175,12 +196,4 @@ func (ta *TriggerAction) userAgent() string {
 	}
 
 	return fmt.Sprintf("Waldo %s v%s", ci, version)
-}
-
-func (ta *TriggerAction) validateUploadToken() error {
-	if len(ta.options.UploadToken) == 0 {
-		return errors.New("Empty upload token")
-	}
-
-	return nil
 }

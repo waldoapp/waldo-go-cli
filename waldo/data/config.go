@@ -13,12 +13,13 @@ import (
 )
 
 const (
-	formatVersion = 1
+	cfgFormatVersion = 1
 )
 
 //-----------------------------------------------------------------------------
 
 type Configuration struct {
+	UniqueID      string    `yaml:"unique_id"`
 	FormatVersion int       `yaml:"format_version"`
 	Recipes       []*Recipe `yaml:"recipes,omitempty"`
 
@@ -77,9 +78,11 @@ func SetupConfiguration(create bool) (*Configuration, bool, error) {
 			return nil, false, err
 		}
 
-		cfg.FormatVersion = formatVersion
+		err = cfg.populate()
 
-		err = cfg.Save()
+		if err == nil {
+			err = cfg.Save()
+		}
 
 		if err != nil {
 			return nil, false, err
@@ -118,6 +121,21 @@ func (cfg *Configuration) BasePath() string {
 }
 
 func (cfg *Configuration) FindRecipe(name string) (*Recipe, error) {
+	if len(name) == 0 {
+		cnt := len(cfg.Recipes)
+
+		switch {
+		case cnt == 1:
+			return cfg.Recipes[0], nil
+
+		case cnt > 1:
+			return nil, errors.New("Empty recipe name")
+
+		default:
+			return nil, errors.New("No recipes defined")
+		}
+	}
+
 	idx := cfg.findRecipeIndex(name)
 
 	if idx >= len(cfg.Recipes) {
@@ -184,17 +202,45 @@ func (cfg *Configuration) load() error {
 }
 
 func (cfg *Configuration) migrate() (bool, error) {
-	if cfg.FormatVersion < formatVersion {
-		// handle any necessary migration here
+	saveNeeded := false
 
-		cfg.FormatVersion = formatVersion
+	//
+	// Ensure there is ALWAYS a unique ID associated with this configuration:
+	//
+	if len(cfg.UniqueID) == 0 {
+		uniqueID, err := lib.NewUniqueID()
 
-		return true, nil
+		if err != nil {
+			return false, err
+		}
+
+		cfg.UniqueID = uniqueID
+
+		saveNeeded = true
 	}
 
-	if cfg.FormatVersion > formatVersion {
+	if cfg.FormatVersion < cfgFormatVersion {
+		// handle any necessary migration here
+
+		cfg.FormatVersion = cfgFormatVersion
+
+		saveNeeded = true
+	} else if cfg.FormatVersion > cfgFormatVersion {
 		// may not understand newer format
 	}
 
-	return false, nil
+	return saveNeeded, nil
+}
+
+func (cfg *Configuration) populate() error {
+	uniqueID, err := lib.NewUniqueID()
+
+	if err != nil {
+		return err
+	}
+
+	cfg.UniqueID = uniqueID
+	cfg.FormatVersion = cfgFormatVersion
+
+	return nil
 }

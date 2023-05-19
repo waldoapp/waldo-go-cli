@@ -6,10 +6,11 @@ import (
 
 	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo/data"
-	"github.com/waldoapp/waldo-go-cli/waldo/tool"
+	"github.com/waldoapp/waldo-go-cli/waldo/data/tool"
 )
 
 type BuildOptions struct {
+	Clean      bool
 	RecipeName string
 	Verbose    bool
 }
@@ -38,54 +39,78 @@ func NewBuildAction(options *BuildOptions, ioStreams *lib.IOStreams, overrides m
 //-----------------------------------------------------------------------------
 
 func (ba *BuildAction) Perform() error {
-	cfg, _, err := data.SetupConfiguration(false)
+	var (
+		cfg    *data.Configuration
+		recipe *data.Recipe
+		err    error
+	)
 
-	if err != nil {
-		return err
+	if len(ba.options.RecipeName) > 0 {
+		err = data.ValidateRecipeName(ba.options.RecipeName)
 	}
 
-	recipe, err := cfg.FindRecipe(ba.options.RecipeName)
-
-	if err != nil {
-		return err
+	if err == nil {
+		cfg, _, err = data.SetupConfiguration(false)
 	}
 
-	err = ba.buildRecipe(cfg, recipe)
-
-	if err != nil {
-		return err
+	if err == nil {
+		recipe, err = cfg.FindRecipe(ba.options.RecipeName)
 	}
 
-	ba.ioStreams.Printf("\nBuilt recipe %q from Waldo configuration\n", recipe.Name)
+	if err == nil {
+		err = ba.buildRecipe(cfg, recipe)
+	}
 
-	return nil
+	if err == nil {
+		ba.ioStreams.Printf("\nRecipe %q successfully built!\n", recipe.Name)
+	}
+
+	return err
 }
 
 //-----------------------------------------------------------------------------
 
-func (ba *BuildAction) buildRecipe(cfg *data.Configuration, recipe *data.Recipe) error {
-	absBasePath := filepath.Join(cfg.BasePath(), recipe.BasePath)
+func (ba *BuildAction) buildRecipe(cfg *data.Configuration, r *data.Recipe) error {
+	ba.ioStreams.Printf("\nBuilding recipe %q…\n", r.Name)
 
-	switch recipe.BuildTool() {
-	case tool.BuildToolCustom:
-		return recipe.CustomBuilder.Build(absBasePath, ba.options.Verbose, ba.ioStreams)
+	var (
+		am  *tool.ArtifactMetadata
+		ud  *data.UserData
+		err error
+	)
 
-	case tool.BuildToolExpo:
-		return recipe.ExpoBuilder.Build(absBasePath, ba.options.Verbose, ba.ioStreams)
+	ud, err = data.SetupUserData(cfg)
 
-	case tool.BuildToolFlutter:
-		return recipe.FlutterBuilder.Build(absBasePath, ba.options.Verbose, ba.ioStreams)
+	if err == nil {
+		absBasePath := filepath.Join(cfg.BasePath(), r.BasePath)
 
-	case tool.BuildToolGradle:
-		return recipe.GradleBuilder.Build(absBasePath, ba.options.Verbose, ba.ioStreams)
+		switch r.BuildTool() {
+		case tool.BuildToolCustom:
+			am, err = r.CustomBuilder.Build(absBasePath, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
 
-	case tool.BuildToolReactNative:
-		return recipe.ReactNativeBuilder.Build(absBasePath, ba.options.Verbose, ba.ioStreams)
+		case tool.BuildToolExpo:
+			am, err = r.ExpoBuilder.Build(absBasePath, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
 
-	case tool.BuildToolXcode:
-		return recipe.XcodeBuilder.Build(absBasePath, ba.options.Verbose, ba.ioStreams)
+		case tool.BuildToolFlutter:
+			am, err = r.FlutterBuilder.Build(absBasePath, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
 
-	default:
-		return fmt.Errorf("Don’t know how to build this app!")
+		case tool.BuildToolGradle:
+			am, err = r.GradleBuilder.Build(absBasePath, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
+
+		case tool.BuildToolReactNative:
+			am, err = r.ReactNativeBuilder.Build(absBasePath, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
+
+		case tool.BuildToolXcode:
+			am, err = r.XcodeBuilder.Build(absBasePath, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
+
+		default:
+			err = fmt.Errorf("Don’t know how to build this app!")
+		}
 	}
+
+	if err == nil {
+		err = ud.AddMetadata(r, am)
+	}
+
+	return err
 }

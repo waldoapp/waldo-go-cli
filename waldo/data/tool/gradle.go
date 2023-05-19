@@ -22,8 +22,8 @@ func IsPossibleGradleContainer(path string) bool {
 	return false
 }
 
-func MakeGradleBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*GradleBuilder, error) {
-	return nil, errors.New("Don’t know how to make a Gradle recipe")
+func MakeGradleBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*GradleBuilder, string, string, error) {
+	return nil, "", "", errors.New("Don’t know how to make a Gradle recipe")
 }
 
 func NewGradleBuilder(module, variant string) *GradleBuilder {
@@ -34,8 +34,8 @@ func NewGradleBuilder(module, variant string) *GradleBuilder {
 
 //-----------------------------------------------------------------------------
 
-func (gb *GradleBuilder) Build(basePath string, verbose bool, ios *lib.IOStreams) error {
-	return fmt.Errorf("Don’t know how to build this app with Gradle!")
+func (gb *GradleBuilder) Build(basePath string, clean, verbose bool, ios *lib.IOStreams) (*ArtifactMetadata, error) {
+	return nil, fmt.Errorf("Don’t know how to build this app with Gradle!")
 }
 
 func (gb *GradleBuilder) Summarize() string {

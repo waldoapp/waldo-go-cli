@@ -1,7 +1,7 @@
 package waldo
 
 import (
-	"errors"
+	"path/filepath"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo/data"
@@ -41,15 +41,9 @@ func (la *ListAction) Perform() error {
 		return err
 	}
 
-	recipes := cfg.Recipes
+	la.ioStreams.Printf("%-16.16s  %-8.8s  %-24.24s  %s\n", "RECIPE NAME", "PLATFORM", "APP NAME", "BUILD TOOL")
 
-	if len(recipes) == 0 {
-		return errors.New("No recipes defined")
-	}
-
-	lf := la.options.LongFormat
-
-	for _, recipe := range recipes {
+	for _, recipe := range cfg.Recipes {
 		if len(recipe.Name) == 0 {
 			continue
 		}
@@ -68,25 +62,26 @@ func (la *ListAction) Perform() error {
 
 		tool := recipe.BuildTool().String()
 
-		la.ioStreams.Printf("  %-16.16s  %-7.7s  %-24.24s  %s\n", recipe.Name, flavor, appName, tool)
+		la.ioStreams.Printf("%-16.16s  %-8.8s  %-24.24s  %s\n", recipe.Name, flavor, appName, tool)
 
-		if lf {
-			path := recipe.BasePath
+		if la.options.LongFormat {
+			absPath := filepath.Join(cfg.BasePath(), recipe.BasePath)
+			relPath := lib.MakeRelativeToCWD(absPath)
 
-			if len(path) > 0 {
-				la.ioStreams.Printf("  %-16.16s  %s\n", "", path)
-			}
-
-			summary := recipe.Summarize()
-
-			if len(summary) > 0 {
-				la.ioStreams.Printf("  %-16.16s  %s\n", "", summary)
+			if len(relPath) > 0 {
+				la.ioStreams.Printf("%-16.16s  build root: %s\n", "", relPath)
 			}
 
 			token := recipe.UploadToken
 
 			if len(token) > 0 {
-				la.ioStreams.Printf("  %-16.16s  %s\n", "", token)
+				la.ioStreams.Printf("%-16.16s  upload token: %s\n", "", token)
+			}
+
+			summary := recipe.Summarize()
+
+			if len(summary) > 0 {
+				la.ioStreams.Printf("%-16.16s  %s\n", "", summary)
 			}
 		}
 	}

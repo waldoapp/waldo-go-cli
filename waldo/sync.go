@@ -5,6 +5,13 @@ import (
 )
 
 type SyncOptions struct {
+	Clean       bool
+	GitBranch   string
+	GitCommit   string
+	RecipeName  string
+	UploadToken string
+	VariantName string
+	Verbose     bool
 }
 
 type SyncAction struct {

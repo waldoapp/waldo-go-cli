@@ -8,57 +8,38 @@ import (
 )
 
 type Task struct {
-	Name string
-	Args []string
-	Env  map[string]string
-	Cwd  string
+	Name      string
+	Args      []string
+	Env       map[string]string
+	Cwd       string
+	IOStreams *IOStreams
 }
 
 //-----------------------------------------------------------------------------
 
-func NewTask(name string, args []string) *Task {
+func NewTask(name string, args ...string) *Task {
 	return &Task{
-		Name: name,
-		Args: args}
-}
-
-func NewTaskCwd(name string, args []string, cwd string) *Task {
-	return &Task{
-		Name: name,
-		Args: args,
-		Cwd:  cwd}
-}
-
-func NewTaskEnv(name string, args []string, env map[string]string) *Task {
-	return &Task{
-		Name: name,
-		Args: args,
-		Env:  env}
-}
-
-func NewTaskEnvCwd(name string, args []string, env map[string]string, cwd string) *Task {
-	return &Task{
-		Name: name,
-		Args: args,
-		Env:  env,
-		Cwd:  cwd}
+		Name:      name,
+		Args:      args,
+		IOStreams: NewIOStreams(os.Stdin, os.Stdout, os.Stderr)}
 }
 
 //-----------------------------------------------------------------------------
 
-func (t *Task) Execute() {
+// if ee, ok := err.(*exec.ExitError); ok {
+// 	os.Exit(ee.ExitCode())
+// }
+
+func (t *Task) Execute() error {
 	cmd := exec.Command(t.Name, t.Args...)
 
 	cmd.Dir = t.Cwd
 	cmd.Env = t.convertEnv()
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
+	cmd.Stderr = t.IOStreams.errWriter
+	cmd.Stdin = t.IOStreams.inReader
+	cmd.Stdout = t.IOStreams.outWriter
 
-	err := cmd.Run()
-
-	if ee, ok := err.(*exec.ExitError); ok {
-		os.Exit(ee.ExitCode())
-	}
+	return cmd.Run()
 }
 
 func (t *Task) Run() (string, string, error) {
@@ -72,6 +53,7 @@ func (t *Task) Run() (string, string, error) {
 	cmd.Dir = t.Cwd
 	cmd.Env = t.convertEnv()
 	cmd.Stderr = &stderrBuffer
+	cmd.Stdin = t.IOStreams.inReader
 	cmd.Stdout = &stdoutBuffer
 
 	err := cmd.Run()

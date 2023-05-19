@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func FileExists(path string) bool {
@@ -29,6 +30,16 @@ func FindDirectoryPathsMatching(pattern string) []string {
 	}
 
 	return result
+}
+
+func GetModificationTimeUTC(path string) time.Time {
+	fi, err := os.Stat(path)
+
+	if err != nil {
+		return time.Time{}
+	}
+
+	return fi.ModTime().UTC()
 }
 
 func HasDirectoryMatching(pattern string) bool {

@@ -20,8 +20,8 @@ func IsPossibleReactNativeContainer(path string) bool {
 	return false
 }
 
-func MakeReactNativeBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*ReactNativeBuilder, error) {
-	return nil, errors.New("Don’t know how to make a React Native recipe")
+func MakeReactNativeBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*ReactNativeBuilder, string, string, error) {
+	return nil, "", "", errors.New("Don’t know how to make a React Native recipe")
 }
 
 func NewReactNativeBuilder() *ReactNativeBuilder {
@@ -30,8 +30,8 @@ func NewReactNativeBuilder() *ReactNativeBuilder {
 
 //-----------------------------------------------------------------------------
 
-func (rnb *ReactNativeBuilder) Build(basePath string, verbose bool, ios *lib.IOStreams) error {
-	return fmt.Errorf("Don’t know how to build this app with React Native!")
+func (rnb *ReactNativeBuilder) Build(basePath string, clean, verbose bool, ios *lib.IOStreams) (*ArtifactMetadata, error) {
+	return nil, fmt.Errorf("Don’t know how to build this app with React Native!")
 }
 
 func (rnb *ReactNativeBuilder) Summarize() string {
