@@ -6,6 +6,7 @@ import (
 
 const (
 	AgentName    = "Waldo CLI"
+	AgentNameOld = "Waldo Agent"
 	AgentPrefix  = "waldo"
 	AgentVersion = "3.0.0"
 

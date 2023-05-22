@@ -101,17 +101,29 @@ func (ta *TriggerAction) determineUploadToken() (string, error) {
 }
 
 func (ta *TriggerAction) makePayload() string {
-	payload := ""
+	var (
+		payload        string
+		wrapperName    string
+		wrapperVersion string
+	)
 
-	lib.AppendIfNotEmpty(&payload, "agentName", data.AgentName)
+	if len(ta.wrapperName) > 0 || len(ta.wrapperVersion) > 0 {
+		wrapperName = ta.wrapperName
+		wrapperVersion = ta.wrapperVersion
+	} else {
+		wrapperName = data.AgentName
+		wrapperVersion = data.AgentVersion
+	}
+
+	lib.AppendIfNotEmpty(&payload, "agentName", data.AgentNameOld) // for now…
 	lib.AppendIfNotEmpty(&payload, "agentVersion", data.AgentVersion)
 	lib.AppendIfNotEmpty(&payload, "arch", ta.runtimeInfo.Arch)
 	lib.AppendIfNotEmpty(&payload, "ci", ta.ciInfo.Provider.String())
 	lib.AppendIfNotEmpty(&payload, "gitSha", ta.options.GitCommit)
 	lib.AppendIfNotEmpty(&payload, "platform", ta.runtimeInfo.Platform)
 	lib.AppendIfNotEmpty(&payload, "ruleName", ta.options.RuleName)
-	lib.AppendIfNotEmpty(&payload, "wrapperName", ta.wrapperName)
-	lib.AppendIfNotEmpty(&payload, "wrapperVersion", ta.wrapperVersion)
+	lib.AppendIfNotEmpty(&payload, "wrapperName", wrapperName)
+	lib.AppendIfNotEmpty(&payload, "wrapperVersion", wrapperVersion)
 
 	payload = "{" + payload + "}"
 

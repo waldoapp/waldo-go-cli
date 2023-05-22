@@ -314,6 +314,11 @@ func (ua *UploadAction) makeBuildPayloadPath(workingPath, buildPath string, flav
 }
 
 func (ua *UploadAction) makeBuildURL(flavor data.BuildFlavor) string {
+	var (
+		wrapperName    string
+		wrapperVersion string
+	)
+
 	buildURL := ua.apiBuildEndpoint
 
 	if len(buildURL) == 0 {
@@ -322,7 +327,15 @@ func (ua *UploadAction) makeBuildURL(flavor data.BuildFlavor) string {
 
 	query := make(url.Values)
 
-	lib.AddIfNotEmpty(&query, "agentName", data.AgentName)
+	if len(ua.wrapperName) > 0 || len(ua.wrapperVersion) > 0 {
+		wrapperName = ua.wrapperName
+		wrapperVersion = ua.wrapperVersion
+	} else {
+		wrapperName = data.AgentName
+		wrapperVersion = data.AgentVersion
+	}
+
+	lib.AddIfNotEmpty(&query, "agentName", data.AgentNameOld) // for now…
 	lib.AddIfNotEmpty(&query, "agentVersion", data.AgentVersion)
 	lib.AddIfNotEmpty(&query, "arch", ua.runtimeInfo.Arch)
 	lib.AddIfNotEmpty(&query, "ci", ua.ciInfo.Provider.String())
@@ -336,8 +349,8 @@ func (ua *UploadAction) makeBuildURL(flavor data.BuildFlavor) string {
 	lib.AddIfNotEmpty(&query, "userGitBranch", ua.options.GitBranch)
 	lib.AddIfNotEmpty(&query, "userGitCommit", ua.options.GitCommit)
 	lib.AddIfNotEmpty(&query, "variantName", ua.options.VariantName)
-	lib.AddIfNotEmpty(&query, "wrapperName", ua.wrapperName)
-	lib.AddIfNotEmpty(&query, "wrapperVersion", ua.wrapperVersion)
+	lib.AddIfNotEmpty(&query, "wrapperName", wrapperName)
+	lib.AddIfNotEmpty(&query, "wrapperVersion", wrapperVersion)
 
 	buildURL += "?" + query.Encode()
 
@@ -345,9 +358,21 @@ func (ua *UploadAction) makeBuildURL(flavor data.BuildFlavor) string {
 }
 
 func (ua *UploadAction) makeErrorPayload(err error) string {
-	payload := ""
+	var (
+		payload        string
+		wrapperName    string
+		wrapperVersion string
+	)
 
-	lib.AppendIfNotEmpty(&payload, "agentName", data.AgentName)
+	if len(ua.wrapperName) > 0 || len(ua.wrapperVersion) > 0 {
+		wrapperName = ua.wrapperName
+		wrapperVersion = ua.wrapperVersion
+	} else {
+		wrapperName = data.AgentName
+		wrapperVersion = data.AgentVersion
+	}
+
+	lib.AppendIfNotEmpty(&payload, "agentName", data.AgentNameOld) // for now…
 	lib.AppendIfNotEmpty(&payload, "agentVersion", data.AgentVersion)
 	lib.AppendIfNotEmpty(&payload, "arch", ua.runtimeInfo.Arch)
 	lib.AppendIfNotEmpty(&payload, "ci", ua.ciInfo.Provider.String())
@@ -355,8 +380,8 @@ func (ua *UploadAction) makeErrorPayload(err error) string {
 	lib.AppendIfNotEmpty(&payload, "ciGitCommit", ua.ciInfo.GitCommit)
 	lib.AppendIfNotEmpty(&payload, "message", err.Error())
 	lib.AppendIfNotEmpty(&payload, "platform", ua.runtimeInfo.Platform)
-	lib.AppendIfNotEmpty(&payload, "wrapperName", ua.wrapperName)
-	lib.AppendIfNotEmpty(&payload, "wrapperVersion", ua.wrapperVersion)
+	lib.AppendIfNotEmpty(&payload, "wrapperName", wrapperName)
+	lib.AppendIfNotEmpty(&payload, "wrapperVersion", wrapperVersion)
 
 	payload = "{" + payload + "}"
 
