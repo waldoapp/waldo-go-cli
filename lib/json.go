@@ -17,6 +17,14 @@ func AppendIfNotEmpty(payload *string, key, value string) {
 	*payload += fmt.Sprintf(`"%s":"%s"`, key, value)
 }
 
+func DecodeFromJSON(in []byte, out any) error {
+	return json.Unmarshal(in, out)
+}
+
+func EncodeToJSON(in any) ([]byte, error) {
+	return json.Marshal(in)
+}
+
 func FormatTopLevelJsonArray(rawJson []any) []byte {
 	data, err := json.Marshal(rawJson)
 

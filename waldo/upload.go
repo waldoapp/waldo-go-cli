@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo/data"
@@ -58,7 +59,7 @@ func NewUploadAction(options *UploadOptions, ioStreams *lib.IOStreams, overrides
 
 func (ua *UploadAction) Perform() error {
 	var (
-		// am               *tool.ArtifactMetadata
+		am               *tool.ArtifactMetadata
 		flavor           data.BuildFlavor
 		ud               *data.UserData
 		recipe           *data.Recipe
@@ -93,6 +94,17 @@ func (ua *UploadAction) Perform() error {
 
 	if err == nil {
 		err = ua.uploadBuildWithRetry(uploadToken, buildPayloadPath, flavor)
+	}
+
+	if err == nil && ud != nil && recipe != nil {
+		am, _ = ud.FindMetadata(recipe)
+
+		if am != nil {
+			am.UploadTime = time.Now().UTC()
+			am.UploadToken = uploadToken
+
+			_ = ud.Save() // don’t care if save fails
+		}
 	}
 
 	if err == nil {
@@ -264,7 +276,7 @@ func (ua *UploadAction) determineUploadToken(recipe *data.Recipe) (string, error
 func (ua *UploadAction) displaySummary(uploadToken, buildPath, buildPayloadPath string) {
 	ua.ioStreams.Printf("\n")
 
-	ua.summarize("Recipe name/build path:", buildPath)
+	ua.summarize("Build path:", buildPath)
 	ua.summarize("Git branch:", ua.options.GitBranch)
 	ua.summarize("Git commit:", ua.options.GitCommit)
 	ua.summarizeSecure("Upload token:", uploadToken)
@@ -379,15 +391,15 @@ func (ua *UploadAction) prepareWorkingPath() (string, error) {
 
 func (ua *UploadAction) summarize(label, value string) {
 	if len(value) > 0 {
-		ua.ioStreams.Printf("%-24.24s %q\n", label, value)
+		ua.ioStreams.Printf("%-20.20s %q\n", label, value)
 	} else {
-		ua.ioStreams.Printf("%-24.24s (none)\n", label)
+		ua.ioStreams.Printf("%-20.20s (none)\n", label)
 	}
 }
 
 func (ua *UploadAction) summarizeSecure(label, value string) {
 	if len(value) == 0 {
-		ua.ioStreams.Printf("%-24.24s (none)\n", label)
+		ua.ioStreams.Printf("%-20.20s (none)\n", label)
 	} else if !ua.options.Verbose {
 		prefixLen := len(value)
 
@@ -401,9 +413,9 @@ func (ua *UploadAction) summarizeSecure(label, value string) {
 
 		value = prefix + secure[0:suffixLen]
 
-		ua.ioStreams.Printf("%-24.24s %q\n", label, value)
+		ua.ioStreams.Printf("%-20.20s %q\n", label, value)
 	} else {
-		ua.ioStreams.Printf("%-24.24s %q\n", label, value)
+		ua.ioStreams.Printf("%-20.20s %q\n", label, value)
 	}
 }
 

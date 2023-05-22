@@ -8,8 +8,7 @@ import (
 	"strings"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
-
-	"gopkg.in/yaml.v3"
+	"github.com/waldoapp/waldo-go-cli/lib/tpw"
 )
 
 const (
@@ -170,7 +169,7 @@ func (cfg *Configuration) RemoveRecipe(name string) error {
 }
 
 func (cfg *Configuration) Save() error {
-	data, err := yaml.Marshal(cfg)
+	data, err := tpw.EncodeToYAML(cfg)
 
 	if err != nil {
 		return nil
@@ -180,6 +179,25 @@ func (cfg *Configuration) Save() error {
 }
 
 //-----------------------------------------------------------------------------
+
+func (cfg *Configuration) ensureUniqueID() (bool, error) {
+	//
+	// Ensure there is ALWAYS a unique ID associated with this configuration:
+	//
+	if len(cfg.UniqueID) == 0 {
+		uniqueID, err := tpw.NewUniqueID()
+
+		if err != nil {
+			return false, err
+		}
+
+		cfg.UniqueID = uniqueID
+
+		return true, nil // save is needed
+	}
+
+	return false, nil
+}
 
 func (cfg *Configuration) findRecipeIndex(name string) int {
 	for idx, recipe := range cfg.Recipes {
@@ -195,28 +213,17 @@ func (cfg *Configuration) load() error {
 	data, err := os.ReadFile(cfg.configPath)
 
 	if err == nil {
-		err = yaml.Unmarshal(data, cfg)
+		err = tpw.DecodeFromYAML(data, cfg)
 	}
 
 	return err
 }
 
 func (cfg *Configuration) migrate() (bool, error) {
-	saveNeeded := false
+	saveNeeded, err := cfg.ensureUniqueID()
 
-	//
-	// Ensure there is ALWAYS a unique ID associated with this configuration:
-	//
-	if len(cfg.UniqueID) == 0 {
-		uniqueID, err := lib.NewUniqueID()
-
-		if err != nil {
-			return false, err
-		}
-
-		cfg.UniqueID = uniqueID
-
-		saveNeeded = true
+	if err != nil {
+		return false, err
 	}
 
 	if cfg.FormatVersion < cfgFormatVersion {
@@ -233,14 +240,9 @@ func (cfg *Configuration) migrate() (bool, error) {
 }
 
 func (cfg *Configuration) populate() error {
-	uniqueID, err := lib.NewUniqueID()
-
-	if err != nil {
-		return err
-	}
-
-	cfg.UniqueID = uniqueID
 	cfg.FormatVersion = cfgFormatVersion
 
-	return nil
+	_, err := cfg.ensureUniqueID()
+
+	return err
 }

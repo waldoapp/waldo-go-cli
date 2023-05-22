@@ -1,4 +1,4 @@
-package lib
+package tpw
 
 import (
 	"encoding/hex"

@@ -7,6 +7,29 @@ This project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [3.0.0-beta.0] - 2023-05-22
+
+Initial public beta release.
+
+### Added
+
+- Added new verbs:
+  - `add` — Add a recipe describing how to build and upload a specific variant of the app.
+  - `build` — Build app from recipe.
+  - `init` — Create an empty Waldo configuration.
+  - `list` — List defined recipes.
+  - `remove` — Remove a recipe.
+  - `sync` — Shorthand for `waldo build` followed by `waldo upload`.
+  - `version` — Display version information.
+
+### Changed
+
+- Enhanced `upload` verb to interoperate with `build`.
+
+### Removed
+
+- Removed support for omitting the `upload` verb.
+
 ## [2.0.5] - 2023-01-30
 
 ### Added
@@ -77,7 +100,8 @@ This project adheres to [Semantic Versioning].
 
 Initial public release.
 
-[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/2.0.5...HEAD
+[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/3.0.0-beta.0...HEAD
+[3.0.0-beta.0]: https://github.com/waldoapp/waldo-go-cli/compare/2.0.5...3.0.0-beta.0
 [2.0.5]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.4...2.0.5
 [2.0.4]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.3...2.0.4
 [2.0.3]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.2...2.0.3

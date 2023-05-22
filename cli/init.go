@@ -13,7 +13,7 @@ func NewInitCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "init",
-		Short: "Initialize Waldo.",
+		Short: "Create an empty Waldo configuration.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
