@@ -108,7 +108,7 @@ func (ua *UploadAction) Perform() error {
 	}
 
 	if err == nil {
-		ua.ioStreams.Printf("\nBuild %q successfully uploaded to Waldo!\n", filepath.Base(ua.options.Target))
+		ua.ioStreams.Printf("\nBuild %q successfully uploaded to Waldo!\n", filepath.Base(buildPath))
 	} else {
 		ua.uploadErrorWithRetry(err, uploadToken, flavor)
 	}
