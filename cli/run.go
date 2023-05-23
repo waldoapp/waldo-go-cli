@@ -11,7 +11,7 @@ func NewRunCommand() *cobra.Command {
 	options := &waldo.RunOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "run",
+		Use:   "run [options]",
 		Short: "Execute one or more locally-defined scripts against an uploaded build.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return waldo.NewRunAction(
@@ -22,6 +22,15 @@ func NewRunCommand() *cobra.Command {
 	cmd.Flags().BoolVarP(&options.Interactive, "interactive", "i", false, "Run interactively.")
 	cmd.Flags().BoolVarP(&options.Preview, "preview", "p", false, "")
 	cmd.Flags().BoolVarP(&options.Verbose, "verbose", "v", false, "Display extra verbiage.")
+
+	cmd.SetUsageTemplate(`
+USAGE: waldo run [options]
+
+OPTIONS:
+  -i, --interactive   Run interactively.
+  -p, --preview
+  -v, --verbose       Display extra verbiage.
+`)
 
 	return cmd
 }

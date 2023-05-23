@@ -21,6 +21,7 @@ type UserData struct {
 	MetadataMap   map[string]*tool.ArtifactMetadata `json:"metadata"` // key is <recipe-name>
 
 	basePath string // absolute
+	dirty    bool
 	userPath string // absolute
 }
 
@@ -42,13 +43,11 @@ func SetupUserData(cfg *Configuration) (*UserData, error) {
 	if lib.IsRegularFile(ud.userPath) {
 		err = ud.load()
 
-		saveNeeded := false
-
 		if err == nil {
-			saveNeeded, err = ud.migrate()
+			err = ud.migrate()
 		}
 
-		if err == nil && saveNeeded {
+		if err == nil {
 			err = ud.Save()
 		}
 
@@ -68,6 +67,8 @@ func SetupUserData(cfg *Configuration) (*UserData, error) {
 	ud.FormatVersion = udFormatVersion
 	ud.MetadataMap = make(map[string]*tool.ArtifactMetadata)
 
+	ud.MarkDirty()
+
 	err = ud.Save()
 
 	if err != nil {
@@ -86,11 +87,9 @@ func (ud *UserData) AddMetadata(r *Recipe, am *tool.ArtifactMetadata) error {
 
 	ud.MetadataMap[r.Name] = am
 
-	if err := ud.Save(); err != nil {
-		return err
-	}
+	ud.MarkDirty()
 
-	return nil
+	return ud.Save()
 }
 
 func (ud *UserData) BasePath() string {
@@ -107,6 +106,14 @@ func (ud *UserData) FindMetadata(r *Recipe) (*tool.ArtifactMetadata, error) {
 	return nil, fmt.Errorf("Unable to find metadata for recipe: %q", r.Name)
 }
 
+func (ud *UserData) IsDirty() bool {
+	return ud.dirty
+}
+
+func (ud *UserData) MarkDirty() {
+	ud.dirty = true
+}
+
 func (ud *UserData) Path() string {
 	return ud.userPath
 }
@@ -114,21 +121,27 @@ func (ud *UserData) Path() string {
 func (ud *UserData) RemoveMetadata(r *Recipe) error {
 	delete(ud.MetadataMap, r.Name)
 
-	if err := ud.Save(); err != nil {
-		return err
-	}
+	ud.MarkDirty()
 
-	return nil
+	return ud.Save()
 }
 
 func (ud *UserData) Save() error {
-	data, err := json.Marshal(ud)
-
-	if err != nil {
+	if !ud.IsDirty() {
 		return nil
 	}
 
-	return os.WriteFile(ud.userPath, data, 0600)
+	data, err := json.Marshal(ud)
+
+	if err == nil {
+		err = os.WriteFile(ud.userPath, data, 0600)
+	}
+
+	if err == nil {
+		ud.dirty = false
+	}
+
+	return err
 }
 
 //-----------------------------------------------------------------------------
@@ -143,15 +156,13 @@ func (ud *UserData) load() error {
 	return err
 }
 
-func (ud *UserData) migrate() (bool, error) {
-	saveNeeded := false
-
+func (ud *UserData) migrate() error {
 	if ud.FormatVersion < udFormatVersion {
 		// handle any necessary migration here
 
 		ud.FormatVersion = udFormatVersion
 
-		saveNeeded = true
+		ud.MarkDirty()
 	} else if ud.FormatVersion > udFormatVersion {
 		// may not understand newer format
 	}
@@ -159,8 +170,8 @@ func (ud *UserData) migrate() (bool, error) {
 	if ud.MetadataMap == nil {
 		ud.MetadataMap = make(map[string]*tool.ArtifactMetadata)
 
-		saveNeeded = true // ???
+		ud.MarkDirty()
 	}
 
-	return saveNeeded, nil
+	return nil
 }

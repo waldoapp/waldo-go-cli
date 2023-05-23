@@ -12,7 +12,7 @@ func NewListCommand() *cobra.Command {
 	options := &waldo.ListOptions{}
 
 	cmd := &cobra.Command{
-		Use:     "list",
+		Use:     "list [options]",
 		Short:   "List defined recipes.",
 		Aliases: []string{"ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -28,6 +28,13 @@ func NewListCommand() *cobra.Command {
 		}}
 
 	cmd.Flags().BoolVarP(&options.LongFormat, "long", "l", false, "List recipes in long format.")
+
+	cmd.SetUsageTemplate(`
+USAGE: waldo list [options]
+
+OPTIONS:
+  -l, --long   List recipes in long format.
+`)
 
 	return cmd
 }

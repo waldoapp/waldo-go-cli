@@ -12,7 +12,7 @@ func NewVersionCommand() *cobra.Command {
 	options := &waldo.VersionOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "version",
+		Use:   "version [options]",
 		Short: "Display version information.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ioStreams := lib.NewIOStreams(
@@ -25,6 +25,10 @@ func NewVersionCommand() *cobra.Command {
 				ioStreams,
 				data.Overrides()).Perform()
 		}}
+
+	cmd.SetUsageTemplate(`
+USAGE: waldo version
+`)
 
 	return cmd
 }

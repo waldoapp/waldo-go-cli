@@ -103,7 +103,9 @@ func (ua *UploadAction) Perform() error {
 			am.UploadTime = time.Now().UTC()
 			am.UploadToken = uploadToken
 
-			_ = ud.Save() // don’t care if save fails
+			ud.MarkDirty()
+
+			ud.Save() // don’t care if save fails
 		}
 	}
 

@@ -12,7 +12,7 @@ func NewRemoveCommand() *cobra.Command {
 	options := &waldo.RemoveOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "remove <recipe-name>",
+		Use:   "remove [options] <recipe-name>",
 		Short: "Remove a recipe.",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -30,6 +30,16 @@ func NewRemoveCommand() *cobra.Command {
 		}}
 
 	cmd.Flags().BoolVarP(&options.Verbose, "verbose", "v", false, "Display extra verbiage.")
+
+	cmd.SetUsageTemplate(`
+USAGE: waldo remove [options] <recipe-name>
+
+ARGUMENTS:
+  <recipe-name>       The name of the recipe to remove.
+
+OPTIONS:
+  -v, --verbose       Display extra verbiage.
+`)
 
 	return cmd
 }

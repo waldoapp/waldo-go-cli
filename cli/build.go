@@ -12,7 +12,7 @@ func NewBuildCommand() *cobra.Command {
 	options := &waldo.BuildOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "build [<recipe-name>]",
+		Use:   "build [options] [<recipe-name>]",
 		Short: "Build app from recipe.",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -33,6 +33,17 @@ func NewBuildCommand() *cobra.Command {
 
 	cmd.Flags().BoolVarP(&options.Clean, "clean", "c", false, "Remove cached artifacts before building.")
 	cmd.Flags().BoolVarP(&options.Verbose, "verbose", "v", false, "Display extra verbiage.")
+
+	cmd.SetUsageTemplate(`
+USAGE: waldo build [options] [<recipe-name>]
+
+ARGUMENTS:
+  <recipe-name>       The name of the recipe to build.
+
+OPTIONS:
+  -c, --clean     Remove cached artifacts before building.
+  -v, --verbose   Display extra verbiage.
+`)
 
 	return cmd
 }

@@ -13,7 +13,6 @@ func main() {
 	cmd := cli.NewRootCommand()
 
 	defer func() {
-
 		ioStreams := lib.NewIOStreams(
 			cmd.InOrStdin(),
 			cmd.OutOrStdout(),

@@ -24,6 +24,7 @@ type Configuration struct {
 
 	basePath   string // absolute
 	configPath string // absolute
+	dirty      bool
 }
 
 //-----------------------------------------------------------------------------
@@ -53,13 +54,11 @@ func SetupConfiguration(create bool) (*Configuration, bool, error) {
 	if lib.IsRegularFile(cfg.configPath) {
 		err = cfg.load()
 
-		saveNeeded := false
-
 		if err == nil {
-			saveNeeded, err = cfg.migrate()
+			err = cfg.migrate()
 		}
 
-		if err == nil && saveNeeded {
+		if err == nil {
 			err = cfg.Save()
 		}
 
@@ -102,17 +101,11 @@ func (cfg *Configuration) AddRecipe(recipe *Recipe) error {
 		return fmt.Errorf("Recipe already added: %q", recipe.Name)
 	}
 
-	oldRecipes := cfg.Recipes
-
 	cfg.Recipes = append(cfg.Recipes, recipe)
 
-	if err := cfg.Save(); err != nil {
-		cfg.Recipes = oldRecipes
+	cfg.MarkDirty()
 
-		return err
-	}
-
-	return nil
+	return cfg.Save()
 }
 
 func (cfg *Configuration) BasePath() string {
@@ -144,6 +137,14 @@ func (cfg *Configuration) FindRecipe(name string) (*Recipe, error) {
 	return cfg.Recipes[idx], nil
 }
 
+func (cfg *Configuration) IsDirty() bool {
+	return cfg.dirty
+}
+
+func (cfg *Configuration) MarkDirty() {
+	cfg.dirty = true
+}
+
 func (cfg *Configuration) Path() string {
 	return cfg.configPath
 }
@@ -155,32 +156,34 @@ func (cfg *Configuration) RemoveRecipe(name string) error {
 		return fmt.Errorf("Unable to find recipe: %q", name)
 	}
 
-	oldRecipes := cfg.Recipes
-
 	cfg.Recipes = append(cfg.Recipes[:idx], cfg.Recipes[idx+1:]...)
 
-	if err := cfg.Save(); err != nil {
-		cfg.Recipes = oldRecipes
+	cfg.MarkDirty()
 
-		return err
-	}
-
-	return nil
+	return cfg.Save()
 }
 
 func (cfg *Configuration) Save() error {
-	data, err := tpw.EncodeToYAML(cfg)
-
-	if err != nil {
+	if !cfg.IsDirty() {
 		return nil
 	}
 
-	return os.WriteFile(cfg.configPath, data, 0644)
+	data, err := tpw.EncodeToYAML(cfg)
+
+	if err == nil {
+		err = os.WriteFile(cfg.configPath, data, 0644)
+	}
+
+	if err == nil {
+		cfg.dirty = false
+	}
+
+	return err
 }
 
 //-----------------------------------------------------------------------------
 
-func (cfg *Configuration) ensureUniqueID() (bool, error) {
+func (cfg *Configuration) ensureUniqueID() error {
 	//
 	// Ensure there is ALWAYS a unique ID associated with this configuration:
 	//
@@ -188,15 +191,15 @@ func (cfg *Configuration) ensureUniqueID() (bool, error) {
 		uniqueID, err := tpw.NewUniqueID()
 
 		if err != nil {
-			return false, err
+			return err
 		}
 
 		cfg.UniqueID = uniqueID
 
-		return true, nil // save is needed
+		cfg.MarkDirty()
 	}
 
-	return false, nil
+	return nil
 }
 
 func (cfg *Configuration) findRecipeIndex(name string) int {
@@ -219,30 +222,24 @@ func (cfg *Configuration) load() error {
 	return err
 }
 
-func (cfg *Configuration) migrate() (bool, error) {
-	saveNeeded, err := cfg.ensureUniqueID()
-
-	if err != nil {
-		return false, err
-	}
-
+func (cfg *Configuration) migrate() error {
 	if cfg.FormatVersion < cfgFormatVersion {
 		// handle any necessary migration here
 
 		cfg.FormatVersion = cfgFormatVersion
 
-		saveNeeded = true
+		cfg.MarkDirty()
 	} else if cfg.FormatVersion > cfgFormatVersion {
 		// may not understand newer format
 	}
 
-	return saveNeeded, nil
+	return cfg.ensureUniqueID()
 }
 
 func (cfg *Configuration) populate() error {
 	cfg.FormatVersion = cfgFormatVersion
 
-	_, err := cfg.ensureUniqueID()
+	cfg.MarkDirty()
 
-	return err
+	return cfg.ensureUniqueID()
 }
