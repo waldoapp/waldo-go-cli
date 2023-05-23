@@ -3,7 +3,7 @@
 set -eu -o pipefail
 
 waldo_cli_bin="${WALDO_CLI_BIN:-/usr/local/bin}"
-waldo_cli_url="https://github.com/waldoapp/waldo-go-cli/releases/latest/download"
+waldo_cli_url="${WALDO_CLI_URL:-https://github.com/waldoapp/waldo-go-cli/releases/latest/download}"
 
 waldo_exec1_name="waldo"
 waldo_exec2_name="sim_appcenter_build_and_upload.sh"
