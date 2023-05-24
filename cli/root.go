@@ -28,6 +28,8 @@ func NewRootCommand() *cobra.Command {
 		Use:   "waldo <command>",
 		Short: "Work with Waldo from the command line."}
 
+	cmd.CompletionOptions.DisableDefaultCmd = true
+
 	cmd.SetHelpTemplate(helpTemplate)
 	cmd.SetUsageTemplate(usageTemplate)
 

@@ -19,26 +19,22 @@ type AddOptions struct {
 }
 
 type AddAction struct {
-	ioStreams      *lib.IOStreams
-	options        *AddOptions
-	promptReader   *lib.PromptReader
-	runtimeInfo    *lib.RuntimeInfo
-	wrapperName    string
-	wrapperVersion string
+	ioStreams    *lib.IOStreams
+	options      *AddOptions
+	promptReader *lib.PromptReader
+	runtimeInfo  *lib.RuntimeInfo
 }
 
 //-----------------------------------------------------------------------------
 
-func NewAddAction(options *AddOptions, ioStreams *lib.IOStreams, overrides map[string]string) *AddAction {
+func NewAddAction(options *AddOptions, ioStreams *lib.IOStreams) *AddAction {
 	runtimeInfo := lib.DetectRuntimeInfo()
 
 	return &AddAction{
-		ioStreams:      ioStreams,
-		options:        options,
-		promptReader:   ioStreams.PromptReader(),
-		runtimeInfo:    runtimeInfo,
-		wrapperName:    overrides["wrapperName"],
-		wrapperVersion: overrides["wrapperVersion"]}
+		ioStreams:    ioStreams,
+		options:      options,
+		promptReader: ioStreams.PromptReader(),
+		runtimeInfo:  runtimeInfo}
 }
 
 //-----------------------------------------------------------------------------

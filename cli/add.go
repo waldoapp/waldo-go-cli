@@ -3,7 +3,6 @@ package cli
 import (
 	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo"
-	"github.com/waldoapp/waldo-go-cli/waldo/data"
 
 	"github.com/spf13/cobra"
 )
@@ -25,8 +24,7 @@ func NewAddCommand() *cobra.Command {
 
 			return waldo.NewAddAction(
 				options,
-				ioStreams,
-				data.Overrides()).Perform()
+				ioStreams).Perform()
 		}}
 
 	cmd.Flags().StringVarP(&options.AppName, "app_name", "a", "", "The name associated with your app.")
@@ -38,13 +36,13 @@ func NewAddCommand() *cobra.Command {
 USAGE: waldo add [options] <recipe-name>
 
 ARGUMENTS:
-  <recipe-name>       The name of the recipe to add.
+  <recipe-name>            The name of the recipe to add.
 
 OPTIONS:
-  -a, --app_name      The name associated with your app.
-  -p, --platform      The platform associated with your app.
-  -u, --upload_token  The upload token associated with your app.
-  -v, --verbose       Display extra verbiage.
+  -a, --app_name <n>       The name associated with your app.
+  -p, --platform <p>       The platform associated with your app.
+  -u, --upload_token <t>   The upload token associated with your app.
+  -v, --verbose            Display extra verbiage.
 `)
 
 	return cmd

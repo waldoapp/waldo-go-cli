@@ -16,24 +16,20 @@ type BuildOptions struct {
 }
 
 type BuildAction struct {
-	ioStreams      *lib.IOStreams
-	options        *BuildOptions
-	runtimeInfo    *lib.RuntimeInfo
-	wrapperName    string
-	wrapperVersion string
+	ioStreams   *lib.IOStreams
+	options     *BuildOptions
+	runtimeInfo *lib.RuntimeInfo
 }
 
 //-----------------------------------------------------------------------------
 
-func NewBuildAction(options *BuildOptions, ioStreams *lib.IOStreams, overrides map[string]string) *BuildAction {
+func NewBuildAction(options *BuildOptions, ioStreams *lib.IOStreams) *BuildAction {
 	runtimeInfo := lib.DetectRuntimeInfo()
 
 	return &BuildAction{
-		ioStreams:      ioStreams,
-		options:        options,
-		runtimeInfo:    runtimeInfo,
-		wrapperName:    overrides["wrapperName"],
-		wrapperVersion: overrides["wrapperVersion"]}
+		ioStreams:   ioStreams,
+		options:     options,
+		runtimeInfo: runtimeInfo}
 }
 
 //-----------------------------------------------------------------------------

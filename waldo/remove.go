@@ -11,24 +11,20 @@ type RemoveOptions struct {
 }
 
 type RemoveAction struct {
-	ioStreams      *lib.IOStreams
-	options        *RemoveOptions
-	runtimeInfo    *lib.RuntimeInfo
-	wrapperName    string
-	wrapperVersion string
+	ioStreams   *lib.IOStreams
+	options     *RemoveOptions
+	runtimeInfo *lib.RuntimeInfo
 }
 
 //-----------------------------------------------------------------------------
 
-func NewRemoveAction(options *RemoveOptions, ioStreams *lib.IOStreams, overrides map[string]string) *RemoveAction {
+func NewRemoveAction(options *RemoveOptions, ioStreams *lib.IOStreams) *RemoveAction {
 	runtimeInfo := lib.DetectRuntimeInfo()
 
 	return &RemoveAction{
-		ioStreams:      ioStreams,
-		options:        options,
-		runtimeInfo:    runtimeInfo,
-		wrapperName:    overrides["wrapperName"],
-		wrapperVersion: overrides["wrapperVersion"]}
+		ioStreams:   ioStreams,
+		options:     options,
+		runtimeInfo: runtimeInfo}
 }
 
 //-----------------------------------------------------------------------------

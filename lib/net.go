@@ -3,20 +3,7 @@ package lib
 import (
 	"net/http"
 	"net/http/httputil"
-	"net/url"
 )
-
-const (
-	BinaryContentType = "application/octet-stream"
-	JsonContentType   = "application/json"
-	ZipContentType    = "application/zip"
-)
-
-func AddIfNotEmpty(query *url.Values, key string, value string) {
-	if len(key) > 0 && len(value) > 0 {
-		query.Add(key, value)
-	}
-}
 
 func DumpRequest(ioStreams *IOStreams, request *http.Request, body bool) {
 	dump, err := httputil.DumpRequestOut(request, body)

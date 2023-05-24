@@ -11,22 +11,20 @@ type RunOptions struct {
 }
 
 type RunAction struct {
-	options        *RunOptions
-	runtimeInfo    *lib.RuntimeInfo
-	wrapperName    string
-	wrapperVersion string
+	ioStreams   *lib.IOStreams
+	options     *RunOptions
+	runtimeInfo *lib.RuntimeInfo
 }
 
 //-----------------------------------------------------------------------------
 
-func NewRunAction(options *RunOptions, overrides map[string]string) *RunAction {
+func NewRunAction(options *RunOptions, ioStreams *lib.IOStreams) *RunAction {
 	runtimeInfo := lib.DetectRuntimeInfo()
 
 	return &RunAction{
-		options:        options,
-		runtimeInfo:    runtimeInfo,
-		wrapperName:    overrides["wrapperName"],
-		wrapperVersion: overrides["wrapperVersion"]}
+		ioStreams:   ioStreams,
+		options:     options,
+		runtimeInfo: runtimeInfo}
 }
 
 //-----------------------------------------------------------------------------

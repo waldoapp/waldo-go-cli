@@ -15,22 +15,20 @@ type SyncOptions struct {
 }
 
 type SyncAction struct {
-	options        *SyncOptions
-	runtimeInfo    *lib.RuntimeInfo
-	wrapperName    string
-	wrapperVersion string
+	ioStreams   *lib.IOStreams
+	options     *SyncOptions
+	runtimeInfo *lib.RuntimeInfo
 }
 
 //-----------------------------------------------------------------------------
 
-func NewSyncAction(options *SyncOptions, overrides map[string]string) *SyncAction {
+func NewSyncAction(options *SyncOptions, ioStreams *lib.IOStreams) *SyncAction {
 	runtimeInfo := lib.DetectRuntimeInfo()
 
 	return &SyncAction{
-		options:        options,
-		runtimeInfo:    runtimeInfo,
-		wrapperName:    overrides["wrapperName"],
-		wrapperVersion: overrides["wrapperVersion"]}
+		ioStreams:   ioStreams,
+		options:     options,
+		runtimeInfo: runtimeInfo}
 }
 
 //-----------------------------------------------------------------------------

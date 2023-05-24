@@ -12,24 +12,20 @@ type ListOptions struct {
 }
 
 type ListAction struct {
-	ioStreams      *lib.IOStreams
-	options        *ListOptions
-	runtimeInfo    *lib.RuntimeInfo
-	wrapperName    string
-	wrapperVersion string
+	ioStreams   *lib.IOStreams
+	options     *ListOptions
+	runtimeInfo *lib.RuntimeInfo
 }
 
 //-----------------------------------------------------------------------------
 
-func NewListAction(options *ListOptions, ioStreams *lib.IOStreams, overrides map[string]string) *ListAction {
+func NewListAction(options *ListOptions, ioStreams *lib.IOStreams) *ListAction {
 	runtimeInfo := lib.DetectRuntimeInfo()
 
 	return &ListAction{
-		ioStreams:      ioStreams,
-		options:        options,
-		runtimeInfo:    runtimeInfo,
-		wrapperName:    overrides["wrapperName"],
-		wrapperVersion: overrides["wrapperVersion"]}
+		ioStreams:   ioStreams,
+		options:     options,
+		runtimeInfo: runtimeInfo}
 }
 
 //-----------------------------------------------------------------------------

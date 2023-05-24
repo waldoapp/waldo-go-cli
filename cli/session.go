@@ -1,8 +1,8 @@
 package cli
 
 import (
+	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo"
-	"github.com/waldoapp/waldo-go-cli/waldo/data"
 
 	"github.com/spf13/cobra"
 )
@@ -14,9 +14,14 @@ func NewSessionCommand() *cobra.Command {
 		Use:   "session [options]",
 		Short: "Launch Waldo Session against the most recent build uploaded.",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ioStreams := lib.NewIOStreams(
+				cmd.InOrStdin(),
+				cmd.OutOrStdout(),
+				cmd.ErrOrStderr())
+
 			return waldo.NewSessionAction(
 				options,
-				data.Overrides()).Perform()
+				ioStreams).Perform()
 		}}
 
 	cmd.Flags().StringVarP(&options.Language, "language", "l", "", "The device language.")
@@ -28,10 +33,10 @@ func NewSessionCommand() *cobra.Command {
 USAGE: waldo session [options]
 
 OPTIONS:
-  -l, --language      The device language.
-  -m, --model         The device model.
-  -o, --os_version    The OS version of the device.
-  -v, --verbose       Display extra verbiage.
+  -l, --language <l>     The device language.
+  -m, --model <m>        The device model.
+  -o, --os_version <v>   The OS version of the device.
+  -v, --verbose          Display extra verbiage.
 `)
 
 	return cmd

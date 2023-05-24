@@ -2,20 +2,7 @@ package lib
 
 import (
 	"encoding/json"
-	"fmt"
 )
-
-func AppendIfNotEmpty(payload *string, key, value string) {
-	if len(key) == 0 || len(value) == 0 {
-		return
-	}
-
-	if len(*payload) > 0 {
-		*payload += ","
-	}
-
-	*payload += fmt.Sprintf(`"%s":"%s"`, key, value)
-}
 
 func DecodeFromJSON(in []byte, out any) error {
 	return json.Unmarshal(in, out)
@@ -23,26 +10,6 @@ func DecodeFromJSON(in []byte, out any) error {
 
 func EncodeToJSON(in any) ([]byte, error) {
 	return json.Marshal(in)
-}
-
-func FormatTopLevelJsonArray(rawJson []any) []byte {
-	data, err := json.Marshal(rawJson)
-
-	if err != nil {
-		return nil
-	}
-
-	return data
-}
-
-func FormatTopLevelJsonObject(rawJson map[string]any) []byte {
-	data, err := json.Marshal(rawJson)
-
-	if err != nil {
-		return nil
-	}
-
-	return data
 }
 
 func ParseJsonArray(value any) []any {

@@ -3,7 +3,6 @@ package cli
 import (
 	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo"
-	"github.com/waldoapp/waldo-go-cli/waldo/data"
 
 	"github.com/spf13/cobra"
 )
@@ -25,8 +24,7 @@ func NewRemoveCommand() *cobra.Command {
 
 			return waldo.NewRemoveAction(
 				options,
-				ioStreams,
-				data.Overrides()).Perform()
+				ioStreams).Perform()
 		}}
 
 	cmd.Flags().BoolVarP(&options.Verbose, "verbose", "v", false, "Display extra verbiage.")
@@ -35,10 +33,10 @@ func NewRemoveCommand() *cobra.Command {
 USAGE: waldo remove [options] <recipe-name>
 
 ARGUMENTS:
-  <recipe-name>       The name of the recipe to remove.
+  <recipe-name>   The name of the recipe to remove.
 
 OPTIONS:
-  -v, --verbose       Display extra verbiage.
+  -v, --verbose   Display extra verbiage.
 `)
 
 	return cmd

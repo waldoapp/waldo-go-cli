@@ -3,7 +3,6 @@ package cli
 import (
 	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo"
-	"github.com/waldoapp/waldo-go-cli/waldo/data"
 
 	"github.com/spf13/cobra"
 )
@@ -22,8 +21,7 @@ func NewInitCommand() *cobra.Command {
 
 			return waldo.NewInitAction(
 				options,
-				ioStreams,
-				data.Overrides()).Perform()
+				ioStreams).Perform()
 		}}
 
 	cmd.Flags().BoolVarP(&options.Verbose, "verbose", "v", false, "Display extra verbiage.")

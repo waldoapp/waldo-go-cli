@@ -3,7 +3,6 @@ package cli
 import (
 	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo"
-	"github.com/waldoapp/waldo-go-cli/waldo/data"
 
 	"github.com/spf13/cobra"
 )
@@ -23,8 +22,7 @@ func NewListCommand() *cobra.Command {
 
 			return waldo.NewListAction(
 				options,
-				ioStreams,
-				data.Overrides()).Perform()
+				ioStreams).Perform()
 		}}
 
 	cmd.Flags().BoolVarP(&options.LongFormat, "long", "l", false, "List recipes in long format.")

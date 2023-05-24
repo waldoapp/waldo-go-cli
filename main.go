@@ -20,7 +20,7 @@ func main() {
 
 		if err := recover(); err != nil {
 			ioStreams.EmitError(
-				data.AgentPrefix,
+				data.CLIPrefix,
 				fmt.Errorf("Unhandled panic: %v", err))
 
 			os.Exit(1)

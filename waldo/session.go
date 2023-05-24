@@ -12,22 +12,20 @@ type SessionOptions struct {
 }
 
 type SessionAction struct {
-	options        *SessionOptions
-	runtimeInfo    *lib.RuntimeInfo
-	wrapperName    string
-	wrapperVersion string
+	ioStreams   *lib.IOStreams
+	options     *SessionOptions
+	runtimeInfo *lib.RuntimeInfo
 }
 
 //-----------------------------------------------------------------------------
 
-func NewSessionAction(options *SessionOptions, overrides map[string]string) *SessionAction {
+func NewSessionAction(options *SessionOptions, ioStreams *lib.IOStreams) *SessionAction {
 	runtimeInfo := lib.DetectRuntimeInfo()
 
 	return &SessionAction{
-		options:        options,
-		runtimeInfo:    runtimeInfo,
-		wrapperName:    overrides["wrapperName"],
-		wrapperVersion: overrides["wrapperVersion"]}
+		ioStreams:   ioStreams,
+		options:     options,
+		runtimeInfo: runtimeInfo}
 }
 
 //-----------------------------------------------------------------------------

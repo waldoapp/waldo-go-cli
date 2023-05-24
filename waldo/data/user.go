@@ -1,7 +1,6 @@
 package data
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -131,7 +130,7 @@ func (ud *UserData) Save() error {
 		return nil
 	}
 
-	data, err := json.Marshal(ud)
+	data, err := lib.EncodeToJSON(ud)
 
 	if err == nil {
 		err = os.WriteFile(ud.userPath, data, 0600)
@@ -150,7 +149,7 @@ func (ud *UserData) load() error {
 	data, err := os.ReadFile(ud.userPath)
 
 	if err == nil {
-		err = json.Unmarshal(data, ud)
+		err = lib.DecodeFromJSON(data, ud)
 	}
 
 	return err

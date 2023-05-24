@@ -1,8 +1,8 @@
 package cli
 
 import (
+	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo"
-	"github.com/waldoapp/waldo-go-cli/waldo/data"
 
 	"github.com/spf13/cobra"
 )
@@ -14,9 +14,14 @@ func NewRunCommand() *cobra.Command {
 		Use:   "run [options]",
 		Short: "Execute one or more locally-defined scripts against an uploaded build.",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ioStreams := lib.NewIOStreams(
+				cmd.InOrStdin(),
+				cmd.OutOrStdout(),
+				cmd.ErrOrStderr())
+
 			return waldo.NewRunAction(
 				options,
-				data.Overrides()).Perform()
+				ioStreams).Perform()
 		}}
 
 	cmd.Flags().BoolVarP(&options.Interactive, "interactive", "i", false, "Run interactively.")

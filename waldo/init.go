@@ -10,24 +10,20 @@ type InitOptions struct {
 }
 
 type InitAction struct {
-	ioStreams      *lib.IOStreams
-	options        *InitOptions
-	runtimeInfo    *lib.RuntimeInfo
-	wrapperName    string
-	wrapperVersion string
+	ioStreams   *lib.IOStreams
+	options     *InitOptions
+	runtimeInfo *lib.RuntimeInfo
 }
 
 //-----------------------------------------------------------------------------
 
-func NewInitAction(options *InitOptions, ioStreams *lib.IOStreams, overrides map[string]string) *InitAction {
+func NewInitAction(options *InitOptions, ioStreams *lib.IOStreams) *InitAction {
 	runtimeInfo := lib.DetectRuntimeInfo()
 
 	return &InitAction{
-		ioStreams:      ioStreams,
-		options:        options,
-		runtimeInfo:    runtimeInfo,
-		wrapperName:    overrides["wrapperName"],
-		wrapperVersion: overrides["wrapperVersion"]}
+		ioStreams:   ioStreams,
+		options:     options,
+		runtimeInfo: runtimeInfo}
 }
 
 //-----------------------------------------------------------------------------
