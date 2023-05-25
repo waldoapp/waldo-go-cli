@@ -7,19 +7,7 @@ This project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
-## [3.0.0-beta.2] - 2023-05-24
-
-### Changed
-
-- Revived download of Waldo Agent binary to perform work of `trigger` and `upload` verbs.
-
-## [3.0.0-beta.1] - 2023-05-22
-
-### Fixed
-
-- Fixed erroneous agent name needed for backwards compatibility.
-
-## [3.0.0-beta.0] - 2023-05-22
+## [3.0.0-rc.1] - 2023-05-25
 
 Initial public beta release.
 
@@ -31,7 +19,6 @@ Initial public beta release.
   - `init` — Create an empty Waldo configuration.
   - `list` — List defined recipes.
   - `remove` — Remove a recipe.
-  - `sync` — Shorthand for `waldo build` followed by `waldo upload`.
   - `version` — Display version information.
 
 ### Changed
@@ -112,10 +99,8 @@ Initial public beta release.
 
 Initial public release.
 
-[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/3.0.0-beta.2...HEAD
-[3.0.0-beta.2]: https://github.com/waldoapp/waldo-go-cli/compare/3.0.0-beta.1...3.0.0-beta.2
-[3.0.0-beta.1]: https://github.com/waldoapp/waldo-go-cli/compare/3.0.0-beta.0...3.0.0-beta.1
-[3.0.0-beta.0]: https://github.com/waldoapp/waldo-go-cli/compare/2.0.5...3.0.0-beta.0
+[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/3.0.0-rc.1...HEAD
+[3.0.0-rc.1]:	https://github.com/waldoapp/waldo-go-cli/compare/2.0.5...3.0.0-rc.1
 [2.0.5]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.4...2.0.5
 [2.0.4]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.3...2.0.4
 [2.0.3]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.2...2.0.3
