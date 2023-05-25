@@ -52,17 +52,15 @@ func SetupConfiguration(create bool) (*Configuration, bool, error) {
 		configPath: filepath.Join(dataPath, "config.yml")}
 
 	if lib.IsRegularFile(cfg.configPath) {
-		err = cfg.load()
-
-		if err == nil {
-			err = cfg.migrate()
+		if err := cfg.load(); err != nil {
+			return nil, false, err
 		}
 
-		if err == nil {
-			err = cfg.Save()
+		if err := cfg.migrate(); err != nil {
+			return nil, false, err
 		}
 
-		if err != nil {
+		if err := cfg.Save(); err != nil {
 			return nil, false, err
 		}
 
@@ -70,19 +68,15 @@ func SetupConfiguration(create bool) (*Configuration, bool, error) {
 	}
 
 	if create {
-		err = os.MkdirAll(dataPath, 0755)
-
-		if err != nil {
+		if err := os.MkdirAll(dataPath, 0755); err != nil {
 			return nil, false, err
 		}
 
-		err = cfg.populate()
-
-		if err == nil {
-			err = cfg.Save()
+		if err := cfg.populate(); err != nil {
+			return nil, false, err
 		}
 
-		if err != nil {
+		if err := cfg.Save(); err != nil {
 			return nil, false, err
 		}
 
@@ -170,15 +164,17 @@ func (cfg *Configuration) Save() error {
 
 	data, err := tpw.EncodeToYAML(cfg)
 
-	if err == nil {
-		err = os.WriteFile(cfg.configPath, data, 0644)
+	if err != nil {
+		return err
 	}
 
-	if err == nil {
-		cfg.dirty = false
+	if err := os.WriteFile(cfg.configPath, data, 0644); err != nil {
+		return err
 	}
 
-	return err
+	cfg.dirty = false
+
+	return nil
 }
 
 //-----------------------------------------------------------------------------
@@ -215,11 +211,11 @@ func (cfg *Configuration) findRecipeIndex(name string) int {
 func (cfg *Configuration) load() error {
 	data, err := os.ReadFile(cfg.configPath)
 
-	if err == nil {
-		err = tpw.DecodeFromYAML(data, cfg)
+	if err != nil {
+		return err
 	}
 
-	return err
+	return tpw.DecodeFromYAML(data, cfg)
 }
 
 func (cfg *Configuration) migrate() error {

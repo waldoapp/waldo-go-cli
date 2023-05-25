@@ -10,23 +10,23 @@ import (
 func FindRepoSpecificPath() (string, error) {
 	path, err := lib.FindGitRepositoryPath()
 
-	if err == nil {
-		path = filepath.Join(filepath.Dir(path), ".waldo")
+	if err != nil {
+		return "", err
 	}
 
-	return path, err
+	path = filepath.Join(filepath.Dir(path), ".waldo")
+
+	return path, nil
 }
 
 func FindUserSpecificPath() (string, error) {
 	path, err := os.UserConfigDir()
 
-	if err == nil {
-		path, err = filepath.Abs(filepath.Join(path, "waldo"))
-	}
-
 	if err != nil {
 		return "", err
 	}
+
+	path = filepath.Join(path, "waldo")
 
 	return path, nil
 }

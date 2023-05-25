@@ -30,24 +30,21 @@ func NewRemoveAction(options *RemoveOptions, ioStreams *lib.IOStreams) *RemoveAc
 //-----------------------------------------------------------------------------
 
 func (ra *RemoveAction) Perform() error {
-	var (
-		cfg *data.Configuration
-		err error
-	)
-
-	err = data.ValidateRecipeName(ra.options.RecipeName)
-
-	if err == nil {
-		cfg, _, err = data.SetupConfiguration(false)
+	if err := data.ValidateRecipeName(ra.options.RecipeName); err != nil {
+		return err
 	}
 
-	if err == nil {
-		err = cfg.RemoveRecipe(ra.options.RecipeName)
+	cfg, _, err := data.SetupConfiguration(false)
+
+	if err != nil {
+		return err
 	}
 
-	if err == nil {
-		ra.ioStreams.Printf("\nRecipe %q successfully removed!\n", ra.options.RecipeName)
+	if err := cfg.RemoveRecipe(ra.options.RecipeName); err != nil {
+		return err
 	}
 
-	return err
+	ra.ioStreams.Printf("\nRecipe %q successfully removed!\n", ra.options.RecipeName)
+
+	return nil
 }

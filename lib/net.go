@@ -8,17 +8,22 @@ import (
 func DumpRequest(ioStreams *IOStreams, request *http.Request, body bool) {
 	dump, err := httputil.DumpRequestOut(request, body)
 
-	if err == nil {
-		ioStreams.Printf("\n--- Request ---\n%s\n", dump)
+	if err != nil {
+		return
 	}
+
+	ioStreams.Printf("\n--- Request ---\n%s\n", dump)
+
 }
 
 func DumpResponse(ioStreams *IOStreams, response *http.Response, body bool) {
 	dump, err := httputil.DumpResponse(response, body)
 
-	if err == nil {
-		ioStreams.Printf("\n--- Response ---\n%s\n", dump)
+	if err != nil {
+		return
 	}
+
+	ioStreams.Printf("\n--- Response ---\n%s\n", dump)
 }
 
 func ShouldRetry(rsp *http.Response) bool {

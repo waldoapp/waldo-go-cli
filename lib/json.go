@@ -4,14 +4,6 @@ import (
 	"encoding/json"
 )
 
-func DecodeFromJSON(in []byte, out any) error {
-	return json.Unmarshal(in, out)
-}
-
-func EncodeToJSON(in any) ([]byte, error) {
-	return json.Marshal(in)
-}
-
 func ParseJsonArray(value any) []any {
 	arrValue, ok := value.([]any)
 

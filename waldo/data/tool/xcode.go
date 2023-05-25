@@ -448,23 +448,25 @@ func (xi *xcodeInfo) populateFromProject(basePath, project string) error {
 
 	jsonString, _, err := task.Run()
 
-	if err == nil {
-		rawJson := lib.ParseTopLevelJsonObject([]byte(jsonString))
+	if err != nil {
+		return err
+	}
 
-		if rawJson != nil {
-			project := lib.ParseJsonObject(rawJson["project"])
+	rawJson := lib.ParseTopLevelJsonObject([]byte(jsonString))
 
-			if project != nil {
-				xi.configurations = lib.ParseJsonStringArray(project["configurations"])
-				xi.name = lib.ParseJsonString(project["name"])
-				xi.schemes = lib.ParseJsonStringArray(project["schemes"])
+	if rawJson != nil {
+		project := lib.ParseJsonObject(rawJson["project"])
 
-				return nil
-			}
+		if project != nil {
+			xi.configurations = lib.ParseJsonStringArray(project["configurations"])
+			xi.name = lib.ParseJsonString(project["name"])
+			xi.schemes = lib.ParseJsonStringArray(project["schemes"])
+
+			return nil
 		}
 	}
 
-	return err
+	return nil
 }
 
 func (xi *xcodeInfo) populateFromWorkspace(basePath, workspace string) error {
@@ -474,20 +476,22 @@ func (xi *xcodeInfo) populateFromWorkspace(basePath, workspace string) error {
 
 	jsonString, _, err := task.Run()
 
-	if err == nil {
-		rawJson := lib.ParseTopLevelJsonObject([]byte(jsonString))
+	if err != nil {
+		return err
+	}
 
-		if rawJson != nil {
-			workspace := lib.ParseJsonObject(rawJson["workspace"])
+	rawJson := lib.ParseTopLevelJsonObject([]byte(jsonString))
 
-			if workspace != nil {
-				xi.name = lib.ParseJsonString(workspace["name"])
-				xi.schemes = lib.ParseJsonStringArray(workspace["schemes"])
+	if rawJson != nil {
+		workspace := lib.ParseJsonObject(rawJson["workspace"])
 
-				return nil
-			}
+		if workspace != nil {
+			xi.name = lib.ParseJsonString(workspace["name"])
+			xi.schemes = lib.ParseJsonStringArray(workspace["schemes"])
+
+			return nil
 		}
 	}
 
-	return err
+	return nil
 }

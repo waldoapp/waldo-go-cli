@@ -43,20 +43,21 @@ func NewUploadAction(options *UploadOptions, ioStreams *lib.IOStreams) *UploadAc
 //-----------------------------------------------------------------------------
 
 func (ua *UploadAction) Perform() error {
+	ciMode := ua.detectCIMode()
+	args := os.Args[1:]
+
 	var (
 		ud          *data.UserData
 		recipe      *data.Recipe
 		uploadToken string
-		err         error
 	)
-
-	ciMode := ua.detectCIMode()
-	args := os.Args[1:]
 
 	if !ciMode {
 		ud, recipe = ua.detectPersistedData()
 
 		if ud != nil && recipe != nil {
+			var err error
+
 			args, uploadToken, err = ua.mungeArgs(ud, recipe)
 
 			if err != nil {
@@ -72,13 +73,15 @@ func (ua *UploadAction) Perform() error {
 
 	path, err := ad.Download()
 
-	if err == nil {
-		defer ad.Cleanup()
-
-		ua.execAgent(path, args)
+	if err != nil {
+		return err
 	}
 
-	if err == nil && ciMode && ud != nil && recipe != nil {
+	defer ad.Cleanup()
+
+	ua.execAgent(path, args)
+
+	if ciMode && ud != nil && recipe != nil {
 		am, _ := ud.FindMetadata(recipe)
 
 		if am != nil {
@@ -91,7 +94,7 @@ func (ua *UploadAction) Perform() error {
 		}
 	}
 
-	return err
+	return nil
 }
 
 //-----------------------------------------------------------------------------
@@ -113,28 +116,25 @@ func (ua *UploadAction) detectCIMode() bool {
 }
 
 func (ua *UploadAction) detectPersistedData() (*data.UserData, *data.Recipe) {
-	var (
-		cfg    *data.Configuration
-		ud     *data.UserData
-		recipe *data.Recipe
-		err    error
-	)
+	cfg, _, err := data.SetupConfiguration(false)
 
-	cfg, _, err = data.SetupConfiguration(false)
-
-	if err == nil {
-		ud, err = data.SetupUserData(cfg)
+	if err != nil {
+		return nil, nil
 	}
 
-	if err == nil {
-		recipe, err = cfg.FindRecipe(ua.options.Target)
+	ud, err := data.SetupUserData(cfg)
+
+	if err != nil {
+		return nil, nil
 	}
 
-	if err == nil {
-		return ud, recipe
+	recipe, err := cfg.FindRecipe(ua.options.Target)
+
+	if err != nil {
+		return nil, nil
 	}
 
-	return nil, nil
+	return ud, recipe
 }
 
 func (ua *UploadAction) detectVerbose() bool {
@@ -235,13 +235,13 @@ func (ua *UploadAction) mungeArgs(ud *data.UserData, recipe *data.Recipe) ([]str
 
 	am, err := ud.FindMetadata(recipe)
 
-	if err == nil && len(am.BuildPath) == 0 {
-		err = fmt.Errorf("No build found for recipe %q", recipe.Name)
+	if err != nil {
+		return nil, "", err
 	}
 
-	if err == nil {
-		return ua.makeArgs(am.BuildPath, uploadToken), uploadToken, nil
+	if len(am.BuildPath) == 0 {
+		return nil, "", fmt.Errorf("No build found for recipe %q", recipe.Name)
 	}
 
-	return nil, "", err
+	return ua.makeArgs(am.BuildPath, uploadToken), uploadToken, nil
 }

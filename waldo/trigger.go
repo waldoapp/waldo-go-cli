@@ -45,13 +45,15 @@ func (ta *TriggerAction) Perform() error {
 
 	path, err := ad.Download()
 
-	if err == nil {
-		defer ad.Cleanup()
-
-		ta.execAgent(path, os.Args[1:])
+	if err != nil {
+		return err
 	}
 
-	return err
+	defer ad.Cleanup()
+
+	ta.execAgent(path, os.Args[1:])
+
+	return nil
 }
 
 //-----------------------------------------------------------------------------

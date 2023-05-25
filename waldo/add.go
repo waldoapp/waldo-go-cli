@@ -40,48 +40,45 @@ func NewAddAction(options *AddOptions, ioStreams *lib.IOStreams) *AddAction {
 //-----------------------------------------------------------------------------
 
 func (aa *AddAction) Perform() error {
-	var (
-		results []*tool.FoundBuildPath
-		recipe  *data.Recipe
-		cfg     *data.Configuration
-		err     error
-	)
-
-	err = data.ValidateRecipeName(aa.options.RecipeName)
-
-	if err == nil && len(aa.options.UploadToken) > 0 {
-		err = data.ValidateUploadToken(aa.options.UploadToken)
+	if err := data.ValidateRecipeName(aa.options.RecipeName); err != nil {
+		return err
 	}
 
-	if err == nil {
-		cfg, _, err = data.SetupConfiguration(false)
-	}
-
-	if err == nil {
-		recipe, _ = cfg.FindRecipe(aa.options.RecipeName)
-
-		if recipe != nil {
-			err = fmt.Errorf("Recipe already added: %q", aa.options.RecipeName)
+	if len(aa.options.UploadToken) > 0 {
+		if err := data.ValidateUploadToken(aa.options.UploadToken); err != nil {
+			return err
 		}
 	}
 
-	if err == nil {
-		results, err = aa.findBuildPaths(cfg.BasePath())
+	cfg, _, err := data.SetupConfiguration(false)
+
+	if err != nil {
+		return err
 	}
 
-	if err == nil {
-		recipe, err = aa.makeRecipe(cfg, results)
+	if recipe, _ := cfg.FindRecipe(aa.options.RecipeName); recipe != nil {
+		return fmt.Errorf("Recipe already added: %q", aa.options.RecipeName)
 	}
 
-	if err == nil {
-		err = cfg.AddRecipe(recipe)
+	results, err := aa.findBuildPaths(cfg.BasePath())
+
+	if err != nil {
+		return err
 	}
 
-	if err == nil {
-		aa.ioStreams.Printf("\nRecipe %q successfully added!\n", recipe.Name)
+	recipe, err := aa.makeRecipe(cfg, results)
+
+	if err != nil {
+		return err
 	}
 
-	return err
+	if err = cfg.AddRecipe(recipe); err != nil {
+		return err
+	}
+
+	aa.ioStreams.Printf("\nRecipe %q successfully added!\n", recipe.Name)
+
+	return nil
 }
 
 //-----------------------------------------------------------------------------
@@ -134,27 +131,23 @@ func (aa *AddAction) decideBuildFlavor(platform string) data.BuildFlavor {
 }
 
 func (aa *AddAction) findBuildPaths(rootPath string) ([]*tool.FoundBuildPath, error) {
-	var (
-		results []*tool.FoundBuildPath
-		err     error
-	)
-
 	bd := tool.NewBuildDetector(aa.options.Verbose, aa.ioStreams)
 
-	results, err = bd.Detect(rootPath)
+	results, err := bd.Detect(rootPath)
 
-	if err == nil && len(results) == 0 {
-		err = errors.New("No build paths found")
+	if err != nil {
+		return nil, err
 	}
 
-	return results, err
+	if len(results) == 0 {
+		return nil, errors.New("No build paths found")
+	}
+
+	return results, nil
 }
 
 func (aa *AddAction) makeRecipe(cfg *data.Configuration, items []*tool.FoundBuildPath) (*data.Recipe, error) {
-	var (
-		item *tool.FoundBuildPath
-		err  error
-	)
+	var item *tool.FoundBuildPath
 
 	if len(items) > 1 {
 		item = aa.askBuildPath(items)
@@ -167,70 +160,78 @@ func (aa *AddAction) makeRecipe(cfg *data.Configuration, items []*tool.FoundBuil
 		UploadToken: aa.options.UploadToken, // for now…
 		BasePath:    lib.MakeRelative(item.AbsPath, cfg.BasePath())}
 
-	ios := aa.ioStreams
 	verbose := aa.options.Verbose
+	ios := aa.ioStreams
 
 	switch item.BuildTool {
 	case tool.BuildToolCustom:
 		builder, appName, platform, err := tool.MakeCustomBuilder(item.AbsPath, item.RelPath, verbose, ios)
 
-		if err == nil {
-			recipe.AppName = aa.decideAppName(appName)     // for now…
-			recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
-			recipe.CustomBuilder = builder
+		if err != nil {
+			return nil, err
 		}
+
+		recipe.AppName = aa.decideAppName(appName)     // for now…
+		recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
+		recipe.CustomBuilder = builder
 
 	case tool.BuildToolExpo:
 		builder, appName, platform, err := tool.MakeExpoBuilder(item.AbsPath, item.RelPath, verbose, ios)
 
-		if err == nil {
-			recipe.AppName = aa.decideAppName(appName)     // for now…
-			recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
-			recipe.ExpoBuilder = builder
+		if err != nil {
+			return nil, err
 		}
+
+		recipe.AppName = aa.decideAppName(appName)     // for now…
+		recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
+		recipe.ExpoBuilder = builder
 
 	case tool.BuildToolFlutter:
 		builder, appName, platform, err := tool.MakeFlutterBuilder(item.AbsPath, item.RelPath, verbose, ios)
 
-		if err == nil {
-			recipe.AppName = aa.decideAppName(appName)     // for now…
-			recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
-			recipe.FlutterBuilder = builder
+		if err != nil {
+			return nil, err
 		}
+
+		recipe.AppName = aa.decideAppName(appName)     // for now…
+		recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
+		recipe.FlutterBuilder = builder
 
 	case tool.BuildToolGradle:
 		builder, appName, platform, err := tool.MakeGradleBuilder(item.AbsPath, item.RelPath, verbose, ios)
 
-		if err == nil {
-			recipe.AppName = aa.decideAppName(appName)     // for now…
-			recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
-			recipe.GradleBuilder = builder
+		if err != nil {
+			return nil, err
 		}
+
+		recipe.AppName = aa.decideAppName(appName)     // for now…
+		recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
+		recipe.GradleBuilder = builder
 
 	case tool.BuildToolReactNative:
 		builder, appName, platform, err := tool.MakeReactNativeBuilder(item.AbsPath, item.RelPath, verbose, ios)
 
-		if err == nil {
-			recipe.AppName = aa.decideAppName(appName)     // for now…
-			recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
-			recipe.ReactNativeBuilder = builder
+		if err != nil {
+			return nil, err
 		}
+
+		recipe.AppName = aa.decideAppName(appName)     // for now…
+		recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
+		recipe.ReactNativeBuilder = builder
 
 	case tool.BuildToolXcode:
 		builder, appName, platform, err := tool.MakeXcodeBuilder(item.AbsPath, item.RelPath, verbose, ios)
 
-		if err == nil {
-			recipe.AppName = aa.decideAppName(appName)     // for now…
-			recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
-			recipe.XcodeBuilder = builder
+		if err != nil {
+			return nil, err
 		}
+
+		recipe.AppName = aa.decideAppName(appName)     // for now…
+		recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
+		recipe.XcodeBuilder = builder
 
 	default:
 		return nil, fmt.Errorf("Unknown build tool: %s", item.BuildTool.String())
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	return recipe, nil

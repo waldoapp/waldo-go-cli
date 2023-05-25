@@ -50,21 +50,19 @@ func (ad *AgentDownloader) Cleanup() {
 }
 
 func (ad *AgentDownloader) Download() (string, error) {
-	err := ad.prepareSource()
-
-	if err == nil {
-		err = ad.prepareTarget()
+	if err := ad.prepareSource(); err != nil {
+		return "", err
 	}
 
-	if err == nil {
-		err = ad.downloadAgentWithRetry()
+	if err := ad.prepareTarget(); err != nil {
+		return "", err
 	}
 
-	if err == nil {
-		return ad.agentPath, nil
+	if err := ad.downloadAgentWithRetry(); err != nil {
+		return "", err
 	}
 
-	return "", err
+	return ad.agentPath, nil
 }
 
 //-----------------------------------------------------------------------------
@@ -182,23 +180,23 @@ func (ad *AgentDownloader) prepareTarget() error {
 	ad.workingPath = ad.determineWorkingPath()
 	ad.agentPath = ad.determineAgentPath()
 
-	err := os.RemoveAll(ad.workingPath)
-
-	if err == nil {
-		err = os.MkdirAll(ad.workingPath, 0755)
+	if err := os.RemoveAll(ad.workingPath); err != nil {
+		return err
 	}
 
-	return err
+	return os.MkdirAll(ad.workingPath, 0755)
 }
 
 func (ad *AgentDownloader) saveResponseBody(rsp *http.Response, path string) error {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0775)
 
-	if err == nil {
-		defer file.Close()
-
-		_, err = io.Copy(file, rsp.Body)
+	if err != nil {
+		return err
 	}
+
+	defer file.Close()
+
+	_, err = io.Copy(file, rsp.Body)
 
 	return err
 }

@@ -1,6 +1,7 @@
 package data
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -40,17 +41,15 @@ func SetupUserData(cfg *Configuration) (*UserData, error) {
 		userPath: filepath.Join(dataPath, fileName)}
 
 	if lib.IsRegularFile(ud.userPath) {
-		err = ud.load()
-
-		if err == nil {
-			err = ud.migrate()
+		if err := ud.load(); err != nil {
+			return nil, err
 		}
 
-		if err == nil {
-			err = ud.Save()
+		if err := ud.migrate(); err != nil {
+			return nil, err
 		}
 
-		if err != nil {
+		if err := ud.Save(); err != nil {
 			return nil, err
 		}
 
@@ -68,9 +67,7 @@ func SetupUserData(cfg *Configuration) (*UserData, error) {
 
 	ud.MarkDirty()
 
-	err = ud.Save()
-
-	if err != nil {
+	if err := ud.Save(); err != nil {
 		return nil, err
 	}
 
@@ -96,9 +93,7 @@ func (ud *UserData) BasePath() string {
 }
 
 func (ud *UserData) FindMetadata(r *Recipe) (*tool.ArtifactMetadata, error) {
-	am := ud.MetadataMap[r.Name]
-
-	if am != nil {
+	if am := ud.MetadataMap[r.Name]; am != nil {
 		return am, nil
 	}
 
@@ -130,17 +125,19 @@ func (ud *UserData) Save() error {
 		return nil
 	}
 
-	data, err := lib.EncodeToJSON(ud)
+	data, err := json.Marshal(ud)
 
-	if err == nil {
-		err = os.WriteFile(ud.userPath, data, 0600)
+	if err != nil {
+		return err
 	}
 
-	if err == nil {
-		ud.dirty = false
+	if err := os.WriteFile(ud.userPath, data, 0600); err != nil {
+		return err
 	}
 
-	return err
+	ud.dirty = false
+
+	return nil
 }
 
 //-----------------------------------------------------------------------------
@@ -148,11 +145,11 @@ func (ud *UserData) Save() error {
 func (ud *UserData) load() error {
 	data, err := os.ReadFile(ud.userPath)
 
-	if err == nil {
-		err = lib.DecodeFromJSON(data, ud)
+	if err != nil {
+		return err
 	}
 
-	return err
+	return json.Unmarshal(data, ud)
 }
 
 func (ud *UserData) migrate() error {
