@@ -13,15 +13,18 @@ func NewTriggerCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "trigger [options]",
 		Short: "Trigger run on Waldo.",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args:  cobra.ExactArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),
 				cmd.ErrOrStderr())
 
-			return waldo.NewTriggerAction(
-				options,
-				ioStreams).Perform()
+			exitOnError(
+				cmd,
+				waldo.NewTriggerAction(
+					options,
+					ioStreams).Perform())
 		}}
 
 	cmd.Flags().StringVar(&options.GitCommit, "git_commit", "", "Hash of originating git commit.")

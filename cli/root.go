@@ -1,6 +1,12 @@
 package cli
 
 import (
+	"os"
+	"os/exec"
+
+	"github.com/waldoapp/waldo-go-cli/lib"
+	"github.com/waldoapp/waldo-go-cli/waldo/data"
+
 	"github.com/spf13/cobra"
 )
 
@@ -49,6 +55,23 @@ func NewRootCommand() *cobra.Command {
 }
 
 //-----------------------------------------------------------------------------
+
+func exitOnError(cmd *cobra.Command, err error) {
+	if err != nil {
+		ioStreams := lib.NewIOStreams(
+			cmd.InOrStdin(),
+			cmd.OutOrStdout(),
+			cmd.ErrOrStderr())
+
+		ioStreams.EmitError(data.CLIPrefix, err)
+
+		if ee, ok := err.(*exec.ExitError); ok {
+			os.Exit(ee.ExitCode())
+		}
+
+		os.Exit(1)
+	}
+}
 
 func fixup(cmd *cobra.Command) *cobra.Command {
 	cmd.DisableAutoGenTag = true

@@ -13,15 +13,18 @@ func NewSyncCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "sync [options] [<recipe-name>]",
 		Short: "Shorthand for waldo build followed by waldo upload.",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args:  cobra.ExactArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),
 				cmd.ErrOrStderr())
 
-			return waldo.NewSyncAction(
-				options,
-				ioStreams).Perform()
+			exitOnError(
+				cmd,
+				waldo.NewSyncAction(
+					options,
+					ioStreams).Perform())
 		}}
 
 	cmd.Flags().BoolVarP(&options.Clean, "clean", "c", false, "Remove cached artifacts before building.")

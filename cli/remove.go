@@ -14,7 +14,7 @@ func NewRemoveCommand() *cobra.Command {
 		Use:   "remove [options] <recipe-name>",
 		Short: "Remove a recipe.",
 		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Run: func(cmd *cobra.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),
@@ -22,9 +22,11 @@ func NewRemoveCommand() *cobra.Command {
 
 			options.RecipeName = args[0]
 
-			return waldo.NewRemoveAction(
-				options,
-				ioStreams).Perform()
+			exitOnError(
+				cmd,
+				waldo.NewRemoveAction(
+					options,
+					ioStreams).Perform())
 		}}
 
 	cmd.Flags().BoolVarP(&options.Verbose, "verbose", "v", false, "Display extra verbiage.")

@@ -14,7 +14,7 @@ func NewBuildCommand() *cobra.Command {
 		Use:   "build [options] [<recipe-name>]",
 		Short: "Build app from recipe.",
 		Args:  cobra.MaximumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Run: func(cmd *cobra.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),
@@ -24,9 +24,11 @@ func NewBuildCommand() *cobra.Command {
 				options.RecipeName = args[0]
 			}
 
-			return waldo.NewBuildAction(
-				options,
-				ioStreams).Perform()
+			exitOnError(
+				cmd,
+				waldo.NewBuildAction(
+					options,
+					ioStreams).Perform())
 		}}
 
 	cmd.Flags().BoolVarP(&options.Clean, "clean", "c", false, "Remove cached artifacts before building.")

@@ -14,7 +14,7 @@ func NewUploadCommand() *cobra.Command {
 		Use:   "upload [options] <build-path>",
 		Short: "Upload build to Waldo.",
 		Args:  cobra.MaximumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Run: func(cmd *cobra.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),
@@ -24,9 +24,11 @@ func NewUploadCommand() *cobra.Command {
 				options.Target = args[0]
 			}
 
-			return waldo.NewUploadAction(
-				options,
-				ioStreams).Perform()
+			exitOnError(
+				cmd,
+				waldo.NewUploadAction(
+					options,
+					ioStreams).Perform())
 		}}
 
 	cmd.Flags().StringVar(&options.GitBranch, "git_branch", "", "Branch name for originating git commit.")
