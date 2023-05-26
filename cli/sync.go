@@ -12,13 +12,17 @@ func NewSyncCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "sync [options] [<recipe-name>]",
-		Short: "Shorthand for waldo build followed by waldo upload.",
-		Args:  cobra.ExactArgs(0),
+		Short: "Build app from recipe and then upload to Waldo.",
+		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),
 				cmd.ErrOrStderr())
+
+			if len(args) > 0 {
+				options.RecipeName = args[0]
+			}
 
 			exitOnError(
 				cmd,

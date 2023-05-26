@@ -46,7 +46,7 @@ func NewRootCommand() *cobra.Command {
 	cmd.AddCommand(fixup(NewRemoveCommand()))
 	// cmd.AddCommand(fixup(NewRunCommand()))
 	// cmd.AddCommand(fixup(NewSessionCommand()))
-	// cmd.AddCommand(fixup(NewSyncCommand()))
+	cmd.AddCommand(fixup(NewSyncCommand()))
 	cmd.AddCommand(fixup(NewTriggerCommand()))
 	cmd.AddCommand(fixup(NewUploadCommand()))
 	cmd.AddCommand(fixup(NewVersionCommand()))
