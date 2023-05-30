@@ -1,6 +1,7 @@
 package tool
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -67,7 +68,7 @@ func MakeXcodeBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams)
 
 	xb := NewXcodeBuilder(project, scheme, configuration)
 
-	return xb, xi.name, "ios", nil
+	return xb, xi.name(), "ios", nil
 }
 
 func NewXcodeBuilder(fileName, scheme, configuration string) *XcodeBuilder {
@@ -341,21 +342,23 @@ func askScheme(schemes []string, ios *lib.IOStreams) string {
 	return schemes[idx]
 }
 
-func determineConfiguration(project string, xi *xcodeInfo, verbose bool, ios *lib.IOStreams) (string, error) {
-	if len(xi.configurations) > 1 {
+func determineConfiguration(project string, xi *XcodeInfo, verbose bool, ios *lib.IOStreams) (string, error) {
+	configs := xi.configurations()
+
+	if len(configs) > 1 {
 		if verbose {
 			ios.Printf("\nMore than one Xcode configuration found in %q\n", project)
 		}
 
-		return askConfiguration(xi.configurations, ios), nil
+		return askConfiguration(configs, ios), nil
 	}
 
-	if len(xi.configurations) == 1 {
+	if len(configs) == 1 {
 		if verbose {
-			ios.Printf("\nOnly one Xcode configuration found in %q: %q\n", project, xi.configurations[0])
+			ios.Printf("\nOnly one Xcode configuration found in %q: %q\n", project, configs[0])
 		}
 
-		return xi.configurations[0], nil
+		return configs[0], nil
 	}
 
 	if verbose {
@@ -389,21 +392,23 @@ func determineProject(projects []string, verbose bool, ios *lib.IOStreams) (stri
 	return "", errors.New("No Xcode workspaces or projects found")
 }
 
-func determineScheme(project string, xi *xcodeInfo, verbose bool, ios *lib.IOStreams) (string, error) {
-	if len(xi.schemes) > 1 {
+func determineScheme(project string, xi *XcodeInfo, verbose bool, ios *lib.IOStreams) (string, error) {
+	schemes := xi.schemes()
+
+	if len(schemes) > 1 {
 		if verbose {
 			ios.Printf("\nMore than one Xcode scheme found in %q\n", project)
 		}
 
-		return askScheme(xi.schemes, ios), nil
+		return askScheme(schemes, ios), nil
 	}
 
-	if len(xi.schemes) == 1 {
+	if len(schemes) == 1 {
 		if verbose {
-			ios.Printf("\nOnly one Xcode scheme found in %q: %q\n", project, xi.schemes[0])
+			ios.Printf("\nOnly one Xcode scheme found in %q: %q\n", project, schemes[0])
 		}
 
-		return xi.schemes[0], nil
+		return schemes[0], nil
 	}
 
 	return "", fmt.Errorf("No Xcode schemes found in %q", project)
@@ -411,16 +416,26 @@ func determineScheme(project string, xi *xcodeInfo, verbose bool, ios *lib.IOStr
 
 //-----------------------------------------------------------------------------
 
-type xcodeInfo struct {
-	name           string
-	configurations []string
-	schemes        []string
+type XcodeInfo struct {
+	Project   *ProjectInfo   `json:"project"`
+	Workspace *WorkspaceInfo `json:"workspace"`
+}
+
+type ProjectInfo struct {
+	Name           string   `json:"name"`
+	Schemes        []string `json:"schemes"`
+	Configurations []string `json:"configurations"`
+}
+
+type WorkspaceInfo struct {
+	Name    string   `json:"name"`
+	Schemes []string `json:"schemes"`
 }
 
 //-----------------------------------------------------------------------------
 
-func detectXcodeInfo(basePath, fileName string) (*xcodeInfo, error) {
-	xi := &xcodeInfo{}
+func detectXcodeInfo(basePath, fileName string) (*XcodeInfo, error) {
+	xi := &XcodeInfo{}
 
 	err := xi.populate(basePath, fileName)
 
@@ -433,7 +448,27 @@ func detectXcodeInfo(basePath, fileName string) (*xcodeInfo, error) {
 
 //-----------------------------------------------------------------------------
 
-func (xi *xcodeInfo) populate(basePath, fileName string) error {
+func (xi *XcodeInfo) configurations() []string {
+	if xi.Project != nil {
+		return xi.Project.Configurations
+	}
+
+	return nil
+}
+
+func (xi *XcodeInfo) name() string {
+	if xi.Project != nil {
+		return xi.Project.Name
+	}
+
+	if xi.Workspace != nil {
+		return xi.Workspace.Name
+	}
+
+	return ""
+}
+
+func (xi *XcodeInfo) populate(basePath, fileName string) error {
 	if strings.HasSuffix(fileName, ".xcworkspace") {
 		return xi.populateFromWorkspace(basePath, fileName)
 	}
@@ -441,7 +476,7 @@ func (xi *xcodeInfo) populate(basePath, fileName string) error {
 	return xi.populateFromProject(basePath, fileName)
 }
 
-func (xi *xcodeInfo) populateFromProject(basePath, project string) error {
+func (xi *XcodeInfo) populateFromProject(basePath, project string) error {
 	task := lib.NewTask("xcodebuild", "-list", "-json", "-project", project)
 
 	task.Cwd = basePath
@@ -452,24 +487,10 @@ func (xi *xcodeInfo) populateFromProject(basePath, project string) error {
 		return err
 	}
 
-	rawJson := lib.ParseTopLevelJsonObject([]byte(jsonString))
-
-	if rawJson != nil {
-		project := lib.ParseJsonObject(rawJson["project"])
-
-		if project != nil {
-			xi.configurations = lib.ParseJsonStringArray(project["configurations"])
-			xi.name = lib.ParseJsonString(project["name"])
-			xi.schemes = lib.ParseJsonStringArray(project["schemes"])
-
-			return nil
-		}
-	}
-
-	return nil
+	return json.Unmarshal([]byte(jsonString), xi)
 }
 
-func (xi *xcodeInfo) populateFromWorkspace(basePath, workspace string) error {
+func (xi *XcodeInfo) populateFromWorkspace(basePath, workspace string) error {
 	task := lib.NewTask("xcodebuild", "-list", "-json", "-workspace", workspace)
 
 	task.Cwd = basePath
@@ -480,17 +501,16 @@ func (xi *xcodeInfo) populateFromWorkspace(basePath, workspace string) error {
 		return err
 	}
 
-	rawJson := lib.ParseTopLevelJsonObject([]byte(jsonString))
+	return json.Unmarshal([]byte(jsonString), xi)
+}
 
-	if rawJson != nil {
-		workspace := lib.ParseJsonObject(rawJson["workspace"])
+func (xi *XcodeInfo) schemes() []string {
+	if xi.Project != nil {
+		return xi.Project.Schemes
+	}
 
-		if workspace != nil {
-			xi.name = lib.ParseJsonString(workspace["name"])
-			xi.schemes = lib.ParseJsonStringArray(workspace["schemes"])
-
-			return nil
-		}
+	if xi.Workspace != nil {
+		return xi.Workspace.Schemes
 	}
 
 	return nil
