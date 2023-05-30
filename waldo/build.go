@@ -41,7 +41,7 @@ func (ba *BuildAction) Perform() error {
 		}
 	}
 
-	cfg, _, err := data.SetupConfiguration(false)
+	cfg, _, err := data.SetupConfiguration(data.CreateKindNever)
 
 	if err != nil {
 		return err
@@ -67,15 +67,14 @@ func (ba *BuildAction) Perform() error {
 func (ba *BuildAction) buildRecipe(cfg *data.Configuration, r *data.Recipe) error {
 	ba.ioStreams.Printf("\nBuilding recipe %q…\n", r.Name)
 
-	ud, err := data.SetupUserData(cfg)
-
-	if err != nil {
-		return err
-	}
+	ud := data.SetupUserData(cfg)
 
 	absBasePath := filepath.Join(cfg.BasePath(), r.BasePath)
 
-	var am *tool.ArtifactMetadata
+	var (
+		am  *tool.ArtifactMetadata
+		err error
+	)
 
 	switch r.BuildTool() {
 	case tool.BuildToolCustom:
@@ -104,5 +103,9 @@ func (ba *BuildAction) buildRecipe(cfg *data.Configuration, r *data.Recipe) erro
 		return err
 	}
 
-	return ud.AddMetadata(r, am)
+	if ud != nil {
+		ud.AddMetadata(r, am)
+	}
+
+	return nil
 }

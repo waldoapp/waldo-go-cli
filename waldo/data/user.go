@@ -27,11 +27,11 @@ type UserData struct {
 
 //-----------------------------------------------------------------------------
 
-func SetupUserData(cfg *Configuration) (*UserData, error) {
-	dataPath, err := FindUserSpecificPath()
+func SetupUserData(cfg *Configuration) *UserData {
+	dataPath, err := makeUserSpecificDataPath()
 
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
 	fileName := cfg.UniqueID + ".json"
@@ -42,36 +42,28 @@ func SetupUserData(cfg *Configuration) (*UserData, error) {
 
 	if lib.IsRegularFile(ud.userPath) {
 		if err := ud.load(); err != nil {
-			return nil, err
+			return nil
 		}
 
 		if err := ud.migrate(); err != nil {
-			return nil, err
+			return nil
+		}
+	} else {
+		if err := os.MkdirAll(dataPath, 0700); err != nil {
+			return nil
 		}
 
-		if err := ud.Save(); err != nil {
-			return nil, err
-		}
+		ud.FormatVersion = udFormatVersion
+		ud.MetadataMap = make(map[string]*tool.ArtifactMetadata)
 
-		return ud, nil
+		ud.MarkDirty()
 	}
-
-	err = os.MkdirAll(dataPath, 0700)
-
-	if err != nil {
-		return nil, err
-	}
-
-	ud.FormatVersion = udFormatVersion
-	ud.MetadataMap = make(map[string]*tool.ArtifactMetadata)
-
-	ud.MarkDirty()
 
 	if err := ud.Save(); err != nil {
-		return nil, err
+		return nil
 	}
 
-	return ud, nil
+	return ud
 }
 
 //-----------------------------------------------------------------------------
@@ -138,6 +130,18 @@ func (ud *UserData) Save() error {
 	ud.dirty = false
 
 	return nil
+}
+
+//-----------------------------------------------------------------------------
+
+func makeUserSpecificDataPath() (string, error) {
+	path, err := os.UserConfigDir()
+
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(path, "waldo"), nil
 }
 
 //-----------------------------------------------------------------------------

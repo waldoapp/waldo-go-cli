@@ -50,10 +50,14 @@ func (aa *AddAction) Perform() error {
 		}
 	}
 
-	cfg, _, err := data.SetupConfiguration(false)
+	cfg, created, err := data.SetupConfiguration(data.CreateKindIfNeeded)
 
 	if err != nil {
 		return err
+	}
+
+	if created {
+		aa.ioStreams.Printf("\nInitialized empty Waldo configuration at %q\n", cfg.Path())
 	}
 
 	if recipe, _ := cfg.FindRecipe(aa.options.RecipeName); recipe != nil {

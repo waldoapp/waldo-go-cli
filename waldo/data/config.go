@@ -17,6 +17,16 @@ const (
 
 //-----------------------------------------------------------------------------
 
+type CreateKind int
+
+const (
+	CreateKindNever CreateKind = iota
+	CreateKindAlways
+	CreateKindIfNeeded
+)
+
+//-----------------------------------------------------------------------------
+
 type Configuration struct {
 	UniqueID      string    `yaml:"unique_id"`
 	FormatVersion int       `yaml:"format_version"`
@@ -29,22 +39,46 @@ type Configuration struct {
 
 //-----------------------------------------------------------------------------
 
-func SetupConfiguration(create bool) (*Configuration, bool, error) {
-	dataPath, err := FindRepoSpecificPath() // /path/to/.waldo
-
-	if err != nil {
+func SetupConfiguration(ck CreateKind) (*Configuration, bool, error) {
+	if err := checkCWD(); err != nil {
 		return nil, false, err
 	}
 
-	cwd, err := os.Getwd()
+	var (
+		dataPath string
+		create   bool
+		err      error
+	)
 
-	if err != nil {
-		return nil, false, err
-	}
+	switch ck {
+	case CreateKindAlways:
+		dataPath, err = makeSharedDataPath()
 
-	if strings.HasSuffix(cwd, "/.waldo") ||
-		strings.Contains(cwd, "/.waldo/") {
-		return nil, false, errors.New("This operation must be run outside of the .waldo tree")
+		if err != nil {
+			return nil, false, err
+		}
+
+		create = true
+
+	case CreateKindIfNeeded:
+		dataPath = findSharedDataPath()
+
+		if len(dataPath) == 0 {
+			dataPath, err = makeSharedDataPath()
+
+			if err != nil {
+				return nil, false, err
+			}
+
+			create = true
+		}
+
+	default: // incl. CreateKindNever
+		dataPath = findSharedDataPath()
+
+		if len(dataPath) == 0 {
+			return nil, false, errors.New("Waldo configuration not found")
+		}
 	}
 
 	cfg := &Configuration{
@@ -175,6 +209,56 @@ func (cfg *Configuration) Save() error {
 	cfg.dirty = false
 
 	return nil
+}
+
+//-----------------------------------------------------------------------------
+
+func checkCWD() error {
+	cwd, err := os.Getwd()
+
+	if err != nil {
+		return err
+	}
+
+	if strings.HasSuffix(cwd, "/.waldo") || strings.Contains(cwd, "/.waldo/") {
+		return errors.New("This operation must be run outside of the .waldo directory")
+	}
+
+	return nil
+}
+
+func findSharedDataPath() string {
+	dirPath, err := os.Getwd()
+
+	if err != nil {
+		return ""
+	}
+
+	for {
+		dataPath := filepath.Join(dirPath, ".waldo")
+
+		if lib.IsDirectory(dataPath) {
+			return dataPath
+		}
+
+		parentPath := filepath.Dir(dirPath)
+
+		if parentPath == dirPath { // i.e., "/" == "/" -- not sure if this will work on Windows
+			return ""
+		}
+
+		dirPath = parentPath
+	}
+}
+
+func makeSharedDataPath() (string, error) {
+	dirPath, err := os.Getwd()
+
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(dirPath, ".waldo"), nil
 }
 
 //-----------------------------------------------------------------------------

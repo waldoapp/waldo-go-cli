@@ -7,9 +7,9 @@ This project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
-## [3.0.0-rc.1] - 2023-05-25
+## [3.0.0] - 2023-05-30
 
-Initial public beta release.
+Initial public release of enhanced functionality.
 
 ### Added
 
@@ -19,6 +19,7 @@ Initial public beta release.
   - `init` — Create an empty Waldo configuration.
   - `list` — List defined recipes.
   - `remove` — Remove a recipe.
+  - `sync` — Build app from recipe and then upload to Waldo.
   - `version` — Display version information.
 
 ### Changed
@@ -99,8 +100,8 @@ Initial public beta release.
 
 Initial public release.
 
-[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/3.0.0-rc.1...HEAD
-[3.0.0-rc.1]:	https://github.com/waldoapp/waldo-go-cli/compare/2.0.5...3.0.0-rc.1
+[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/3.0.0...HEAD
+[3.0.0]:		https://github.com/waldoapp/waldo-go-cli/compare/2.0.5...3.0.0
 [2.0.5]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.4...2.0.5
 [2.0.4]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.3...2.0.4
 [2.0.3]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.2...2.0.3

@@ -46,7 +46,7 @@ func (gb *GradleBuilder) Summarize() string {
 			summary += ", "
 		}
 
-		summary += "module: " + gb.Module
+		summary += "module=" + gb.Module
 
 	}
 
@@ -55,7 +55,7 @@ func (gb *GradleBuilder) Summarize() string {
 			summary += ", "
 		}
 
-		summary += "variant: " + gb.Variant
+		summary += "variant=" + gb.Variant
 	}
 
 	return summary

@@ -3,7 +3,7 @@ package tool
 type BuildTool int
 
 const (
-	BuildToolCustom BuildTool = iota // MUST be first
+	BuildToolCustom BuildTool = iota
 	BuildToolExpo
 	BuildToolFlutter
 	BuildToolGradle

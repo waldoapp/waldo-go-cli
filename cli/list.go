@@ -28,13 +28,15 @@ func NewListCommand() *cobra.Command {
 					ioStreams).Perform())
 		}}
 
-	cmd.Flags().BoolVarP(&options.LongFormat, "long", "l", false, "List recipes in long format.")
+	cmd.Flags().BoolVarP(&options.LongFormat, "long", "l", false, "Display recipes in long format.")
+	cmd.Flags().BoolVarP(&options.UserInfo, "user", "u", false, "Display user-specific info for each recipe.")
 
 	cmd.SetUsageTemplate(`
 USAGE: waldo list [options]
 
 OPTIONS:
-  -l, --long   List recipes in long format.
+  -l, --long   Display recipes in long format.
+  -u, --user   Display user-specific info for each recipe.
 `)
 
 	return cmd
