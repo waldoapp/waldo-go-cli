@@ -138,7 +138,7 @@ func (xb *XcodeBuilder) Summarize() string {
 			summary += ", "
 		}
 
-		summary += "workspace: " + xb.Workspace
+		summary += "workspace=" + xb.Workspace
 	}
 
 	if len(xb.Project) > 0 {
@@ -146,7 +146,7 @@ func (xb *XcodeBuilder) Summarize() string {
 			summary += ", "
 		}
 
-		summary += "project: " + xb.Project
+		summary += "project=" + xb.Project
 	}
 
 	if len(xb.Scheme) > 0 {
@@ -154,7 +154,7 @@ func (xb *XcodeBuilder) Summarize() string {
 			summary += ", "
 		}
 
-		summary += "scheme: " + xb.Scheme
+		summary += "scheme=" + xb.Scheme
 	}
 
 	if len(xb.Configuration) > 0 {
@@ -162,7 +162,7 @@ func (xb *XcodeBuilder) Summarize() string {
 			summary += ", "
 		}
 
-		summary += "configuration: " + xb.Configuration
+		summary += "configuration=" + xb.Configuration
 	}
 
 	return summary

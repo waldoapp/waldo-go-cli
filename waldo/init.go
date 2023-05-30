@@ -29,7 +29,7 @@ func NewInitAction(options *InitOptions, ioStreams *lib.IOStreams) *InitAction {
 //-----------------------------------------------------------------------------
 
 func (ia *InitAction) Perform() error {
-	cfg, created, err := data.SetupConfiguration(true)
+	cfg, created, err := data.SetupConfiguration(data.CreateKindAlways)
 
 	if err != nil {
 		return err

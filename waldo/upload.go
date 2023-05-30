@@ -110,15 +110,15 @@ func (ua *UploadAction) detectCIMode() bool {
 }
 
 func (ua *UploadAction) detectPersistedData() (*data.UserData, *data.Recipe) {
-	cfg, _, err := data.SetupConfiguration(false)
+	cfg, _, err := data.SetupConfiguration(data.CreateKindNever)
 
 	if err != nil {
 		return nil, nil
 	}
 
-	ud, err := data.SetupUserData(cfg)
+	ud := data.SetupUserData(cfg)
 
-	if err != nil {
+	if ud == nil {
 		return nil, nil
 	}
 

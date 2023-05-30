@@ -34,7 +34,7 @@ func (ra *RemoveAction) Perform() error {
 		return err
 	}
 
-	cfg, _, err := data.SetupConfiguration(false)
+	cfg, _, err := data.SetupConfiguration(data.CreateKindNever)
 
 	if err != nil {
 		return err
