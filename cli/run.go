@@ -13,15 +13,17 @@ func NewRunCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "run [options]",
 		Short: "Execute one or more locally-defined scripts against an uploaded build.",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Run: func(cmd *cobra.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),
 				cmd.ErrOrStderr())
 
-			return waldo.NewRunAction(
-				options,
-				ioStreams).Perform()
+			exitOnError(
+				cmd,
+				waldo.NewRunAction(
+					options,
+					ioStreams).Perform())
 		}}
 
 	cmd.Flags().BoolVarP(&options.Interactive, "interactive", "i", false, "Run interactively.")

@@ -2,7 +2,6 @@ package waldo
 
 import (
 	"os"
-	"os/exec"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo/data"
@@ -51,9 +50,7 @@ func (ta *TriggerAction) Perform() error {
 
 	defer ad.Cleanup()
 
-	ta.execAgent(path, os.Args[1:])
-
-	return nil
+	return ta.executeAgent(path, os.Args[1:])
 }
 
 //-----------------------------------------------------------------------------
@@ -93,15 +90,11 @@ func (ta *TriggerAction) enrichEnvironment() lib.Environment {
 	return env
 }
 
-func (ta *TriggerAction) execAgent(path string, args []string) {
+func (ta *TriggerAction) executeAgent(path string, args []string) error {
 	task := lib.NewTask(path, args...)
 
 	task.Env = ta.enrichEnvironment()
 	task.IOStreams = ta.ioStreams
 
-	err := task.Execute()
-
-	if ee, ok := err.(*exec.ExitError); ok {
-		os.Exit(ee.ExitCode())
-	}
+	return task.Execute()
 }

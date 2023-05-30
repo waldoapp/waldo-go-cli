@@ -13,15 +13,18 @@ func NewInitCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init [options]",
 		Short: "Create an empty Waldo configuration.",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args:  cobra.ExactArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),
 				cmd.ErrOrStderr())
 
-			return waldo.NewInitAction(
-				options,
-				ioStreams).Perform()
+			exitOnError(
+				cmd,
+				waldo.NewInitAction(
+					options,
+					ioStreams).Perform())
 		}}
 
 	cmd.Flags().BoolVarP(&options.Verbose, "verbose", "v", false, "Display extra verbiage.")

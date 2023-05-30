@@ -13,15 +13,18 @@ func NewSessionCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "session [options]",
 		Short: "Launch Waldo Session against the most recent build uploaded.",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args:  cobra.ExactArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),
 				cmd.ErrOrStderr())
 
-			return waldo.NewSessionAction(
-				options,
-				ioStreams).Perform()
+			exitOnError(
+				cmd,
+				waldo.NewSessionAction(
+					options,
+					ioStreams).Perform())
 		}}
 
 	cmd.Flags().StringVarP(&options.Language, "language", "l", "", "The device language.")

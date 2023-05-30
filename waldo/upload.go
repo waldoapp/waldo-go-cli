@@ -3,7 +3,6 @@ package waldo
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -66,10 +65,12 @@ func (ua *UploadAction) Perform() error {
 		}
 	}
 
-	assetVersion := ua.detectAssetVersion()
-	verbose := ua.detectVerbose()
-
-	ad := tool.NewAgentDownloader(assetVersion, data.CLIPrefix, verbose, ua.ioStreams, ua.runtimeInfo)
+	ad := tool.NewAgentDownloader(
+		ua.detectAssetVersion(),
+		data.CLIPrefix,
+		ua.detectVerbose(),
+		ua.ioStreams,
+		ua.runtimeInfo)
 
 	path, err := ad.Download()
 
@@ -79,19 +80,12 @@ func (ua *UploadAction) Perform() error {
 
 	defer ad.Cleanup()
 
-	ua.execAgent(path, args)
+	if err := ua.executeAgent(path, args); err != nil {
+		return err
+	}
 
-	if ciMode && ud != nil && recipe != nil {
-		am, _ := ud.FindMetadata(recipe)
-
-		if am != nil {
-			am.UploadTime = time.Now().UTC()
-			am.UploadToken = uploadToken
-
-			ud.MarkDirty()
-
-			ud.Save() // don’t care if save fails
-		}
+	if !ciMode && ud != nil && recipe != nil {
+		ua.updateMetadata(ud, recipe, uploadToken)
 	}
 
 	return nil
@@ -164,17 +158,13 @@ func (ua *UploadAction) enrichEnvironment() lib.Environment {
 	return env
 }
 
-func (ua *UploadAction) execAgent(path string, args []string) {
+func (ua *UploadAction) executeAgent(path string, args []string) error {
 	task := lib.NewTask(path, args...)
 
 	task.Env = ua.enrichEnvironment()
 	task.IOStreams = ua.ioStreams
 
-	err := task.Execute()
-
-	if ee, ok := err.(*exec.ExitError); ok {
-		os.Exit(ee.ExitCode())
-	}
+	return task.Execute()
 }
 
 func (ua *UploadAction) makeArgs(buildPath, uploadToken string) []string {
@@ -244,4 +234,17 @@ func (ua *UploadAction) mungeArgs(ud *data.UserData, recipe *data.Recipe) ([]str
 	}
 
 	return ua.makeArgs(am.BuildPath, uploadToken), uploadToken, nil
+}
+
+func (ua *UploadAction) updateMetadata(ud *data.UserData, recipe *data.Recipe, uploadToken string) {
+	am, _ := ud.FindMetadata(recipe)
+
+	if am != nil {
+		am.UploadTime = time.Now().UTC()
+		am.UploadToken = uploadToken
+
+		ud.MarkDirty()
+
+		ud.Save() // don’t care if save fails
+	}
 }

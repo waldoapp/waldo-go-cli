@@ -14,7 +14,7 @@ func NewAddCommand() *cobra.Command {
 		Use:   "add [options] <recipe-name>",
 		Short: "Add a recipe describing how to build and upload a specific variant of the app.",
 		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Run: func(cmd *cobra.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),
@@ -22,9 +22,11 @@ func NewAddCommand() *cobra.Command {
 
 			options.RecipeName = args[0]
 
-			return waldo.NewAddAction(
-				options,
-				ioStreams).Perform()
+			exitOnError(
+				cmd,
+				waldo.NewAddAction(
+					options,
+					ioStreams).Perform())
 		}}
 
 	cmd.Flags().StringVarP(&options.AppName, "app_name", "a", "", "The name associated with your app.")

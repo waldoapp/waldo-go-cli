@@ -14,15 +14,18 @@ func NewListCommand() *cobra.Command {
 		Use:     "list [options]",
 		Short:   "List defined recipes.",
 		Aliases: []string{"ls"},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args:    cobra.ExactArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),
 				cmd.ErrOrStderr())
 
-			return waldo.NewListAction(
-				options,
-				ioStreams).Perform()
+			exitOnError(
+				cmd,
+				waldo.NewListAction(
+					options,
+					ioStreams).Perform())
 		}}
 
 	cmd.Flags().BoolVarP(&options.LongFormat, "long", "l", false, "List recipes in long format.")

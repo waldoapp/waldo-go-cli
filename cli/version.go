@@ -13,15 +13,18 @@ func NewVersionCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version [options]",
 		Short: "Display version information.",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Args:  cobra.ExactArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),
 				cmd.ErrOrStderr())
 
-			return waldo.NewVersionAction(
-				options,
-				ioStreams).Perform()
+			exitOnError(
+				cmd,
+				waldo.NewVersionAction(
+					options,
+					ioStreams).Perform())
 		}}
 
 	cmd.SetUsageTemplate(`
