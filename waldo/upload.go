@@ -8,7 +8,7 @@ import (
 
 	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo/data"
-	"github.com/waldoapp/waldo-go-cli/waldo/data/tool"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool"
 )
 
 type UploadOptions struct {

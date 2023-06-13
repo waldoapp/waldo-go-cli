@@ -72,11 +72,11 @@ func (ios *IOStreams) PromptReader() *PromptReader {
 
 //-----------------------------------------------------------------------------
 
-func (pr *PromptReader) ReadChoose(hdr string, choices []string, prompt string, defValue int, canDefault bool) (int, bool) {
+func (pr *PromptReader) ReadChoose(hdr string, choices []string, prompt string) int {
 	minChoice := 1
 	maxChoice := len(choices)
 
-	fmtPrompt := pr.formatChoosePrompt(prompt, minChoice, maxChoice, defValue, canDefault)
+	fmtPrompt := pr.formatChoosePrompt(prompt, minChoice, maxChoice)
 
 	for {
 		if len(hdr) > 0 {
@@ -103,22 +103,18 @@ func (pr *PromptReader) ReadChoose(hdr string, choices []string, prompt string, 
 			}
 
 			if choice >= minChoice && choice <= maxChoice {
-				return choice - 1, false
+				return choice - 1
 			}
 
 			continue
 		}
-
-		if canDefault {
-			return defValue, true
-		}
 	}
 
-	return 0, false
+	return 0
 }
 
-func (pr *PromptReader) ReadYN(prompt string, defValue, canDefault bool) (bool, bool) {
-	fmtPrompt := pr.formatYNPrompt(prompt, defValue, canDefault)
+func (pr *PromptReader) ReadYN(prompt string) bool {
+	fmtPrompt := pr.formatYNPrompt(prompt)
 
 	for {
 		value, err := pr.promptReadTrimmedString(fmtPrompt)
@@ -130,44 +126,28 @@ func (pr *PromptReader) ReadYN(prompt string, defValue, canDefault bool) (bool, 
 		if len(value) > 0 {
 			switch strings.ToLower(value) {
 			case "n", "no":
-				return false, false
+				return false
 
 			case "y", "yes":
-				return true, false
+				return true
 
 			default:
 				continue
 			}
 		}
-
-		if canDefault {
-			return defValue, true
-		}
 	}
 
-	return false, false
+	return false
 }
 
 //-----------------------------------------------------------------------------
 
-func (pr *PromptReader) formatChoosePrompt(prompt string, minChoice, maxChoice, defValue int, canDefault bool) string {
-	if !canDefault {
-		return fmt.Sprintf("\n%s (%d..%d): ", prompt, minChoice, maxChoice)
-	}
-
-	return fmt.Sprintf("\n%s (%d..%d): [%d] ", prompt, minChoice, maxChoice, defValue+1)
+func (pr *PromptReader) formatChoosePrompt(prompt string, minChoice, maxChoice int) string {
+	return fmt.Sprintf("\n%s (%d..%d): ", prompt, minChoice, maxChoice)
 }
 
-func (pr *PromptReader) formatYNPrompt(prompt string, defValue, canDefault bool) string {
-	if !canDefault {
-		return fmt.Sprintf("\n%s (Y/N)? ", prompt)
-	}
-
-	if defValue {
-		return fmt.Sprintf("\n%s (Y/N)? [Y] ", prompt)
-	}
-
-	return fmt.Sprintf("\n%s (Y/N)? [N] ", prompt)
+func (pr *PromptReader) formatYNPrompt(prompt string) string {
+	return fmt.Sprintf("\n%s (Y/N)? ", prompt)
 }
 
 func (pr *PromptReader) promptReadTrimmedString(prompt string) (string, error) {

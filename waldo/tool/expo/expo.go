@@ -1,4 +1,4 @@
-package tool
+package expo
 
 import (
 	"errors"
@@ -20,8 +20,8 @@ func IsPossibleExpoContainer(path string) bool {
 	return false
 }
 
-func MakeExpoBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*ExpoBuilder, string, string, error) {
-	return nil, "", "", errors.New("Don’t know how to make an Expo recipe")
+func MakeExpoBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*ExpoBuilder, string, lib.Platform, error) {
+	return nil, "", lib.PlatformUnknown, errors.New("Don’t know how to make an Expo recipe")
 }
 
 func NewExpoBuilder() *ExpoBuilder {
@@ -30,8 +30,8 @@ func NewExpoBuilder() *ExpoBuilder {
 
 //-----------------------------------------------------------------------------
 
-func (eb *ExpoBuilder) Build(basePath string, clean, verbose bool, ios *lib.IOStreams) (*ArtifactMetadata, error) {
-	return nil, fmt.Errorf("Don’t know how to build this app with Expo!")
+func (eb *ExpoBuilder) Build(basePath string, platform lib.Platform, clean, verbose bool, ios *lib.IOStreams) (string, error) {
+	return "", fmt.Errorf("Don’t know how to build this app with Expo!")
 }
 
 func (eb *ExpoBuilder) Summarize() string {

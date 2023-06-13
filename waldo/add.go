@@ -3,11 +3,18 @@ package waldo
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"sort"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo/data"
-	"github.com/waldoapp/waldo-go-cli/waldo/data/tool"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool/custom"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool/expo"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool/flutter"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool/gradle"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool/reactnative"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool/xcode"
 )
 
 type AddOptions struct {
@@ -76,6 +83,10 @@ func (aa *AddAction) Perform() error {
 		return err
 	}
 
+	if !aa.confirmRecipe(cfg.BasePath(), recipe) {
+		return fmt.Errorf("Recipe canceled: %q", aa.options.RecipeName)
+	}
+
 	if err = cfg.AddRecipe(recipe); err != nil {
 		return err
 	}
@@ -106,14 +117,50 @@ func (aa *AddAction) askBuildPath(items []*tool.FoundBuildPath) *tool.FoundBuild
 		return fmt.Sprintf("%-*s  (%s)", maxLen, item.RelPath, item.BuildTool.String())
 	})
 
-	idx, _ := aa.promptReader.ReadChoose(
+	idx := aa.promptReader.ReadChoose(
 		"Available build paths",
 		choices,
-		"Choose a build path",
-		0,
-		false)
+		"Choose a build path")
 
 	return items[idx]
+}
+
+func (aa *AddAction) confirmRecipe(basePath string, recipe *data.Recipe) bool {
+	aa.ioStreams.Printf("\nNew recipe %q:\n\n", recipe.Name)
+
+	appName := recipe.AppName
+
+	if len(appName) == 0 {
+		appName = "(unknown)"
+	}
+
+	buildTool := recipe.BuildTool().String()
+	buildRoot := "(none)"
+	uploadToken := "(none)"
+	buildOptions := "(none)"
+
+	absPath := filepath.Join(basePath, recipe.BasePath)
+
+	if relPath := lib.MakeRelativeToCWD(absPath); len(relPath) > 0 {
+		buildRoot = relPath
+	}
+
+	if token := recipe.UploadToken; len(token) > 0 {
+		uploadToken = token
+	}
+
+	if summary := recipe.Summarize(); len(summary) > 0 {
+		buildOptions = summary
+	}
+
+	aa.ioStreams.Printf("  Platform:      %s\n", recipe.Platform)
+	aa.ioStreams.Printf("  App name:      %s\n", appName)
+	aa.ioStreams.Printf("  Build tool:    %s\n", buildTool)
+	aa.ioStreams.Printf("  Build root:    %s\n", buildRoot)
+	aa.ioStreams.Printf("  Upload token:  %s\n", uploadToken)
+	aa.ioStreams.Printf("  Build options: %s\n", buildOptions)
+
+	return aa.promptReader.ReadYN(fmt.Sprintf("Add recipe %q", recipe.Name))
 }
 
 func (aa *AddAction) decideAppName(appName string) string {
@@ -122,16 +169,6 @@ func (aa *AddAction) decideAppName(appName string) string {
 	}
 
 	return appName
-}
-
-func (aa *AddAction) decideBuildFlavor(platform string) data.BuildFlavor {
-	flavor := data.ParseBuildFlavor(platform)
-
-	if flavor != data.BuildFlavorUnknown {
-		return flavor
-	}
-
-	return data.ParseBuildFlavor(platform)
 }
 
 func (aa *AddAction) findBuildPaths(rootPath string) ([]*tool.FoundBuildPath, error) {
@@ -154,8 +191,14 @@ func (aa *AddAction) makeRecipe(cfg *data.Configuration, items []*tool.FoundBuil
 	var item *tool.FoundBuildPath
 
 	if len(items) > 1 {
+		if aa.options.Verbose {
+			aa.ioStreams.Printf("\nMore than one build path found\n")
+		}
+
 		item = aa.askBuildPath(items)
 	} else {
+		aa.ioStreams.Printf("\nOnly one build path found: %q\n", items[0].RelPath)
+
 		item = items[0]
 	}
 
@@ -169,69 +212,69 @@ func (aa *AddAction) makeRecipe(cfg *data.Configuration, items []*tool.FoundBuil
 
 	switch item.BuildTool {
 	case tool.BuildToolCustom:
-		builder, appName, platform, err := tool.MakeCustomBuilder(item.AbsPath, item.RelPath, verbose, ios)
+		builder, appName, platform, err := custom.MakeCustomBuilder(item.AbsPath, item.RelPath, verbose, ios)
 
 		if err != nil {
 			return nil, err
 		}
 
-		recipe.AppName = aa.decideAppName(appName)     // for now…
-		recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
+		recipe.AppName = aa.decideAppName(appName) // for now…
+		recipe.Platform = platform
 		recipe.CustomBuilder = builder
 
 	case tool.BuildToolExpo:
-		builder, appName, platform, err := tool.MakeExpoBuilder(item.AbsPath, item.RelPath, verbose, ios)
+		builder, appName, platform, err := expo.MakeExpoBuilder(item.AbsPath, item.RelPath, verbose, ios)
 
 		if err != nil {
 			return nil, err
 		}
 
-		recipe.AppName = aa.decideAppName(appName)     // for now…
-		recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
+		recipe.AppName = aa.decideAppName(appName) // for now…
+		recipe.Platform = platform
 		recipe.ExpoBuilder = builder
 
 	case tool.BuildToolFlutter:
-		builder, appName, platform, err := tool.MakeFlutterBuilder(item.AbsPath, item.RelPath, verbose, ios)
+		builder, appName, platform, err := flutter.MakeFlutterBuilder(item.AbsPath, item.RelPath, verbose, ios)
 
 		if err != nil {
 			return nil, err
 		}
 
-		recipe.AppName = aa.decideAppName(appName)     // for now…
-		recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
+		recipe.AppName = aa.decideAppName(appName) // for now…
+		recipe.Platform = platform
 		recipe.FlutterBuilder = builder
 
 	case tool.BuildToolGradle:
-		builder, appName, platform, err := tool.MakeGradleBuilder(item.AbsPath, item.RelPath, verbose, ios)
+		builder, appName, platform, err := gradle.MakeGradleBuilder(item.AbsPath, item.RelPath, verbose, ios)
 
 		if err != nil {
 			return nil, err
 		}
 
-		recipe.AppName = aa.decideAppName(appName)     // for now…
-		recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
+		recipe.AppName = aa.decideAppName(appName) // for now…
+		recipe.Platform = platform
 		recipe.GradleBuilder = builder
 
 	case tool.BuildToolReactNative:
-		builder, appName, platform, err := tool.MakeReactNativeBuilder(item.AbsPath, item.RelPath, verbose, ios)
+		builder, appName, platform, err := reactnative.MakeReactNativeBuilder(item.AbsPath, item.RelPath, verbose, ios)
 
 		if err != nil {
 			return nil, err
 		}
 
-		recipe.AppName = aa.decideAppName(appName)     // for now…
-		recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
+		recipe.AppName = aa.decideAppName(appName) // for now…
+		recipe.Platform = platform
 		recipe.ReactNativeBuilder = builder
 
 	case tool.BuildToolXcode:
-		builder, appName, platform, err := tool.MakeXcodeBuilder(item.AbsPath, item.RelPath, verbose, ios)
+		builder, appName, platform, err := xcode.MakeXcodeBuilder(item.AbsPath, item.RelPath, verbose, ios)
 
 		if err != nil {
 			return nil, err
 		}
 
-		recipe.AppName = aa.decideAppName(appName)     // for now…
-		recipe.Flavor = aa.decideBuildFlavor(platform) // ditto…
+		recipe.AppName = aa.decideAppName(appName) // for now…
+		recipe.Platform = platform
 		recipe.XcodeBuilder = builder
 
 	default:

@@ -7,6 +7,7 @@ const (
 	BuildToolExpo
 	BuildToolFlutter
 	BuildToolGradle
+	BuildToolIonic
 	BuildToolReactNative
 	BuildToolXcode
 )
@@ -17,6 +18,7 @@ func (bt BuildTool) String() string {
 		"Expo",
 		"Flutter",
 		"Gradle",
+		"Ionic",
 		"React Native",
 		"Xcode"}[bt]
 }

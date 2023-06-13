@@ -149,7 +149,7 @@ func (cfg *Configuration) FindRecipe(name string) (*Recipe, error) {
 			return cfg.Recipes[0], nil
 
 		case cnt > 1:
-			return nil, errors.New("Empty recipe name")
+			return nil, errors.New("Missing recipe name")
 
 		default:
 			return nil, errors.New("No recipes defined")
@@ -236,8 +236,9 @@ func findSharedDataPath() string {
 
 	for {
 		dataPath := filepath.Join(dirPath, ".waldo")
+		cfgPath := filepath.Join(dirPath, ".waldo", "config.yml")
 
-		if lib.IsDirectory(dataPath) {
+		if lib.IsRegularFile(cfgPath) {
 			return dataPath
 		}
 
