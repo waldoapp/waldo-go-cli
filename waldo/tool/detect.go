@@ -6,6 +6,12 @@ import (
 	"strings"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool/expo"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool/flutter"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool/gradle"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool/ionic"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool/reactnative"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool/xcode"
 )
 
 type BuildDetector struct {
@@ -57,19 +63,13 @@ func (bd *BuildDetector) Detect(rootPath string) ([]*FoundBuildPath, error) {
 		}
 
 		if bd.shouldSkip(filepath.Base(path), entry) {
-			// if bd.verbose {
-			// 	bd.ioStreams.Printf("\nSkipping directory %q\n", path)
-			// }
-
 			return filepath.SkipDir
 		}
 
 		if entry.IsDir() {
-			// if bd.verbose {
-			// 	bd.ioStreams.Printf("\nChecking directory %q\n", path)
-			// }
+			skipChildren := false
 
-			if IsPossibleExpoContainer(path) {
+			if expo.IsPossibleExpoContainer(path) {
 				found := NewFoundBuildPath(BuildToolExpo, path)
 
 				if bd.verbose {
@@ -77,9 +77,11 @@ func (bd *BuildDetector) Detect(rootPath string) ([]*FoundBuildPath, error) {
 				}
 
 				results = append(results, found)
+
+				skipChildren = true
 			}
 
-			if IsPossibleFlutterContainer(path) {
+			if flutter.IsPossibleFlutterContainer(path) {
 				found := NewFoundBuildPath(BuildToolFlutter, path)
 
 				if bd.verbose {
@@ -87,9 +89,11 @@ func (bd *BuildDetector) Detect(rootPath string) ([]*FoundBuildPath, error) {
 				}
 
 				results = append(results, found)
+
+				skipChildren = true
 			}
 
-			if IsPossibleGradleContainer(path) {
+			if gradle.IsPossibleGradleContainer(path) {
 				found := NewFoundBuildPath(BuildToolGradle, path)
 
 				if bd.verbose {
@@ -97,9 +101,23 @@ func (bd *BuildDetector) Detect(rootPath string) ([]*FoundBuildPath, error) {
 				}
 
 				results = append(results, found)
+
+				skipChildren = true
 			}
 
-			if IsPossibleReactNativeContainer(path) {
+			if ionic.IsPossibleIonicContainer(path) {
+				found := NewFoundBuildPath(BuildToolIonic, path)
+
+				if bd.verbose {
+					bd.ioStreams.Printf("\nFound possible Ionic container: %q\n", path)
+				}
+
+				results = append(results, found)
+
+				skipChildren = true
+			}
+
+			if reactnative.IsPossibleReactNativeContainer(path) {
 				found := NewFoundBuildPath(BuildToolReactNative, path)
 
 				if bd.verbose {
@@ -107,9 +125,11 @@ func (bd *BuildDetector) Detect(rootPath string) ([]*FoundBuildPath, error) {
 				}
 
 				results = append(results, found)
+
+				skipChildren = true
 			}
 
-			if IsPossibleXcodeContainer(path) {
+			if xcode.IsPossibleXcodeContainer(path) {
 				found := NewFoundBuildPath(BuildToolXcode, path)
 
 				if bd.verbose {
@@ -117,6 +137,12 @@ func (bd *BuildDetector) Detect(rootPath string) ([]*FoundBuildPath, error) {
 				}
 
 				results = append(results, found)
+
+				skipChildren = true
+			}
+
+			if skipChildren {
+				return filepath.SkipDir
 			}
 		}
 
@@ -139,13 +165,18 @@ func (bd *BuildDetector) shouldSkip(name string, entry fs.DirEntry) bool {
 
 	if strings.HasPrefix(name, ".") ||
 		strings.HasSuffix(name, ".docset") ||
+		strings.HasSuffix(name, ".framework") ||
 		strings.HasSuffix(name, ".lproj") ||
 		strings.HasSuffix(name, ".xcassets") ||
 		strings.HasSuffix(name, ".xcodeproj") ||
 		strings.HasSuffix(name, ".xcworkspace") ||
 		name == "build" ||
+		name == "Carthage" ||
+		name == "CordovaLib" ||
 		name == "fastlane" ||
-		name == "gradle" {
+		name == "gradle" ||
+		name == "node_modules" ||
+		name == "Pods" {
 		return true
 	}
 

@@ -88,8 +88,8 @@ func (ad *AgentDownloader) determineAgentPath() string {
 }
 
 func (ad *AgentDownloader) determineAssetURL() string {
-	platform := strings.ToLower(ad.runtimeInfo.Platform)
-	arch := strings.ToLower(ad.runtimeInfo.Arch)
+	platform := strings.ToLower(string(ad.runtimeInfo.Platform))
+	arch := strings.ToLower(string(ad.runtimeInfo.Arch))
 
 	assetName := fmt.Sprintf("waldo-agent-%s-%s", platform, arch)
 

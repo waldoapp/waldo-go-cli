@@ -58,71 +58,62 @@ func (la *ListAction) Perform() error {
 			appName = "(unknown)"
 		}
 
-		flavor := recipe.Flavor
+		buildTool := recipe.BuildTool().String()
 
-		if len(flavor) == 0 {
-			flavor = "Unknown"
-		}
-
-		tool := recipe.BuildTool().String()
-
-		la.ioStreams.Printf("%-16.16s  %-8.8s  %-24.24s  %s\n", recipe.Name, flavor, appName, tool)
+		la.ioStreams.Printf("%-16.16s  %-8.8s  %-24.24s  %s\n", recipe.Name, recipe.Platform, appName, buildTool)
 
 		if la.options.LongFormat {
+			buildRoot := "(none)"
+			uploadToken := "(none)"
+			buildOptions := "(none)"
+
 			absPath := filepath.Join(cfg.BasePath(), recipe.BasePath)
-			relPath := lib.MakeRelativeToCWD(absPath)
 
-			if len(relPath) > 0 {
-				la.ioStreams.Printf("%16.16s: %s\n", "build root", relPath)
-			} else {
-				la.ioStreams.Printf("%16.16s: (none)\n", "build root")
+			if relPath := lib.MakeRelativeToCWD(absPath); len(relPath) > 0 {
+				buildRoot = relPath
 			}
 
-			token := recipe.UploadToken
-
-			if len(token) > 0 {
-				la.ioStreams.Printf("%16.16s: %s\n", "upload token", token)
-			} else {
-				la.ioStreams.Printf("%16.16s: (none)\n", "upload token")
+			if token := recipe.UploadToken; len(token) > 0 {
+				uploadToken = token
 			}
 
-			summary := recipe.Summarize()
-
-			if len(summary) > 0 {
-				la.ioStreams.Printf("%16.16s: %s\n", "build options", summary)
-			} else {
-				la.ioStreams.Printf("%16.16s: (none)\n", "build options")
+			if summary := recipe.Summarize(); len(summary) > 0 {
+				buildOptions = summary
 			}
+
+			la.ioStreams.Printf("%16.16s: %s\n", "build root", buildRoot)
+			la.ioStreams.Printf("%16.16s: %s\n", "upload token", uploadToken)
+			la.ioStreams.Printf("%16.16s: %s\n", "build options", buildOptions)
 		}
 
 		if la.options.UserInfo {
+			buildPath := "(unknown)"
+			lastBuild := "(unknown)"
+			lastUpload := "(unknown)"
+
 			if ud != nil {
 				if am, _ := ud.FindMetadata(recipe); am != nil {
 					if len(am.BuildPath) > 0 {
+						buildPath = am.BuildPath
+
 						if buildTime := la.formatTime(lib.GetModificationTimeUTC(am.BuildPath)); len(buildTime) > 0 {
-							la.ioStreams.Printf("%16.16s: %s\n", "last build", buildTime)
-						} else {
-							la.ioStreams.Printf("%16.16s: (unknown)\n", "last build")
+							lastBuild = buildTime
 						}
 					}
 
 					if uploadTime := la.formatTime(am.UploadTime); len(uploadTime) > 0 {
 						if uploadToken := am.UploadToken; len(uploadToken) > 0 {
-							la.ioStreams.Printf("%16.16s: %s to %s\n", "last upload", uploadTime, uploadToken)
+							lastUpload = uploadTime + " to " + uploadToken
 						} else {
-							la.ioStreams.Printf("%16.16s: %s\n", "last upload", uploadTime)
+							lastUpload = uploadTime
 						}
-					} else {
-						la.ioStreams.Printf("%16.16s: (unknown)\n", "last upload")
 					}
-				} else {
-					la.ioStreams.Printf("%16.16s: (unknown)\n", "last build")
-					la.ioStreams.Printf("%16.16s: (unknown)\n", "last upload")
 				}
-			} else {
-				la.ioStreams.Printf("%16.16s: (unknown)\n", "last build")
-				la.ioStreams.Printf("%16.16s: (unknown)\n", "last upload")
 			}
+
+			la.ioStreams.Printf("%16.16s: %s\n", "build path", buildPath)
+			la.ioStreams.Printf("%16.16s: %s\n", "last build", lastBuild)
+			la.ioStreams.Printf("%16.16s: %s\n", "last upload", lastUpload)
 		}
 	}
 

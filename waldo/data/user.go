@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
-	"github.com/waldoapp/waldo-go-cli/waldo/data/tool"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool"
 )
 
 const (

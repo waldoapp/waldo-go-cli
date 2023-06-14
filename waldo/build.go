@@ -6,7 +6,7 @@ import (
 
 	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo/data"
-	"github.com/waldoapp/waldo-go-cli/waldo/data/tool"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool"
 )
 
 type BuildOptions struct {
@@ -72,28 +72,28 @@ func (ba *BuildAction) buildRecipe(cfg *data.Configuration, r *data.Recipe) erro
 	absBasePath := filepath.Join(cfg.BasePath(), r.BasePath)
 
 	var (
-		am  *tool.ArtifactMetadata
-		err error
+		buildPath string
+		err       error
 	)
 
 	switch r.BuildTool() {
 	case tool.BuildToolCustom:
-		am, err = r.CustomBuilder.Build(absBasePath, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
+		buildPath, err = r.CustomBuilder.Build(absBasePath, r.Platform, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
 
 	case tool.BuildToolExpo:
-		am, err = r.ExpoBuilder.Build(absBasePath, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
+		buildPath, err = r.ExpoBuilder.Build(absBasePath, r.Platform, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
 
 	case tool.BuildToolFlutter:
-		am, err = r.FlutterBuilder.Build(absBasePath, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
+		buildPath, err = r.FlutterBuilder.Build(absBasePath, r.Platform, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
 
 	case tool.BuildToolGradle:
-		am, err = r.GradleBuilder.Build(absBasePath, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
+		buildPath, err = r.GradleBuilder.Build(absBasePath, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
 
 	case tool.BuildToolReactNative:
-		am, err = r.ReactNativeBuilder.Build(absBasePath, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
+		buildPath, err = r.ReactNativeBuilder.Build(absBasePath, r.Platform, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
 
 	case tool.BuildToolXcode:
-		am, err = r.XcodeBuilder.Build(absBasePath, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
+		buildPath, err = r.XcodeBuilder.Build(absBasePath, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
 
 	default:
 		return fmt.Errorf("Don’t know how to build this app!")
@@ -104,7 +104,7 @@ func (ba *BuildAction) buildRecipe(cfg *data.Configuration, r *data.Recipe) erro
 	}
 
 	if ud != nil {
-		ud.AddMetadata(r, am)
+		ud.AddMetadata(r, &tool.ArtifactMetadata{BuildPath: buildPath})
 	}
 
 	return nil
