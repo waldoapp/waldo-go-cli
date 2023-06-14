@@ -9,8 +9,8 @@
 
 - Add one or more recipes describing how to build a particular variant of your app from the command-line that is suitable for running on Waldo, and then actually build the app variant from a recipe. These recipes can be persisted to your repository alongside your app’s source code and thereby shared with your teammates. The following build tools are currently supported:
   - Xcode (see [here](https://docs.waldo.com/docs/exporting-your-build-for-waldo) for details)
-  - Gradle (_coming soon…_)
-  - Flutter (_coming soon…_)
+  - Gradle
+  - Flutter
   - _…and more to come!_
 - Upload an iOS or Android build to Waldo for processing. See [here](https://docs.waldo.com/docs/ios-uploading-your-simulator-build-to-waldo) and [here](https://docs.waldo.com/docs/android-uploading-your-emulator-build-to-waldo) for more details.
 - Trigger a run of of one or more test flows for your app. See [here](https://docs.waldo.com/docs/ci-run) for more details.
