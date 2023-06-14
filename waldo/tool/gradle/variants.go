@@ -7,6 +7,14 @@ import (
 	"github.com/waldoapp/waldo-go-cli/lib"
 )
 
+func DetectBuildVariants(basePath, module string) []string {
+	tasks := fetchTasks(basePath, module)
+
+	return extractVariants(tasks)
+}
+
+//-----------------------------------------------------------------------------
+
 func candidateVariantFromTask(task string) string {
 	if !strings.HasPrefix(task, "assemble") {
 		return ""
@@ -37,7 +45,7 @@ func extractVariants(tasks []string) []string {
 	})
 }
 
-func fetchTasks(basePath, module string, ios *lib.IOStreams) []string {
+func fetchTasks(basePath, module string) []string {
 	wrapperPath := filepath.Join(basePath, wrapperName())
 
 	args := append([]string{"tasks", "--all"}, commonGradleArgs()...)
@@ -45,7 +53,6 @@ func fetchTasks(basePath, module string, ios *lib.IOStreams) []string {
 	task := lib.NewTask(wrapperPath, args...)
 
 	task.Cwd = basePath
-	task.IOStreams = ios
 
 	stdout, _, err := task.Run()
 

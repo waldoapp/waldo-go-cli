@@ -32,7 +32,7 @@ func extractModules(text string) []string {
 	return modules
 }
 
-func fetchProperties(basePath, module string, ios *lib.IOStreams) map[string]string {
+func fetchProperties(basePath, module string) map[string]string {
 	wrapperPath := filepath.Join(basePath, wrapperName())
 
 	verb := "properties"
@@ -46,7 +46,6 @@ func fetchProperties(basePath, module string, ios *lib.IOStreams) map[string]str
 	task := lib.NewTask(wrapperPath, args...)
 
 	task.Cwd = basePath
-	task.IOStreams = ios
 
 	stdout, _, err := task.Run()
 

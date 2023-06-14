@@ -48,7 +48,7 @@ func MakeFlutterBuilder(absPath, relPath string, verbose bool, ios *lib.IOStream
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	flavors, err := detectFlavors(absPath, platform)
+	flavors, err := detectFlavors(absPath, platform, ios)
 
 	if err != nil {
 		return nil, "", lib.PlatformUnknown, err
@@ -133,10 +133,10 @@ func detectAppName(path string) (string, error) {
 	return ps.Name, nil
 }
 
-func detectFlavors(path string, platform lib.Platform) ([]string, error) {
+func detectFlavors(path string, platform lib.Platform, ios *lib.IOStreams) ([]string, error) {
 	switch platform {
 	case lib.PlatformAndroid:
-		return detectFlavorsForAndroid(path)
+		return detectFlavorsForAndroid(path, ios)
 
 	case lib.PlatformIos:
 		return detectFlavorsForIos(path)
@@ -146,8 +146,16 @@ func detectFlavors(path string, platform lib.Platform) ([]string, error) {
 	}
 }
 
-func detectFlavorsForAndroid(path string) ([]string, error) {
-	return []string{"Debug", "Release"}, nil
+func detectFlavorsForAndroid(path string, ios *lib.IOStreams) ([]string, error) {
+	androidPath := filepath.Join(path, "android")
+
+	variants := gradle.DetectBuildVariants(androidPath, "app")
+
+	if len(variants) > 0 {
+		return variants, nil
+	}
+
+	return []string{"debug", "release"}, nil
 }
 
 func detectFlavorsForIos(path string) ([]string, error) {
