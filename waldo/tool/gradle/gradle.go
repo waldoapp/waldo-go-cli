@@ -33,7 +33,7 @@ func IsPossibleGradleContainer(path string) bool {
 func MakeGradleBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*GradleBuilder, string, lib.Platform, error) {
 	ios.Printf("\nSearching for Gradle modules in %q…\n", relPath)
 
-	properties := fetchProperties(absPath, "", ios)
+	properties := fetchProperties(absPath, "")
 
 	modules := extractModules(properties["subprojects"])
 
@@ -45,7 +45,7 @@ func MakeGradleBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams
 
 	ios.Printf("\nFinding all build variants in %q…\n", module)
 
-	tasks := fetchTasks(absPath, module, ios)
+	tasks := fetchTasks(absPath, module)
 
 	variants := extractVariants(tasks)
 
@@ -67,7 +67,7 @@ func (gb *GradleBuilder) Build(basePath string, clean, verbose bool, ios *lib.IO
 
 	ios.Printf("\nDetecting module properties for %s…\n", target)
 
-	properties, err := gb.detectModuleProperties(basePath, ios)
+	properties, err := gb.detectModuleProperties(basePath)
 
 	if err != nil {
 		return "", err
@@ -167,8 +167,8 @@ func (gb *GradleBuilder) build(basePath string, clean, verbose bool, ios *lib.IO
 	return task.Execute()
 }
 
-func (gb *GradleBuilder) detectModuleProperties(basePath string, ios *lib.IOStreams) (map[string]string, error) {
-	return fetchProperties(basePath, gb.Module, ios), nil
+func (gb *GradleBuilder) detectModuleProperties(basePath string) (map[string]string, error) {
+	return fetchProperties(basePath, gb.Module), nil
 }
 
 func (gb *GradleBuilder) determineBuildPath(properties map[string]string) (string, error) {
