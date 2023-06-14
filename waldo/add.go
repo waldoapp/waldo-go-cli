@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo/data"
@@ -100,7 +101,7 @@ func (aa *AddAction) Perform() error {
 
 func (aa *AddAction) askBuildPath(items []*tool.FoundBuildPath) *tool.FoundBuildPath {
 	sort.Slice(items, func(i, j int) bool {
-		return items[i].RelPath > items[j].RelPath
+		return strings.ToLower(items[i].RelPath) < strings.ToLower(items[j].RelPath)
 	})
 
 	maxLen := 0

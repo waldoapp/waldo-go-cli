@@ -2,6 +2,8 @@ package waldo
 
 import (
 	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
@@ -45,41 +47,29 @@ func (la *ListAction) Perform() error {
 		ud = data.SetupUserData(cfg)
 	}
 
+	recipes := la.sortRecipes(cfg.Recipes)
+
 	la.ioStreams.Printf("%-16.16s  %-8.8s  %-24.24s  %s\n", "RECIPE NAME", "PLATFORM", "APP NAME", "BUILD TOOL")
 
-	for _, recipe := range cfg.Recipes {
-		if len(recipe.Name) == 0 {
+	for _, recipe := range recipes {
+		name := recipe.Name
+
+		if len(name) == 0 {
 			continue
 		}
 
-		appName := recipe.AppName
-
-		if len(appName) == 0 {
-			appName = "(unknown)"
-		}
-
+		platform := recipe.Platform
+		appName := la.formatString(recipe.AppName, "(unknown)")
 		buildTool := recipe.BuildTool().String()
 
-		la.ioStreams.Printf("%-16.16s  %-8.8s  %-24.24s  %s\n", recipe.Name, recipe.Platform, appName, buildTool)
+		la.ioStreams.Printf("%-16.16s  %-8.8s  %-24.24s  %s\n", name, platform, appName, buildTool)
 
 		if la.options.LongFormat {
-			buildRoot := "(none)"
-			uploadToken := "(none)"
-			buildOptions := "(none)"
-
 			absPath := filepath.Join(cfg.BasePath(), recipe.BasePath)
 
-			if relPath := lib.MakeRelativeToCWD(absPath); len(relPath) > 0 {
-				buildRoot = relPath
-			}
-
-			if token := recipe.UploadToken; len(token) > 0 {
-				uploadToken = token
-			}
-
-			if summary := recipe.Summarize(); len(summary) > 0 {
-				buildOptions = summary
-			}
+			buildRoot := la.formatString(lib.MakeRelativeToCWD(absPath), "(none)")
+			uploadToken := la.formatString(recipe.UploadToken, "(none)")
+			buildOptions := la.formatString(recipe.Summarize(), "(none)")
 
 			la.ioStreams.Printf("%16.16s: %s\n", "build root", buildRoot)
 			la.ioStreams.Printf("%16.16s: %s\n", "upload token", uploadToken)
@@ -87,29 +77,31 @@ func (la *ListAction) Perform() error {
 		}
 
 		if la.options.UserInfo {
-			buildPath := "(unknown)"
-			lastBuild := "(unknown)"
-			lastUpload := "(unknown)"
+			var (
+				buildPath  string
+				lastBuild  string
+				lastUpload string
+			)
 
 			if ud != nil {
 				if am, _ := ud.FindMetadata(recipe); am != nil {
-					if len(am.BuildPath) > 0 {
-						buildPath = am.BuildPath
+					buildPath = am.BuildPath
 
-						if buildTime := la.formatTime(lib.GetModificationTimeUTC(am.BuildPath)); len(buildTime) > 0 {
-							lastBuild = buildTime
-						}
+					if len(buildPath) > 0 {
+						lastBuild = la.formatTime(lib.GetModificationTimeUTC(buildPath))
 					}
 
-					if uploadTime := la.formatTime(am.UploadTime); len(uploadTime) > 0 {
-						if uploadToken := am.UploadToken; len(uploadToken) > 0 {
-							lastUpload = uploadTime + " to " + uploadToken
-						} else {
-							lastUpload = uploadTime
-						}
+					lastUpload = la.formatTime(am.UploadTime)
+
+					if uploadToken := am.UploadToken; len(lastUpload) > 0 && len(uploadToken) > 0 {
+						lastUpload += " to " + uploadToken
 					}
 				}
 			}
+
+			buildPath = la.formatString(buildPath, "(unknown)")
+			lastBuild = la.formatString(lastBuild, "(unknown)")
+			lastUpload = la.formatString(lastUpload, "(unknown)")
 
 			la.ioStreams.Printf("%16.16s: %s\n", "build path", buildPath)
 			la.ioStreams.Printf("%16.16s: %s\n", "last build", lastBuild)
@@ -122,10 +114,26 @@ func (la *ListAction) Perform() error {
 
 //-----------------------------------------------------------------------------
 
-func (la *ListAction) formatTime(t time.Time) string {
-	if t == (time.Time{}) {
+func (la *ListAction) formatString(value, defaultValue string) string {
+	if len(value) > 0 {
+		return value
+	}
+
+	return defaultValue
+}
+
+func (la *ListAction) formatTime(value time.Time) string {
+	if value == (time.Time{}) {
 		return ""
 	}
 
-	return t.Format(time.RFC3339)
+	return value.Format(time.RFC3339)
+}
+
+func (la *ListAction) sortRecipes(recipes []*data.Recipe) []*data.Recipe {
+	sort.Slice(recipes, func(i, j int) bool {
+		return strings.ToLower(recipes[i].Name) < strings.ToLower(recipes[j].Name)
+	})
+
+	return recipes
 }
