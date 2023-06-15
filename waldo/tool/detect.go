@@ -1,6 +1,7 @@
 package tool
 
 import (
+	"errors"
 	"io/fs"
 	"path/filepath"
 	"strings"
@@ -14,14 +15,7 @@ import (
 	"github.com/waldoapp/waldo-go-cli/waldo/tool/xcode"
 )
 
-type BuildDetector struct {
-	ioStreams *lib.IOStreams
-	verbose   bool
-}
-
-//-----------------------------------------------------------------------------
-
-type FoundBuildPath struct {
+type BuildPath struct {
 	AbsPath   string
 	RelPath   string
 	BuildTool BuildTool
@@ -29,40 +23,17 @@ type FoundBuildPath struct {
 
 //-----------------------------------------------------------------------------
 
-func NewBuildDetector(verbose bool, ioStreams *lib.IOStreams) *BuildDetector {
-	return &BuildDetector{
-		ioStreams: ioStreams,
-		verbose:   verbose}
-}
+func DetectBuildPaths(rootPath string, verbose bool, ios *lib.IOStreams) ([]*BuildPath, error) {
+	ios.Printf("\nSearching for possible build paths…\n")
 
-//-----------------------------------------------------------------------------
-
-func NewFoundBuildPath(buildTool BuildTool, path string) *FoundBuildPath {
-	absPath, err := filepath.Abs(path)
-
-	if err != nil {
-		absPath = path
-	}
-
-	return &FoundBuildPath{
-		AbsPath:   absPath,
-		RelPath:   lib.MakeRelativeToCWD(absPath),
-		BuildTool: buildTool}
-}
-
-//-----------------------------------------------------------------------------
-
-func (bd *BuildDetector) Detect(rootPath string) ([]*FoundBuildPath, error) {
-	bd.ioStreams.Printf("\nSearching for possible build paths…\n")
-
-	var results []*FoundBuildPath
+	var buildPaths []*BuildPath
 
 	err := filepath.WalkDir(rootPath, func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		if bd.shouldSkip(filepath.Base(path), entry) {
+		if shouldSkip(filepath.Base(path), entry) {
 			return filepath.SkipDir
 		}
 
@@ -70,73 +41,73 @@ func (bd *BuildDetector) Detect(rootPath string) ([]*FoundBuildPath, error) {
 			skipChildren := false
 
 			if expo.IsPossibleExpoContainer(path) {
-				found := NewFoundBuildPath(BuildToolExpo, path)
+				buildPath := newBuildPath(BuildToolExpo, path)
 
-				if bd.verbose {
-					bd.ioStreams.Printf("\nFound possible Expo container: %q\n", path)
+				if verbose {
+					ios.Printf("\nFound possible Expo container: %q\n", path)
 				}
 
-				results = append(results, found)
+				buildPaths = append(buildPaths, buildPath)
 
 				skipChildren = true
 			}
 
 			if flutter.IsPossibleFlutterContainer(path) {
-				found := NewFoundBuildPath(BuildToolFlutter, path)
+				buildPath := newBuildPath(BuildToolFlutter, path)
 
-				if bd.verbose {
-					bd.ioStreams.Printf("\nFound possible Flutter container: %q\n", path)
+				if verbose {
+					ios.Printf("\nFound possible Flutter container: %q\n", path)
 				}
 
-				results = append(results, found)
+				buildPaths = append(buildPaths, buildPath)
 
 				skipChildren = true
 			}
 
 			if gradle.IsPossibleGradleContainer(path) {
-				found := NewFoundBuildPath(BuildToolGradle, path)
+				buildPath := newBuildPath(BuildToolGradle, path)
 
-				if bd.verbose {
-					bd.ioStreams.Printf("\nFound possible Gradle container: %q\n", path)
+				if verbose {
+					ios.Printf("\nFound possible Gradle container: %q\n", path)
 				}
 
-				results = append(results, found)
+				buildPaths = append(buildPaths, buildPath)
 
 				skipChildren = true
 			}
 
 			if ionic.IsPossibleIonicContainer(path) {
-				found := NewFoundBuildPath(BuildToolIonic, path)
+				buildPath := newBuildPath(BuildToolIonic, path)
 
-				if bd.verbose {
-					bd.ioStreams.Printf("\nFound possible Ionic container: %q\n", path)
+				if verbose {
+					ios.Printf("\nFound possible Ionic container: %q\n", path)
 				}
 
-				results = append(results, found)
+				buildPaths = append(buildPaths, buildPath)
 
 				skipChildren = true
 			}
 
 			if reactnative.IsPossibleReactNativeContainer(path) {
-				found := NewFoundBuildPath(BuildToolReactNative, path)
+				buildPath := newBuildPath(BuildToolReactNative, path)
 
-				if bd.verbose {
-					bd.ioStreams.Printf("\nFound possible React Native container: %q\n")
+				if verbose {
+					ios.Printf("\nFound possible React Native container: %q\n")
 				}
 
-				results = append(results, found)
+				buildPaths = append(buildPaths, buildPath)
 
 				skipChildren = true
 			}
 
 			if xcode.IsPossibleXcodeContainer(path) {
-				found := NewFoundBuildPath(BuildToolXcode, path)
+				buildPath := newBuildPath(BuildToolXcode, path)
 
-				if bd.verbose {
-					bd.ioStreams.Printf("\nFound possible Xcode container: %q\n", path)
+				if verbose {
+					ios.Printf("\nFound possible Xcode container: %q\n", path)
 				}
 
-				results = append(results, found)
+				buildPaths = append(buildPaths, buildPath)
 
 				skipChildren = true
 			}
@@ -153,12 +124,29 @@ func (bd *BuildDetector) Detect(rootPath string) ([]*FoundBuildPath, error) {
 		return nil, err
 	}
 
-	return results, nil
+	if len(buildPaths) == 0 {
+		return nil, errors.New("No build paths buildPath")
+	}
+
+	return buildPaths, nil
 }
 
 //-----------------------------------------------------------------------------
 
-func (bd *BuildDetector) shouldSkip(name string, entry fs.DirEntry) bool {
+func newBuildPath(buildTool BuildTool, path string) *BuildPath {
+	absPath, err := filepath.Abs(path)
+
+	if err != nil {
+		absPath = path
+	}
+
+	return &BuildPath{
+		AbsPath:   absPath,
+		RelPath:   lib.MakeRelativeToCWD(absPath),
+		BuildTool: buildTool}
+}
+
+func shouldSkip(name string, entry fs.DirEntry) bool {
 	if !entry.IsDir() {
 		return false
 	}

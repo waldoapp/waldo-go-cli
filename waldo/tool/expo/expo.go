@@ -12,20 +12,12 @@ type ExpoBuilder struct {
 
 //-----------------------------------------------------------------------------
 
-func FindExpoPaths(path string) []string {
-	return make([]string, 0)
-}
-
 func IsPossibleExpoContainer(path string) bool {
 	return false
 }
 
 func MakeExpoBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*ExpoBuilder, string, lib.Platform, error) {
 	return nil, "", lib.PlatformUnknown, errors.New("Don’t know how to make an Expo recipe")
-}
-
-func NewExpoBuilder() *ExpoBuilder {
-	return &ExpoBuilder{}
 }
 
 //-----------------------------------------------------------------------------

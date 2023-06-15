@@ -12,20 +12,12 @@ type IonicBuilder struct {
 
 //-----------------------------------------------------------------------------
 
-func FindIonicPaths(path string) []string {
-	return make([]string, 0)
-}
-
 func IsPossibleIonicContainer(path string) bool {
 	return false
 }
 
 func MakeIonicBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*IonicBuilder, string, string, error) {
 	return nil, "", "", errors.New("Don’t know how to make an Ionic recipe")
-}
-
-func NewIonicBuilder() *IonicBuilder {
-	return &IonicBuilder{}
 }
 
 //-----------------------------------------------------------------------------

@@ -31,7 +31,7 @@ func IsPossibleGradleContainer(path string) bool {
 }
 
 func MakeGradleBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*GradleBuilder, string, lib.Platform, error) {
-	ios.Printf("\nSearching for Gradle modules in %q…\n", relPath)
+	ios.Printf("\nSearching for modules in %q…\n", relPath)
 
 	properties := fetchProperties(absPath, "")
 
@@ -45,17 +45,21 @@ func MakeGradleBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams
 
 	ios.Printf("\nFinding all build variants in %q…\n", module)
 
-	tasks := fetchTasks(absPath, module)
-
-	variants := extractVariants(tasks)
-
-	variant, err := determineVariant(variants, module, verbose, ios)
+	gi, err := DetectGradleInfo(absPath, module)
 
 	if err != nil {
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	gb := newGradleBuilder(module, variant)
+	variant, err := determineVariant(module, gi.Variants, verbose, ios)
+
+	if err != nil {
+		return nil, "", lib.PlatformUnknown, err
+	}
+
+	gb := &GradleBuilder{
+		Module:  module,
+		Variant: variant}
 
 	return gb, properties["name"], lib.PlatformAndroid, nil
 }
@@ -95,16 +99,7 @@ func (gb *GradleBuilder) Build(basePath string, clean, verbose bool, ios *lib.IO
 
 	ios.Printf("\nVerifying build path for %s…\n", target)
 
-	buildPaths, err := gb.verifyBuildPath(buildPath)
-
-	if err != nil {
-		return "", err
-	}
-
-	// if len(buildPaths) > 1 {
-	// }
-
-	return buildPaths[0], nil // for now, arbitrarily always take first path
+	return gb.verifyBuildPath(buildPath)
 }
 
 func (gb *GradleBuilder) Summarize() string {
@@ -120,12 +115,6 @@ func (gb *GradleBuilder) Summarize() string {
 
 func commonGradleArgs() []string {
 	return []string{"--console=plain", "--quiet"}
-}
-
-func newGradleBuilder(module, variant string) *GradleBuilder {
-	return &GradleBuilder{
-		Module:  module,
-		Variant: variant}
 }
 
 func wrapperName() string {
@@ -217,8 +206,8 @@ func (gb *GradleBuilder) parseBuildSettings(text string) map[string]string {
 	return settings
 }
 
-func (gb *GradleBuilder) verifyBuildPath(basePath string) ([]string, error) {
-	var results []string
+func (gb *GradleBuilder) verifyBuildPath(basePath string) (string, error) {
+	var paths []string
 
 	err := filepath.WalkDir(basePath, func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
@@ -230,19 +219,19 @@ func (gb *GradleBuilder) verifyBuildPath(basePath string) ([]string, error) {
 		}
 
 		if gb.isPossibleBuildArtifact(path, basePath) {
-			results = append(results, path)
+			paths = append(paths, path)
 		}
 
 		return nil
 	})
 
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	if len(results) == 0 {
-		return nil, fmt.Errorf("Unable to locate build path in %q", basePath)
+	if len(paths) == 0 {
+		return "", fmt.Errorf("Unable to locate build path in %q", basePath)
 	}
 
-	return results, nil
+	return paths[0], nil // for now, arbitrarily always take first path
 }

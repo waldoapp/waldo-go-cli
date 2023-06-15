@@ -2,12 +2,10 @@ package flutter
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
-	"github.com/waldoapp/waldo-go-cli/lib/tpw"
 	"github.com/waldoapp/waldo-go-cli/waldo/tool/gradle"
 	"github.com/waldoapp/waldo-go-cli/waldo/tool/xcode"
 )
@@ -42,27 +40,22 @@ func MakeFlutterBuilder(absPath, relPath string, verbose bool, ios *lib.IOStream
 
 	ios.Printf("\nFinding all supported build flavors…\n")
 
-	name, err := detectAppName(absPath)
+	fi, err := DetectFlutterInfo(absPath, platform, ios)
 
 	if err != nil {
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	flavors, err := detectFlavors(absPath, platform, ios)
+	flavor, err := determineFlavor(fi.Flavors, verbose, ios)
 
 	if err != nil {
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	flavor, err := determineFlavor(flavors, verbose, ios)
+	fb := &FlutterBuilder{
+		Flavor: flavor}
 
-	if err != nil {
-		return nil, "", lib.PlatformUnknown, err
-	}
-
-	fb := newFlutterBuilder(flavor)
-
-	return fb, name, platform, nil
+	return fb, fi.Name, platform, nil
 }
 
 //-----------------------------------------------------------------------------
@@ -107,82 +100,6 @@ func (fb *FlutterBuilder) Summarize() string {
 	lib.AppendIfNotEmpty(&summary, "flavor", fb.Flavor, "=", ", ")
 
 	return summary
-}
-
-//-----------------------------------------------------------------------------
-
-type Pubspec struct {
-	Name string `yaml:"name"`
-}
-
-//-----------------------------------------------------------------------------
-
-func detectAppName(path string) (string, error) {
-	data, err := os.ReadFile(filepath.Join(path, "pubspec.yaml"))
-
-	if err != nil {
-		return "", err
-	}
-
-	var ps Pubspec
-
-	if err = tpw.DecodeFromYAML(data, &ps); err != nil {
-		return "", err
-	}
-
-	return ps.Name, nil
-}
-
-func detectFlavors(path string, platform lib.Platform, ios *lib.IOStreams) ([]string, error) {
-	switch platform {
-	case lib.PlatformAndroid:
-		return detectFlavorsForAndroid(path, ios)
-
-	case lib.PlatformIos:
-		return detectFlavorsForIos(path)
-
-	default:
-		return nil, fmt.Errorf("Unknown build platform: %q", platform)
-	}
-}
-
-func detectFlavorsForAndroid(path string, ios *lib.IOStreams) ([]string, error) {
-	androidPath := filepath.Join(path, "android")
-
-	variants := gradle.DetectBuildVariants(androidPath, "app")
-
-	if len(variants) > 0 {
-		return variants, nil
-	}
-
-	return []string{"debug", "release"}, nil
-}
-
-func detectFlavorsForIos(path string) ([]string, error) {
-	iosPath := filepath.Join(path, "ios")
-
-	xi, err := xcode.DetectXcodeInfo(iosPath, "Runner.xcodeproj")
-
-	if err != nil {
-		return []string{"Debug"}, nil
-	}
-
-	flavors := lib.CompactMap(xi.Configurations(), func(flavor string) bool {
-		switch strings.ToLower(flavor) {
-		case "profile", "release":
-			return false
-
-		default:
-			return true
-		}
-	})
-
-	return flavors, nil
-}
-
-func newFlutterBuilder(flavor string) *FlutterBuilder {
-	return &FlutterBuilder{
-		Flavor: flavor}
 }
 
 //-----------------------------------------------------------------------------

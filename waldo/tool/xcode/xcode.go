@@ -28,33 +28,48 @@ func IsPossibleXcodeContainer(path string) bool {
 func MakeXcodeBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*XcodeBuilder, string, lib.Platform, error) {
 	ios.Printf("\nSearching for Xcode workspaces and projects in %q…\n", relPath)
 
-	project, err := determineProject(findXcodeProjects(absPath), verbose, ios)
+	fileName, err := determineProject(findXcodeProjects(absPath), verbose, ios)
 
 	if err != nil {
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	ios.Printf("\nFinding all Xcode schemes and configurations in %q…\n", project)
+	ios.Printf("\nFinding all Xcode schemes and configurations in %q…\n", fileName)
 
-	xi, err := DetectXcodeInfo(absPath, project)
-
-	if err != nil {
-		return nil, "", lib.PlatformUnknown, err
-	}
-
-	scheme, err := determineScheme(project, xi, verbose, ios)
+	xi, err := DetectXcodeInfo(absPath, fileName)
 
 	if err != nil {
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	configuration, err := determineConfiguration(project, xi, verbose, ios)
+	scheme, err := determineScheme(fileName, xi.Schemes(), verbose, ios)
 
 	if err != nil {
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	xb := newXcodeBuilder(project, scheme, configuration)
+	configuration, err := determineConfiguration(fileName, xi.Configurations(), verbose, ios)
+
+	if err != nil {
+		return nil, "", lib.PlatformUnknown, err
+	}
+
+	var (
+		project   string
+		workspace string
+	)
+
+	if strings.HasSuffix(fileName, ".xcworkspace") {
+		workspace = fileName
+	} else {
+		project = fileName
+	}
+
+	xb := &XcodeBuilder{
+		Workspace:     workspace,
+		Project:       project,
+		Scheme:        scheme,
+		Configuration: configuration}
 
 	return xb, xi.Name(), lib.PlatformIos, nil
 }
@@ -118,25 +133,6 @@ func findXcodeProjects(path string) []string {
 	projects := lib.FindDirectoryPathsMatching(projPath)
 
 	return append(workspaces, projects...)
-}
-
-func newXcodeBuilder(fileName, scheme, configuration string) *XcodeBuilder {
-	var (
-		project   string
-		workspace string
-	)
-
-	if strings.HasSuffix(fileName, ".xcworkspace") {
-		workspace = fileName
-	} else {
-		project = fileName
-	}
-
-	return &XcodeBuilder{
-		Workspace:     workspace,
-		Project:       project,
-		Scheme:        scheme,
-		Configuration: configuration}
 }
 
 //-----------------------------------------------------------------------------
