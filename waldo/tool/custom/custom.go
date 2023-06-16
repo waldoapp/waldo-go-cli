@@ -16,10 +16,6 @@ func MakeCustomBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams
 	return nil, "", lib.PlatformUnknown, errors.New("Don’t know how to make a custom recipe")
 }
 
-func NewCustomBuilder() *CustomBuilder {
-	return &CustomBuilder{}
-}
-
 //-----------------------------------------------------------------------------
 
 func (cb *CustomBuilder) Build(basePath string, platform lib.Platform, clean, verbose bool, ios *lib.IOStreams) (string, error) {
