@@ -33,7 +33,7 @@ func IsPossibleGradleContainer(path string) bool {
 func MakeGradleBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*GradleBuilder, string, lib.Platform, error) {
 	ios.Printf("\nSearching for modules in %q…\n", relPath)
 
-	properties := fetchProperties(absPath, "")
+	properties := fetchProperties(absPath, "", ios)
 
 	modules := extractModules(properties["subprojects"])
 
@@ -71,7 +71,7 @@ func (gb *GradleBuilder) Build(basePath string, clean, verbose bool, ios *lib.IO
 
 	ios.Printf("\nDetecting module properties for %s…\n", target)
 
-	properties, err := gb.detectModuleProperties(basePath)
+	properties, err := gb.detectModuleProperties(basePath, ios)
 
 	if err != nil {
 		return "", err
@@ -102,6 +102,20 @@ func (gb *GradleBuilder) Build(basePath string, clean, verbose bool, ios *lib.IO
 	return gb.verifyBuildPath(buildPath)
 }
 
+func (gb *GradleBuilder) DetermineBuildPath(basePath string, ios *lib.IOStreams) (string, error) {
+	ios.Printf("\nDetecting module properties in %q…\n", basePath)
+
+	properties, err := gb.detectModuleProperties(basePath, ios)
+
+	if err != nil {
+		return "", err
+	}
+
+	ios.Printf("\nDetermining build path…\n")
+
+	return gb.determineBuildPath(properties)
+}
+
 func (gb *GradleBuilder) Summarize() string {
 	summary := ""
 
@@ -109,6 +123,12 @@ func (gb *GradleBuilder) Summarize() string {
 	lib.AppendIfNotEmpty(&summary, "variant", gb.Variant, "=", ", ")
 
 	return summary
+}
+
+func (gb *GradleBuilder) VerifyBuildPath(basePath string, ios *lib.IOStreams) (string, error) {
+	ios.Printf("\nVerifying build path…\n")
+
+	return gb.verifyBuildPath(basePath)
 }
 
 //-----------------------------------------------------------------------------
@@ -156,8 +176,8 @@ func (gb *GradleBuilder) build(basePath string, clean, verbose bool, ios *lib.IO
 	return task.Execute()
 }
 
-func (gb *GradleBuilder) detectModuleProperties(basePath string) (map[string]string, error) {
-	return fetchProperties(basePath, gb.Module), nil
+func (gb *GradleBuilder) detectModuleProperties(basePath string, ios *lib.IOStreams) (map[string]string, error) {
+	return fetchProperties(basePath, gb.Module, ios), nil
 }
 
 func (gb *GradleBuilder) determineBuildPath(properties map[string]string) (string, error) {

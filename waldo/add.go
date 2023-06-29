@@ -7,7 +7,6 @@ import (
 	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo/data"
 	"github.com/waldoapp/waldo-go-cli/waldo/tool"
-	"github.com/waldoapp/waldo-go-cli/waldo/tool/custom"
 	"github.com/waldoapp/waldo-go-cli/waldo/tool/expo"
 	"github.com/waldoapp/waldo-go-cli/waldo/tool/flutter"
 	"github.com/waldoapp/waldo-go-cli/waldo/tool/gradle"
@@ -161,17 +160,6 @@ func (aa *AddAction) makeRecipe(cfg *data.Configuration, buildPath *tool.BuildPa
 		BasePath:    lib.MakeRelative(buildPath.AbsPath, cfg.BasePath())}
 
 	switch buildPath.BuildTool {
-	case tool.BuildToolCustom:
-		builder, appName, platform, err := custom.MakeCustomBuilder(buildPath.AbsPath, buildPath.RelPath, verbose, ios)
-
-		if err != nil {
-			return nil, err
-		}
-
-		recipe.AppName = aa.decideAppName(appName)
-		recipe.Platform = platform
-		recipe.CustomBuilder = builder
-
 	case tool.BuildToolExpo:
 		builder, appName, platform, err := expo.MakeExpoBuilder(buildPath.AbsPath, buildPath.RelPath, verbose, ios)
 

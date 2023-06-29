@@ -77,9 +77,6 @@ func (ba *BuildAction) buildRecipe(cfg *data.Configuration, r *data.Recipe) erro
 	)
 
 	switch r.BuildTool() {
-	case tool.BuildToolCustom:
-		buildPath, err = r.CustomBuilder.Build(absBasePath, r.Platform, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
-
 	case tool.BuildToolExpo:
 		buildPath, err = r.ExpoBuilder.Build(absBasePath, r.Platform, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
 

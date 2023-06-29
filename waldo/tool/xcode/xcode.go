@@ -26,7 +26,7 @@ func IsPossibleXcodeContainer(path string) bool {
 }
 
 func MakeXcodeBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*XcodeBuilder, string, lib.Platform, error) {
-	ios.Printf("\nSearching for Xcode workspaces and projects in %q…\n", relPath)
+	ios.Printf("\nSearching for workspaces and projects in %q…\n", relPath)
 
 	fileName, err := determineProject(findXcodeProjects(absPath), verbose, ios)
 
@@ -34,7 +34,7 @@ func MakeXcodeBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams)
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	ios.Printf("\nFinding all Xcode schemes and configurations in %q…\n", fileName)
+	ios.Printf("\nFinding all schemes and configurations in %q…\n", fileName)
 
 	xi, err := DetectXcodeInfo(absPath, fileName)
 
@@ -112,6 +112,20 @@ func (xb *XcodeBuilder) Build(basePath string, clean, verbose bool, ios *lib.IOS
 	return xb.verifyBuildPath(buildPath)
 }
 
+func (xb *XcodeBuilder) DetermineBuildPath(basePath string, ios *lib.IOStreams) (string, error) {
+	ios.Printf("\nDetecting build settings in %q…\n", basePath)
+
+	settings, err := xb.detectBuildSettings(basePath, ios)
+
+	if err != nil {
+		return "", err
+	}
+
+	ios.Printf("\nDetermining build path…\n")
+
+	return xb.determineBuildPath(settings)
+}
+
 func (xb *XcodeBuilder) Summarize() string {
 	summary := ""
 
@@ -121,6 +135,12 @@ func (xb *XcodeBuilder) Summarize() string {
 	lib.AppendIfNotEmpty(&summary, "configuration", xb.Configuration, "=", ", ")
 
 	return summary
+}
+
+func (xb *XcodeBuilder) VerifyBuildPath(basePath string, ios *lib.IOStreams) (string, error) {
+	ios.Printf("\nVerifying build path…\n")
+
+	return xb.verifyBuildPath(basePath)
 }
 
 //-----------------------------------------------------------------------------

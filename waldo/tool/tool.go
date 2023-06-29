@@ -3,7 +3,7 @@ package tool
 type BuildTool int
 
 const (
-	BuildToolCustom BuildTool = iota
+	BuildToolUnknown BuildTool = iota
 	BuildToolExpo
 	BuildToolFlutter
 	BuildToolGradle
@@ -14,7 +14,7 @@ const (
 
 func (bt BuildTool) String() string {
 	return [...]string{
-		"Custom",
+		"Unknown",
 		"Expo",
 		"Flutter",
 		"Gradle",
