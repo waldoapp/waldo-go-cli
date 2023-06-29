@@ -112,6 +112,12 @@ func (xb *XcodeBuilder) Build(basePath string, clean, verbose bool, ios *lib.IOS
 	return xb.verifyBuildPath(buildPath)
 }
 
+func (xb *XcodeBuilder) Clean(basePath string, verbose bool, ios *lib.IOStreams) error {
+	ios.Printf("\nCleaning…\n")
+
+	return xb.clean(basePath, verbose, ios)
+}
+
 func (xb *XcodeBuilder) DetermineBuildPath(basePath string, ios *lib.IOStreams) (string, error) {
 	ios.Printf("\nDetecting build settings in %q…\n", basePath)
 
@@ -169,6 +175,23 @@ func (xb *XcodeBuilder) build(basePath string, clean, verbose bool, ios *lib.IOS
 	}
 
 	args = append(args, "build")
+
+	task := lib.NewTask("xcodebuild", args...)
+
+	task.Cwd = basePath
+	task.IOStreams = ios
+
+	return task.Execute()
+}
+
+func (xb *XcodeBuilder) clean(basePath string, verbose bool, ios *lib.IOStreams) error {
+	args := xb.commonBuildArgs()
+
+	if !verbose {
+		args = append(args, "-quiet")
+	}
+
+	args = append(args, "clean")
 
 	task := lib.NewTask("xcodebuild", args...)
 

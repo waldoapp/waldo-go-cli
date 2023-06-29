@@ -102,6 +102,12 @@ func (gb *GradleBuilder) Build(basePath string, clean, verbose bool, ios *lib.IO
 	return gb.verifyBuildPath(buildPath)
 }
 
+func (gb *GradleBuilder) Clean(basePath string, verbose bool, ios *lib.IOStreams) error {
+	ios.Printf("\nCleaning…\n")
+
+	return gb.clean(basePath, verbose, ios)
+}
+
 func (gb *GradleBuilder) DetermineBuildPath(basePath string, ios *lib.IOStreams) (string, error) {
 	ios.Printf("\nDetecting module properties in %q…\n", basePath)
 
@@ -163,6 +169,23 @@ func (gb *GradleBuilder) build(basePath string, clean, verbose bool, ios *lib.IO
 	args = append(args, taskName)
 
 	args = append(args, "--console=plain")
+
+	if !verbose {
+		args = append(args, "--quiet")
+	}
+
+	task := lib.NewTask(wrapperPath, args...)
+
+	task.Cwd = basePath
+	task.IOStreams = ios
+
+	return task.Execute()
+}
+
+func (gb *GradleBuilder) clean(basePath string, verbose bool, ios *lib.IOStreams) error {
+	wrapperPath := filepath.Join(basePath, wrapperName())
+
+	args := []string{"clean", "--console=plain"}
 
 	if !verbose {
 		args = append(args, "--quiet")
