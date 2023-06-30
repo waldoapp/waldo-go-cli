@@ -18,7 +18,7 @@ func DetectGradleInfo(basePath, module string) (*GradleInfo, error) {
 	gi := &GradleInfo{}
 
 	tasks := fetchTasks(basePath, module)
-	
+
 	gi.Variants = extractVariants(tasks)
 
 	return gi, nil
@@ -80,7 +80,7 @@ func extractVariants(tasks []string) []string {
 	})
 }
 
-func fetchProperties(basePath, module string) map[string]string {
+func fetchProperties(basePath, module string, ios *lib.IOStreams) map[string]string {
 	wrapperPath := filepath.Join(basePath, wrapperName())
 
 	verb := "properties"
@@ -94,6 +94,7 @@ func fetchProperties(basePath, module string) map[string]string {
 	task := lib.NewTask(wrapperPath, args...)
 
 	task.Cwd = basePath
+	task.IOStreams = ios
 
 	stdout, _, err := task.Run()
 

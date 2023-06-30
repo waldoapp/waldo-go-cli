@@ -15,9 +15,9 @@ func askModule(modules []string, ios *lib.IOStreams) string {
 	sort.Strings(modules)
 
 	idx := pr.ReadChoose(
-		"Available Gradle modules",
+		"Available modules",
 		modules,
-		"Choose a Gradle module")
+		"Choose a module")
 
 	return modules[idx]
 }
@@ -67,10 +67,10 @@ func determineVariant(module string, variants []string, verbose bool, ios *lib.I
 	}
 
 	if len(variants) == 1 {
-		ios.Printf("\nOnly one Gradle build found in %q: %q\n", module, variants[0])
+		ios.Printf("\nOnly one build variant found in %q: %q\n", module, variants[0])
 
 		return variants[0], nil
 	}
 
-	return "", fmt.Errorf("No Gradle build found in %q", module)
+	return "", fmt.Errorf("No build variants found in %q", module)
 }

@@ -52,8 +52,7 @@ func MakeFlutterBuilder(absPath, relPath string, verbose bool, ios *lib.IOStream
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	fb := &FlutterBuilder{
-		Flavor: flavor}
+	fb := &FlutterBuilder{Flavor: flavor}
 
 	return fb, fi.Name, platform, nil
 }
