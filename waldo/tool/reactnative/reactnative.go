@@ -126,7 +126,7 @@ func (rnb *ReactNativeBuilder) androidBuildArgs() []string {
 }
 
 func (rnb *ReactNativeBuilder) build(basePath string, platform lib.Platform, verbose bool, ios *lib.IOStreams) error {
-	args := []string{"--yes", "react-native"}
+	args := []string{"--no-install", "react-native"}
 	env := lib.CurrentEnvironment()
 
 	switch platform {
@@ -235,22 +235,4 @@ func (rnb *ReactNativeBuilder) verifyBuildPath(path, name string, platform lib.P
 	}
 
 	return path, nil
-}
-
-//-----------------------------------------------------------------------------
-
-func reactNativePath() string {
-	path, _, err := lib.NewTask("command", "-v", "react-native").Run()
-
-	if err == nil && len(path) > 0 {
-		return path
-	}
-
-	path, _, err = lib.NewTask("npx", "--yes", "which", "react-native").Run()
-
-	if err == nil && len(path) > 0 {
-		return path
-	}
-
-	return "react-native"
 }
