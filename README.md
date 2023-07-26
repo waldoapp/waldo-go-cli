@@ -11,6 +11,7 @@
   - Xcode (see [here](https://docs.waldo.com/docs/exporting-your-build-for-waldo) for details)
   - Gradle
   - Flutter
+  - React Native (non-Expo)
   - _…and more to come!_
 - Upload an iOS or Android build to Waldo for processing. See [here](https://docs.waldo.com/docs/ios-uploading-your-simulator-build-to-waldo) and [here](https://docs.waldo.com/docs/android-uploading-your-emulator-build-to-waldo) for more details.
 - Trigger a run of of one or more test flows for your app. See [here](https://docs.waldo.com/docs/ci-run) for more details.
