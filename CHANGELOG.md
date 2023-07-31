@@ -7,6 +7,12 @@ This project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [3.2.0] - 2023-07-26
+
+### Added
+
+- Added support for React Native (non-Expo) recipes.
+
 ## [3.1.0] - 2023-06-14
 
 ### Added
@@ -116,7 +122,8 @@ Initial public release of enhanced functionality.
 
 Initial public release.
 
-[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/3.1.0...HEAD
+[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/3.2.0...HEAD
+[3.2.0]:		https://github.com/waldoapp/waldo-go-cli/compare/3.1.0...3.2.0
 [3.1.0]:		https://github.com/waldoapp/waldo-go-cli/compare/3.0.0...3.1.0
 [3.0.0]:		https://github.com/waldoapp/waldo-go-cli/compare/2.0.5...3.0.0
 [2.0.5]:        https://github.com/waldoapp/waldo-go-cli/compare/2.0.4...2.0.5
