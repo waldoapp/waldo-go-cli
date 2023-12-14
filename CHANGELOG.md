@@ -7,6 +7,13 @@ This project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [3.2.1] - 2023-12-14
+
+### Changed
+
+- Upgraded to use Go 1.21.
+- Upgraded all dependencies to latest and greatest.
+
 ## [3.2.0] - 2023-07-26
 
 ### Added
@@ -122,7 +129,8 @@ Initial public release of enhanced functionality.
 
 Initial public release.
 
-[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/3.2.0...HEAD
+[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/3.2.1...HEAD
+[3.2.1]:		https://github.com/waldoapp/waldo-go-cli/compare/3.2.0...3.2.1
 [3.2.0]:		https://github.com/waldoapp/waldo-go-cli/compare/3.1.0...3.2.0
 [3.1.0]:		https://github.com/waldoapp/waldo-go-cli/compare/3.0.0...3.1.0
 [3.0.0]:		https://github.com/waldoapp/waldo-go-cli/compare/2.0.5...3.0.0
