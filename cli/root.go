@@ -40,6 +40,7 @@ func NewRootCommand() *cobra.Command {
 	cmd.SetUsageTemplate(usageTemplate)
 
 	cmd.AddCommand(fixup(NewAddCommand()))
+	cmd.AddCommand(fixup(NewAuthCommand()))
 	cmd.AddCommand(fixup(NewBuildCommand()))
 	cmd.AddCommand(fixup(NewInitCommand()))
 	cmd.AddCommand(fixup(NewListCommand()))
