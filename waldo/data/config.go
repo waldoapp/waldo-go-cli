@@ -17,16 +17,6 @@ const (
 
 //-----------------------------------------------------------------------------
 
-type CreateKind int
-
-const (
-	CreateKindNever CreateKind = iota
-	CreateKindAlways
-	CreateKindIfNeeded
-)
-
-//-----------------------------------------------------------------------------
-
 type Configuration struct {
 	UniqueID      string    `yaml:"unique_id"`
 	FormatVersion int       `yaml:"format_version"`
