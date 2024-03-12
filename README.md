@@ -32,20 +32,11 @@ To install Waldo CLI, simply download and execute the installer script:
 curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install.sh | bash
 ```
 
-By default, the script installs Waldo CLI to `~/.waldo/bin`.
-
-If you wish to install Waldo CLI to a different location, simply define the `WALDO_CLI_BIN` environment variable _before_ invoking the installer script:
-
-```bash
-export WALDO_CLI_BIN=/path/to/binary
-curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install.sh | bash
-```
-
-> **Note:** If the installer script is able to find a previous Waldo CLI installation (using `which waldo`), the script _re-installs_ the latest version of Waldo CLI to _the same location_, unless you override this location with the `WALDO_CLI_BIN` environment variable.
+The script attempts to install Waldo CLI to `~/.waldo/bin`.
 
 You can verify that you have installed Waldo CLI correctly with the `which waldo` and `waldo help` commands.
 
-If you ever need to uninstall Waldo CLI, simply delete the executable from the install location.
+If you ever need to uninstall Waldo CLI, simply delete the binary at `~/.waldo/bin/waldo`.
 
 ### Windows
 
