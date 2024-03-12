@@ -2,7 +2,7 @@
 
 set -eu -o pipefail
 
-waldo_cli_bin="${WALDO_CLI_BIN:-}"
+waldo_cli_bin=
 waldo_cli_url="${WALDO_CLI_URL:-https://github.com/waldoapp/waldo-go-cli/releases/latest/download}"
 
 waldo_exec1_name="waldo"
@@ -11,32 +11,58 @@ waldo_exec2_name="sim_appcenter_build_and_upload.sh"
 waldo_asset1_name=
 waldo_asset2_name=
 
+waldo_exec_path=
+
 waldo_found_in_path=false
 waldo_is_reinstall=false
 
+function authenticate() {
+    local _user_token=${WALDO_USER_TOKEN:-${TOKEN:-}}
+    local _auth_status
+
+    if [[ -z $_user_token ]]; then
+        _user_token=$(find_user_token)
+    fi
+
+    if [[ -n $_user_token ]]; then
+        do_authentication $_user_token
+
+        _auth_status=$?
+    else
+        _auth_status=1
+    fi
+
+    if (( $_auth_status != 0 )); then
+        echo ""
+        echo "You have not yet been authenticated with Waldo. Many Waldo CLI commands will be unavailable to you."
+        echo ""
+        echo "You must first run the following command:"
+        echo ""
+        echo "    waldo auth <user-token>"
+        echo ""
+        echo "You can retrieve your user token here: https://app.waldo.com/settings/profile"
+    fi
+}
+
 function check_curl_command() {
-    if ! command -v curl >/dev/null; then
+    if ! command -v curl &>/dev/null; then
         fail "No ‘curl’ command found"
     fi
 }
 
 function check_destination() {
-    local _cur_path=$(command -v waldo)
+    waldo_cli_bin=${HOME}/.waldo/bin
 
-    if [[ -z $waldo_cli_bin ]]; then
-    	if [[ -n $_cur_path ]]; then
-			waldo_cli_bin=$(dirname $_cur_path)
-		else
-			waldo_cli_bin=${HOME}/.waldo/bin
-		fi
-	fi
+    local _cur_path=$(command -v waldo)
 
     if [[ $waldo_cli_bin/waldo == $_cur_path  ]]; then
         waldo_found_in_path=true
+    elif [[ -n $_cur_path ]]; then
+        fail "Conflicting Waldo CLI installation found at ‘${_cur_path}’ -- please remove it"
     fi
 
     if [[ -e $waldo_cli_bin/waldo ]]; then
-        echo "Waldo CLI installation detected in ‘${waldo_cli_bin}’ -- will re-install"
+        echo "Waldo CLI installation found in ‘${waldo_cli_bin}’ -- will re-install"
         echo ""
 
         waldo_is_reinstall=true
@@ -47,13 +73,18 @@ function check_destination() {
 }
 
 function check_installation() {
+    local _line="export PATH=\"$waldo_cli_bin:\$PATH\""
+
 	if [[ $waldo_found_in_path != true ]]; then
 		local _startup_file=$(find_startup_file)
 
 		if [[ -n $_startup_file ]]; then
-			echo "Updating your PATH in ‘${_startup_file}’ to support ‘waldo’"
+            echo ""
+			echo "Updating your PATH in ‘${_startup_file}’ to support ‘waldo’ with the following:"
+			echo ""
+			echo "    ${_line}"
 
-			echo 'export PATH=$PATH:'"$waldo_cli_bin" >> "$_startup_file"
+			echo "${_line}" >> "$_startup_file"
 		fi
 	fi
 
@@ -69,7 +100,7 @@ function check_installation() {
         echo ""
         echo "Please open a new terminal window OR run the following in your current one:"
         echo ""
-        echo "    export PATH=\"$waldo_cli_bin:\$PATH\""
+		echo "    ${_line}"
         echo ""
         echo "Then run the following command:"
         echo ""
@@ -121,6 +152,10 @@ function determine_asset_names() {
     waldo_asset2_name="$waldo_exec2_name"
 }
 
+function do_authentication() {
+    "${waldo_exec_path}" auth $1
+}
+
 function fail() {
     echo "install.sh: $1" 1>&2
     exit 1
@@ -161,6 +196,23 @@ function find_startup_file() {
     fi
 }
 
+function find_user_token() {
+    local _profile_path="${HOME}/.waldo/profile.yml"
+
+    if [[ ! -r $_profile_path ]]; then
+        return
+    fi
+
+    local _regex='user_token:[ ]*([^ ]+)[ ]*'
+
+    while read -r line; do
+        if [[ $line =~ $_regex ]]; then
+            echo ${BASH_REMATCH[1]}
+            return
+        fi
+    done < "$_profile_path"
+}
+
 function install_binaries() {
     mkdir -p "$waldo_cli_bin"
 
@@ -179,6 +231,8 @@ function install_binaries() {
     if [[ -n ${APPCENTER_BUILD_ID:-} ]]; then
         install_binary "${waldo_asset2_name}" "${waldo_exec2_name}"
     fi
+
+    waldo_exec_path="${waldo_cli_bin}/${waldo_exec1_name}"
 }
 
 function install_binary() {
@@ -217,5 +271,6 @@ check_curl_command
 determine_asset_names
 install_binaries
 check_installation
+authenticate
 
 exit
