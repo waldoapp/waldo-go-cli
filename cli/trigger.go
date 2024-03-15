@@ -11,8 +11,8 @@ func NewTriggerCommand() *cobra.Command {
 	options := &waldo.TriggerOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "trigger [options]",
-		Short: "Trigger run on Waldo.",
+		Use:   "trigger [--git_commit <c>] [--rule_name <r>] [--upload_token <t>] [-v | --verbose]",
+		Short: "Trigger a run on Waldo.",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
@@ -27,23 +27,21 @@ func NewTriggerCommand() *cobra.Command {
 					ioStreams).Perform())
 		}}
 
-	cmd.Flags().StringVar(&options.GitCommit, "git_commit", "", "Hash of originating git commit.")
-	cmd.Flags().BoolVar(&options.Help, "help", false, "Display available options and exit.")
-	cmd.Flags().StringVar(&options.RuleName, "rule_name", "", "Rule name.")
-	cmd.Flags().StringVar(&options.UploadToken, "upload_token", "", "Upload token (overrides WALDO_UPLOAD_TOKEN).")
-	cmd.Flags().BoolVar(&options.Verbose, "verbose", false, "Display extra verbiage.")
-	cmd.Flags().BoolVar(&options.Version, "version", false, "Display version and exit.")
+	cmd.Flags().StringVar(&options.GitCommit, "git_commit", "", "The originating git commit hash.")
+	cmd.Flags().BoolVar(&options.Help, "help", false, "Show available options and exit.")
+	cmd.Flags().StringVar(&options.RuleName, "rule_name", "", "An optional rule name.")
+	cmd.Flags().StringVar(&options.UploadToken, "upload_token", "", "The upload token (overrides WALDO_UPLOAD_TOKEN).")
+	cmd.Flags().BoolVar(&options.Verbose, "verbose", false, "Show extra verbiage.")
+	cmd.Flags().BoolVar(&options.Version, "version", false, "Show version information and exit.")
 
 	cmd.SetUsageTemplate(`
-USAGE: waldo trigger [options]
+USAGE: waldo trigger [--git_commit <c>] [--rule_name <r>] [--upload_token <t>] [-v | --verbose]
 
 OPTIONS:
-  --git_commit <value>    Hash of originating git commit.
-  --help                  Display available options and exit.
-  --rule_name <value>     Rule name.
-  --upload_token <value>  Upload token (overrides WALDO_UPLOAD_TOKEN).
-  --verbose               Display extra verbiage.
-  --version               Display version and exit.
+      --git_commit <c>    The originating git commit hash.
+      --rule_name <r>     An optional rule name.
+      --upload_token <t>  The upload token (overrides WALDO_UPLOAD_TOKEN).
+  -v, --verbose           Show extra verbiage.
 `)
 
 	return cmd

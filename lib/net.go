@@ -5,25 +5,25 @@ import (
 	"net/http/httputil"
 )
 
-func DumpRequest(ioStreams *IOStreams, request *http.Request, body bool) {
-	dump, err := httputil.DumpRequestOut(request, body)
+func DumpRequest(ios *IOStreams, req *http.Request, body bool) {
+	dump, err := httputil.DumpRequestOut(req, body)
 
 	if err != nil {
 		return
 	}
 
-	ioStreams.Printf("\n--- Request ---\n%s\n", dump)
+	ios.Printf("\n--- Request ---\n%s\n", dump)
 
 }
 
-func DumpResponse(ioStreams *IOStreams, response *http.Response, body bool) {
-	dump, err := httputil.DumpResponse(response, body)
+func DumpResponse(ios *IOStreams, rsp *http.Response, body bool) {
+	dump, err := httputil.DumpResponse(rsp, body)
 
 	if err != nil {
 		return
 	}
 
-	ioStreams.Printf("\n--- Response ---\n%s\n", dump)
+	ios.Printf("\n--- Response ---\n%s\n", dump)
 }
 
 func ShouldRetry(rsp *http.Response) bool {

@@ -15,12 +15,12 @@ var (
 {{if or .Runnable .HasSubCommands}}{{.UsageString}}{{end}}`
 
 	usageTemplate = `{{if .HasAvailableSubCommands}}
-USAGE: {{.CommandPath}} <command>
+USAGE: {{.CommandPath}} <subcommand>
 {{$cmds := .Commands}}
-COMMANDS:{{range $cmds}}
+SUBCOMMANDS:{{range $cmds}}
   {{rpad .Name .NamePadding}}  {{.Short}}{{end}}
 
-Use "{{.CommandPath}} help <command>" for more information about a command.
+Use "{{.CommandPath}} help <subcommand>" for detailed help.
 {{else}}
 USAGE: {{.UseLine}}
 {{if .HasAvailableLocalFlags}}
@@ -31,7 +31,7 @@ OPTIONS:
 
 func NewRootCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "waldo <command>",
+		Use:   "waldo <subcommand>",
 		Short: "Work with Waldo from the command line."}
 
 	cmd.CompletionOptions.DisableDefaultCmd = true
@@ -45,8 +45,6 @@ func NewRootCommand() *cobra.Command {
 	cmd.AddCommand(fixup(NewInitCommand()))
 	cmd.AddCommand(fixup(NewListCommand()))
 	cmd.AddCommand(fixup(NewRemoveCommand()))
-	// cmd.AddCommand(fixup(NewRunCommand()))
-	// cmd.AddCommand(fixup(NewSessionCommand()))
 	cmd.AddCommand(fixup(NewSyncCommand()))
 	cmd.AddCommand(fixup(NewTriggerCommand()))
 	cmd.AddCommand(fixup(NewUploadCommand()))

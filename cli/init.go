@@ -11,7 +11,7 @@ func NewInitCommand() *cobra.Command {
 	options := &waldo.InitOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "init [options]",
+		Use:   "init [-v | --verbose]",
 		Short: "Create an empty Waldo configuration.",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -27,13 +27,13 @@ func NewInitCommand() *cobra.Command {
 					ioStreams).Perform())
 		}}
 
-	cmd.Flags().BoolVarP(&options.Verbose, "verbose", "v", false, "Display extra verbiage.")
+	cmd.Flags().BoolVarP(&options.Verbose, "verbose", "v", false, "Show extra verbiage.")
 
 	cmd.SetUsageTemplate(`
-USAGE: waldo init [options]
+USAGE: waldo init [-v | --verbose]
 
 OPTIONS:
-  -v, --verbose   Display extra verbiage.
+  -v, --verbose           Show extra verbiage.
 `)
 
 	return cmd

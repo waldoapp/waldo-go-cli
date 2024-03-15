@@ -11,8 +11,8 @@ func NewVersionCommand() *cobra.Command {
 	options := &waldo.VersionOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "version [options]",
-		Short: "Display version information.",
+		Use:   "version",
+		Short: "Show version information.",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			ioStreams := lib.NewIOStreams(

@@ -29,10 +29,12 @@ Type `waldo help` to see all that Waldo CLI can do for you!
 To install Waldo CLI, simply download and execute the installer script:
 
 ```bash
-curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install.sh | bash
+TOKEN=u-xxxx bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install.sh)"
 ```
 
 The script attempts to install Waldo CLI to `~/.waldo/bin`.
+
+If you set environment variable `WALDO_USER_TOKEN` (or just `TOKEN`) to the value of your user token, the installer script will automatically run the `waldo auth` command upon successful installation of Waldo CLI. You can retrieve your user token by visiting the “Profile” tab of your Waldo account settings (https://app.waldo.com/settings/profile).
 
 You can verify that you have installed Waldo CLI correctly with the `which waldo` and `waldo help` commands.
 

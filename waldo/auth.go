@@ -37,7 +37,7 @@ func (aa *AuthAction) Perform() error {
 		return err
 	}
 
-	fullName, err := aa.authorizeUser()
+	fullName, err := aa.authenticateUser()
 
 	if err != nil {
 		return err
@@ -46,7 +46,7 @@ func (aa *AuthAction) Perform() error {
 	profile, _, err := data.SetupProfile(data.CreateKindIfNeeded)
 
 	if err != nil {
-		return fmt.Errorf("Unable to authorize user, error: %v", err)
+		return fmt.Errorf("Unable to authenticate user, error: %v", err)
 	}
 
 	profile.UserToken = aa.options.UserToken
@@ -54,25 +54,25 @@ func (aa *AuthAction) Perform() error {
 	profile.MarkDirty()
 
 	if err := profile.Save(); err != nil {
-		return fmt.Errorf("Unable to authorize user, error: %v", err)
+		return fmt.Errorf("Unable to authenticate user, error: %v", err)
 	}
 
-	aa.ioStreams.Printf("\nUser %q successfully authorized with user token %q\n", fullName, profile.UserToken)
+	aa.ioStreams.Printf("\nUser %q successfully authenticated -- credentials saved to %q\n", fullName, profile.Path())
 
 	return nil
 }
 
 //-----------------------------------------------------------------------------
 
-func (aa *AuthAction) authorizeUser() (string, error) {
-	aa.ioStreams.Printf("\nAuthorizing with user token %q…\n", aa.options.UserToken)
+func (aa *AuthAction) authenticateUser() (string, error) {
+	aa.ioStreams.Printf("\nAuthenticating with user token %q…\n", aa.options.UserToken)
 
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", data.CoreAPIUserEndpoint, nil)
 
 	if err != nil {
-		return "", fmt.Errorf("Unable to authorize user, error: %v", err)
+		return "", fmt.Errorf("Unable to authenticate user, error: %v", err)
 	}
 
 	req.Header.Add("Authorization", fmt.Sprintf("Token %s", aa.options.UserToken))
@@ -85,7 +85,7 @@ func (aa *AuthAction) authorizeUser() (string, error) {
 	rsp, err := client.Do(req)
 
 	if err != nil {
-		return "", fmt.Errorf("Unable to authorize user, error: %v", err)
+		return "", fmt.Errorf("Unable to authenticate user, error: %v", err)
 	}
 
 	defer rsp.Body.Close()
@@ -97,13 +97,13 @@ func (aa *AuthAction) authorizeUser() (string, error) {
 	status := rsp.StatusCode
 
 	if status < 200 || status > 299 {
-		return "", fmt.Errorf("Unable to authorize user, error: %v", rsp.Status)
+		return "", fmt.Errorf("Unable to authenticate user, error: %v", rsp.Status)
 	}
 
 	ar, err := data.ParseAuthResponse(rsp)
 
 	if err != nil {
-		return "", fmt.Errorf("Unable to authorize user, error: %v", err)
+		return "", fmt.Errorf("Unable to authenticate user, error: %v", err)
 	}
 
 	return ar.FullName(), nil

@@ -26,7 +26,7 @@ func IsPossibleXcodeContainer(path string) bool {
 }
 
 func MakeXcodeBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*XcodeBuilder, string, lib.Platform, error) {
-	ios.Printf("\nSearching for workspaces and projects in %q…\n", relPath)
+	ios.Printf("\nFinding all workspaces and projects in %q…\n", relPath)
 
 	fileName, err := determineProject(findXcodeProjects(absPath), verbose, ios)
 
