@@ -11,8 +11,8 @@ func NewSyncCommand() *cobra.Command {
 	options := &waldo.SyncOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "sync [options] [<recipe-name>]",
-		Short: "Build app from recipe and then upload to Waldo.",
+		Use:   "sync [-c | --clean] [--git_branch <b>] [--git_commit <c>] [--variant_name <n>] [-v | --verbose] [<recipe-name>]",
+		Short: "Build an app from the recipe and then upload it to Waldo.",
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
@@ -34,23 +34,21 @@ func NewSyncCommand() *cobra.Command {
 	cmd.Flags().BoolVarP(&options.Clean, "clean", "c", false, "Remove cached artifacts before building.")
 	cmd.Flags().StringVar(&options.GitBranch, "git_branch", "", "The originating git commit branch name.")
 	cmd.Flags().StringVar(&options.GitCommit, "git_commit", "", "The originating git commit hash.")
-	cmd.Flags().StringVarP(&options.UploadToken, "upload_token", "u", "", "The upload token associated with your app.")
 	cmd.Flags().StringVar(&options.VariantName, "variant_name", "", "An optional variant name.")
-	cmd.Flags().BoolVarP(&options.Verbose, "verbose", "v", false, "Display extra verbiage.")
+	cmd.Flags().BoolVarP(&options.Verbose, "verbose", "v", false, "Show extra verbiage.")
 
 	cmd.SetUsageTemplate(`
-USAGE: waldo sync [options] [<recipe-name>]
+USAGE: waldo sync [-c | --clean] [--git_branch <b>] [--git_commit <c>] [--variant_name <n>] [-v | --verbose] [<recipe-name>]
 
 ARGUMENTS:
-  <recipe-name>            The name of the recipe to build and upload.
+  <recipe-name>           The name of the recipe to build and upload.
 
 OPTIONS:
-  -c, --clean              Remove cached artifacts before building.
-      --git_branch <b>     The originating git commit branch name.
-      --git_commit <c>     The originating git commit hash.
-  -u, --upload_token <t>   The upload token associated with your app.
-      --variant_name <n>   An optional variant name.
-  -v, --verbose            Display extra verbiage.
+  -c, --clean             Remove cached artifacts before building.
+      --git_branch <b>    The originating git commit branch name.
+      --git_commit <c>    The originating git commit hash.
+      --variant_name <n>  An optional variant name.
+  -v, --verbose           Show extra verbiage.
 `)
 
 	return cmd

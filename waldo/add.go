@@ -15,11 +15,8 @@ import (
 )
 
 type AddOptions struct {
-	AppName     string
-	Platform    string
-	RecipeName  string
-	UploadToken string
-	Verbose     bool
+	RecipeName string
+	Verbose    bool
 }
 
 type AddAction struct {
@@ -46,12 +43,6 @@ func NewAddAction(options *AddOptions, ioStreams *lib.IOStreams) *AddAction {
 func (aa *AddAction) Perform() error {
 	if err := data.ValidateRecipeName(aa.options.RecipeName); err != nil {
 		return err
-	}
-
-	if len(aa.options.UploadToken) > 0 {
-		if err := data.ValidateUploadToken(aa.options.UploadToken); err != nil {
-			return err
-		}
 	}
 
 	cfg, created, err := data.SetupConfiguration(data.CreateKindIfNeeded)
@@ -142,22 +133,13 @@ func (aa *AddAction) confirmRecipe(basePath string, recipe *data.Recipe) bool {
 	return aa.promptReader.ReadYN(fmt.Sprintf("Add recipe %q", recipe.Name))
 }
 
-func (aa *AddAction) decideAppName(appName string) string {
-	if len(aa.options.AppName) > 0 {
-		return aa.options.AppName
-	}
-
-	return appName
-}
-
 func (aa *AddAction) makeRecipe(cfg *data.Configuration, buildPath *tool.BuildPath) (*data.Recipe, error) {
 	verbose := aa.options.Verbose
 	ios := aa.ioStreams
 
 	recipe := &data.Recipe{
-		Name:        aa.options.RecipeName,
-		UploadToken: aa.options.UploadToken,
-		BasePath:    lib.MakeRelative(buildPath.AbsPath, cfg.BasePath())}
+		Name:     aa.options.RecipeName,
+		BasePath: lib.MakeRelative(buildPath.AbsPath, cfg.BasePath())}
 
 	switch buildPath.BuildTool {
 	case tool.BuildToolExpo:
@@ -167,7 +149,7 @@ func (aa *AddAction) makeRecipe(cfg *data.Configuration, buildPath *tool.BuildPa
 			return nil, err
 		}
 
-		recipe.AppName = aa.decideAppName(appName)
+		recipe.AppName = appName
 		recipe.Platform = platform
 		recipe.ExpoBuilder = builder
 
@@ -178,7 +160,7 @@ func (aa *AddAction) makeRecipe(cfg *data.Configuration, buildPath *tool.BuildPa
 			return nil, err
 		}
 
-		recipe.AppName = aa.decideAppName(appName)
+		recipe.AppName = appName
 		recipe.Platform = platform
 		recipe.FlutterBuilder = builder
 
@@ -189,7 +171,7 @@ func (aa *AddAction) makeRecipe(cfg *data.Configuration, buildPath *tool.BuildPa
 			return nil, err
 		}
 
-		recipe.AppName = aa.decideAppName(appName)
+		recipe.AppName = appName
 		recipe.Platform = platform
 		recipe.GradleBuilder = builder
 
@@ -200,7 +182,7 @@ func (aa *AddAction) makeRecipe(cfg *data.Configuration, buildPath *tool.BuildPa
 			return nil, err
 		}
 
-		recipe.AppName = aa.decideAppName(appName)
+		recipe.AppName = appName
 		recipe.Platform = platform
 		recipe.ReactNativeBuilder = builder
 
@@ -211,7 +193,7 @@ func (aa *AddAction) makeRecipe(cfg *data.Configuration, buildPath *tool.BuildPa
 			return nil, err
 		}
 
-		recipe.AppName = aa.decideAppName(appName)
+		recipe.AppName = appName
 		recipe.Platform = platform
 		recipe.XcodeBuilder = builder
 

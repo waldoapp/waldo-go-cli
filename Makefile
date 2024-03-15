@@ -1,4 +1,4 @@
-PREFIX?=/usr/local
+PREFIX?=~/.waldo
 
 BUILD_DIR?=.build
 INSTALL_DIR?=$(PREFIX)/bin

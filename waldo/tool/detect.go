@@ -24,7 +24,7 @@ type BuildPath struct {
 //-----------------------------------------------------------------------------
 
 func DetectBuildPaths(rootPath string, verbose bool, ios *lib.IOStreams) ([]*BuildPath, error) {
-	ios.Printf("\nSearching for possible build paths…\n")
+	ios.Printf("\nFinding possible build paths…\n")
 
 	var buildPaths []*BuildPath
 

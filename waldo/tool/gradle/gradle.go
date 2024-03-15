@@ -31,7 +31,7 @@ func IsPossibleGradleContainer(path string) bool {
 }
 
 func MakeGradleBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*GradleBuilder, string, lib.Platform, error) {
-	ios.Printf("\nSearching for modules in %q…\n", relPath)
+	ios.Printf("\nFinding modules in %q…\n", relPath)
 
 	properties := fetchProperties(absPath, "", ios)
 

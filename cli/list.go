@@ -11,7 +11,7 @@ func NewListCommand() *cobra.Command {
 	options := &waldo.ListOptions{}
 
 	cmd := &cobra.Command{
-		Use:     "list [options]",
+		Use:     "list [-l | --long] [-u | --user]",
 		Short:   "List defined recipes.",
 		Aliases: []string{"ls"},
 		Args:    cobra.ExactArgs(0),
@@ -28,15 +28,15 @@ func NewListCommand() *cobra.Command {
 					ioStreams).Perform())
 		}}
 
-	cmd.Flags().BoolVarP(&options.LongFormat, "long", "l", false, "Display recipes in long format.")
-	cmd.Flags().BoolVarP(&options.UserInfo, "user", "u", false, "Display user-specific info for each recipe.")
+	cmd.Flags().BoolVarP(&options.LongFormat, "long", "l", false, "Show recipes in long format.")
+	cmd.Flags().BoolVarP(&options.UserInfo, "user", "u", false, "Show user-specific information for each recipe.")
 
 	cmd.SetUsageTemplate(`
-USAGE: waldo list [options]
+USAGE: waldo list [-l | --long] [-u | --user]
 
 OPTIONS:
-  -l, --long   Display recipes in long format.
-  -u, --user   Display user-specific info for each recipe.
+  -l, --long              Show recipes in long format.
+  -u, --user              Show user-specific information for each recipe.
 `)
 
 	return cmd
