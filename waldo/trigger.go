@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
+	"github.com/waldoapp/waldo-go-cli/waldo/api"
 	"github.com/waldoapp/waldo-go-cli/waldo/data"
-	"github.com/waldoapp/waldo-go-cli/waldo/tool"
 )
 
 type TriggerOptions struct {
@@ -40,7 +40,7 @@ func (ta *TriggerAction) Perform() error {
 	assetVersion := ta.detectAssetVersion()
 	verbose := ta.detectVerbose()
 
-	ad := tool.NewAgentDownloader(assetVersion, data.CLIPrefix, verbose, ta.ioStreams, ta.runtimeInfo)
+	ad := api.NewAgentDownloader(assetVersion, data.CLIPrefix, verbose, ta.ioStreams, ta.runtimeInfo)
 
 	path, err := ad.Download()
 

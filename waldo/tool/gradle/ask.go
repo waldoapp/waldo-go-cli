@@ -10,11 +10,9 @@ import (
 )
 
 func askModule(modules []string, ios *lib.IOStreams) string {
-	pr := ios.PromptReader()
-
 	sort.Strings(modules)
 
-	idx := pr.ReadChoose(
+	idx := ios.PromptReader().ReadChoose(
 		"Available modules",
 		modules,
 		"Choose a module")
@@ -23,11 +21,9 @@ func askModule(modules []string, ios *lib.IOStreams) string {
 }
 
 func askVariant(variants []string, ios *lib.IOStreams) string {
-	pr := ios.PromptReader()
-
 	sort.Strings(variants)
 
-	idx := pr.ReadChoose(
+	idx := ios.PromptReader().ReadChoose(
 		"Available build variants",
 		variants,
 		"Choose a build variant")

@@ -14,8 +14,8 @@ import (
 type Recipe struct {
 	Name               string                          `yaml:"recipe"`
 	AppName            string                          `yaml:"app_name"`
+	AppID              string                          `yaml:"app_id"`
 	Platform           lib.Platform                    `yaml:"platform"`
-	UploadToken        string                          `yaml:"upload_token"`
 	BasePath           string                          `yaml:"build_root"` // relative to Configuration.BasePath
 	ExpoBuilder        *expo.ExpoBuilder               `yaml:"expo_build,omitempty"`
 	FlutterBuilder     *flutter.FlutterBuilder         `yaml:"flutter_build,omitempty"`

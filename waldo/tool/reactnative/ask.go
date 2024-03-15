@@ -8,11 +8,9 @@ import (
 )
 
 func askMode(modes []string, ios *lib.IOStreams) string {
-	pr := ios.PromptReader()
-
 	sort.Strings(modes)
 
-	idx := pr.ReadChoose(
+	idx := ios.PromptReader().ReadChoose(
 		"Supported build modes",
 		modes,
 		"Choose a build mode")
@@ -21,11 +19,9 @@ func askMode(modes []string, ios *lib.IOStreams) string {
 }
 
 func askPlatform(platforms []string, ios *lib.IOStreams) string {
-	pr := ios.PromptReader()
-
 	sort.Strings(platforms)
 
-	idx := pr.ReadChoose(
+	idx := ios.PromptReader().ReadChoose(
 		"Supported build platforms",
 		platforms,
 		"Choose a build platform")

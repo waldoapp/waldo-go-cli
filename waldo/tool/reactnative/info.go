@@ -66,8 +66,8 @@ func detectModesForAndroid(basePath string) ([]string, error) {
 		return []string{"release"}, nil
 	}
 
-	modes := lib.CompactMap(gi.Variants, func(mode string) bool {
-		return strings.ToLower(mode) == "release"
+	modes := lib.CompactMap(gi.Variants, func(mode string) (string, bool) {
+		return mode, strings.ToLower(mode) == "release"
 	})
 
 	return modes, nil
@@ -82,8 +82,8 @@ func detectModesForIos(basePath, name string) ([]string, error) {
 		return []string{"Debug"}, nil
 	}
 
-	modes := lib.CompactMap(xi.Configurations(), func(mode string) bool {
-		return strings.ToLower(mode) == "debug"
+	modes := lib.CompactMap(xi.Configurations(), func(mode string) (string, bool) {
+		return mode, strings.ToLower(mode) == "debug"
 	})
 
 	return modes, nil

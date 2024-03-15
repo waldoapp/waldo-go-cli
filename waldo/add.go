@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
+	"github.com/waldoapp/waldo-go-cli/waldo/api"
 	"github.com/waldoapp/waldo-go-cli/waldo/data"
 	"github.com/waldoapp/waldo-go-cli/waldo/tool"
 	"github.com/waldoapp/waldo-go-cli/waldo/tool/expo"
@@ -24,6 +25,7 @@ type AddAction struct {
 	options      *AddOptions
 	promptReader *lib.PromptReader
 	runtimeInfo  *lib.RuntimeInfo
+	userToken    string
 }
 
 //-----------------------------------------------------------------------------
@@ -44,6 +46,14 @@ func (aa *AddAction) Perform() error {
 	if err := data.ValidateRecipeName(aa.options.RecipeName); err != nil {
 		return err
 	}
+
+	profile, _, err := data.SetupProfile(data.CreateKindNever)
+
+	if err != nil {
+		return fmt.Errorf("Unable to authenticate user, error: %v", err)
+	}
+
+	aa.userToken = profile.UserToken
 
 	cfg, created, err := data.SetupConfiguration(data.CreateKindIfNeeded)
 
@@ -104,10 +114,15 @@ func (aa *AddAction) confirmRecipe(basePath string, recipe *data.Recipe) bool {
 		appName = "(unknown)"
 	}
 
-	buildTool := recipe.BuildTool().String()
-	buildRoot := "(none)"
-	uploadToken := "(none)"
+	appID := recipe.AppID
+
+	if len(appID) == 0 {
+		appID = "(none)"
+	}
+
 	buildOptions := "(none)"
+	buildRoot := "(none)"
+	buildTool := recipe.BuildTool().String()
 
 	absPath := filepath.Join(basePath, recipe.BasePath)
 
@@ -115,22 +130,44 @@ func (aa *AddAction) confirmRecipe(basePath string, recipe *data.Recipe) bool {
 		buildRoot = relPath
 	}
 
-	if token := recipe.UploadToken; len(token) > 0 {
-		uploadToken = token
-	}
-
 	if summary := recipe.Summarize(); len(summary) > 0 {
 		buildOptions = summary
 	}
 
-	aa.ioStreams.Printf("  Platform:      %s\n", recipe.Platform)
 	aa.ioStreams.Printf("  App name:      %s\n", appName)
+	aa.ioStreams.Printf("  App ID:        %s\n", appID)
+	aa.ioStreams.Printf("  Platform:      %s\n", recipe.Platform)
 	aa.ioStreams.Printf("  Build tool:    %s\n", buildTool)
 	aa.ioStreams.Printf("  Build root:    %s\n", buildRoot)
-	aa.ioStreams.Printf("  Upload token:  %s\n", uploadToken)
 	aa.ioStreams.Printf("  Build options: %s\n", buildOptions)
 
 	return aa.promptReader.ReadYN(fmt.Sprintf("Add recipe %q", recipe.Name))
+}
+
+func (aa *AddAction) determineApp(platform lib.Platform) (string, string, error) {
+	if aa.options.Verbose {
+		aa.ioStreams.Printf("\nFetching %v apps for user token %q…\n", platform, aa.userToken)
+	}
+
+	items, err := api.FetchApps(aa.userToken, platform, aa.options.Verbose, aa.ioStreams)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	if platform != lib.PlatformUnknown {
+		items = lib.CompactMap(items, func(item *tool.AppInfo) (*tool.AppInfo, bool) {
+			return item, item.Platform == platform
+		})
+	}
+
+	item, err := tool.DetermineApp(platform, items, aa.options.Verbose, aa.ioStreams)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	return item.AppName, item.AppID, nil
 }
 
 func (aa *AddAction) makeRecipe(cfg *data.Configuration, buildPath *tool.BuildPath) (*data.Recipe, error) {
@@ -200,6 +237,15 @@ func (aa *AddAction) makeRecipe(cfg *data.Configuration, buildPath *tool.BuildPa
 	default:
 		return nil, fmt.Errorf("Unknown build tool: %s", buildPath.BuildTool.String())
 	}
+
+	appName, appID, err := aa.determineApp(recipe.Platform)
+
+	if err != nil {
+		return nil, err
+	}
+
+	recipe.AppID = appID
+	recipe.AppName = appName
 
 	return recipe, nil
 }
