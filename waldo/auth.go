@@ -2,9 +2,9 @@ package waldo
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
+	"github.com/waldoapp/waldo-go-cli/waldo/api"
 	"github.com/waldoapp/waldo-go-cli/waldo/data"
 )
 
@@ -37,7 +37,9 @@ func (aa *AuthAction) Perform() error {
 		return err
 	}
 
-	fullName, err := aa.authenticateUser()
+	aa.ioStreams.Printf("\nAuthenticating with user token %q…\n", aa.options.UserToken)
+
+	fullName, err := api.AuthenticateUser(aa.options.UserToken, aa.options.Verbose, aa.ioStreams)
 
 	if err != nil {
 		return err
@@ -60,51 +62,4 @@ func (aa *AuthAction) Perform() error {
 	aa.ioStreams.Printf("\nUser %q successfully authenticated -- credentials saved to %q\n", fullName, profile.Path())
 
 	return nil
-}
-
-//-----------------------------------------------------------------------------
-
-func (aa *AuthAction) authenticateUser() (string, error) {
-	aa.ioStreams.Printf("\nAuthenticating with user token %q…\n", aa.options.UserToken)
-
-	client := &http.Client{}
-
-	req, err := http.NewRequest("GET", data.CoreAPIUserEndpoint, nil)
-
-	if err != nil {
-		return "", fmt.Errorf("Unable to authenticate user, error: %v", err)
-	}
-
-	req.Header.Add("Authorization", fmt.Sprintf("Token %s", aa.options.UserToken))
-	req.Header.Add("User-Agent", data.FullVersion())
-
-	if aa.options.Verbose {
-		lib.DumpRequest(aa.ioStreams, req, true)
-	}
-
-	rsp, err := client.Do(req)
-
-	if err != nil {
-		return "", fmt.Errorf("Unable to authenticate user, error: %v", err)
-	}
-
-	defer rsp.Body.Close()
-
-	if aa.options.Verbose {
-		lib.DumpResponse(aa.ioStreams, rsp, true)
-	}
-
-	status := rsp.StatusCode
-
-	if status < 200 || status > 299 {
-		return "", fmt.Errorf("Unable to authenticate user, error: %v", rsp.Status)
-	}
-
-	ar, err := data.ParseAuthResponse(rsp)
-
-	if err != nil {
-		return "", fmt.Errorf("Unable to authenticate user, error: %v", err)
-	}
-
-	return ar.FullName(), nil
 }

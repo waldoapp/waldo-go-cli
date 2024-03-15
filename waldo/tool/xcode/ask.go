@@ -10,11 +10,9 @@ import (
 )
 
 func askConfiguration(configurations []string, ios *lib.IOStreams) string {
-	pr := ios.PromptReader()
-
 	sort.Strings(configurations)
 
-	idx := pr.ReadChoose(
+	idx := ios.PromptReader().ReadChoose(
 		"Available configurations",
 		configurations,
 		"Choose a configuration")
@@ -23,11 +21,9 @@ func askConfiguration(configurations []string, ios *lib.IOStreams) string {
 }
 
 func askProject(pwNames []string, ios *lib.IOStreams) string {
-	pr := ios.PromptReader()
-
 	sort.Strings(pwNames)
 
-	idx := pr.ReadChoose(
+	idx := ios.PromptReader().ReadChoose(
 		"Available workspaces and projects",
 		pwNames,
 		"Choose a workspace or project")
@@ -36,11 +32,9 @@ func askProject(pwNames []string, ios *lib.IOStreams) string {
 }
 
 func askScheme(schemes []string, ios *lib.IOStreams) string {
-	pr := ios.PromptReader()
-
 	sort.Strings(schemes)
 
-	idx := pr.ReadChoose(
+	idx := ios.PromptReader().ReadChoose(
 		"Available schemes",
 		schemes,
 		"Choose a scheme")

@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
+	"github.com/waldoapp/waldo-go-cli/waldo/api"
 	"github.com/waldoapp/waldo-go-cli/waldo/data"
-	"github.com/waldoapp/waldo-go-cli/waldo/tool"
 )
 
 type UploadOptions struct {
@@ -65,7 +65,7 @@ func (ua *UploadAction) Perform() error {
 		}
 	}
 
-	ad := tool.NewAgentDownloader(
+	ad := api.NewAgentDownloader(
 		ua.detectAssetVersion(),
 		data.CLIPrefix,
 		ua.detectVerbose(),
@@ -200,9 +200,9 @@ func (ua *UploadAction) makeArgs(buildPath, uploadToken string) []string {
 func (ua *UploadAction) mungeArgs(ud *data.UserData, recipe *data.Recipe) ([]string, string, error) {
 	uploadToken := ua.options.UploadToken
 
-	if len(uploadToken) == 0 {
-		uploadToken = recipe.UploadToken
-	}
+	// if len(uploadToken) == 0 {
+	// 	uploadToken = recipe.UploadToken
+	// }
 
 	if len(uploadToken) == 0 {
 		uploadToken = os.Getenv("WALDO_UPLOAD_TOKEN")

@@ -73,13 +73,13 @@ func detectFlavorsForIos(basePath string) ([]string, error) {
 		return []string{"Debug"}, nil
 	}
 
-	flavors := lib.CompactMap(xi.Configurations(), func(flavor string) bool {
+	flavors := lib.CompactMap(xi.Configurations(), func(flavor string) (string, bool) {
 		switch strings.ToLower(flavor) {
 		case "profile", "release":
-			return false
+			return "", false
 
 		default:
-			return true
+			return flavor, true
 		}
 	})
 

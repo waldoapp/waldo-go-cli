@@ -92,7 +92,7 @@ func DetectBuildPaths(rootPath string, verbose bool, ios *lib.IOStreams) ([]*Bui
 				buildPath := newBuildPath(BuildToolReactNative, path)
 
 				if verbose {
-					ios.Printf("\nFound possible React Native container: %q\n")
+					ios.Printf("\nFound possible React Native container: %q\n", path)
 				}
 
 				buildPaths = append(buildPaths, buildPath)

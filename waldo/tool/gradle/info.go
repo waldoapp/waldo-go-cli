@@ -71,12 +71,8 @@ func extractVariants(tasks []string) []string {
 		}
 	}
 
-	variants := lib.CompactMap(candidates, func(candidate string) bool {
-		return !isAffix(candidate, candidates)
-	})
-
-	return lib.Map(variants, func(task string) string {
-		return strings.ToLower(task[0:1]) + task[1:]
+	return lib.CompactMap(candidates, func(candidate string) (string, bool) {
+		return strings.ToLower(candidate[0:1]) + candidate[1:], !isAffix(candidate, candidates)
 	})
 }
 

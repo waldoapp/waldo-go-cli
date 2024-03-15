@@ -1,11 +1,11 @@
 package lib
 
-func CompactMap[T any](slice []T, fn func(T) bool) []T {
-	var result []T
+func CompactMap[T any, U any](slice []T, fn func(T) (U, bool)) []U {
+	var result []U
 
 	for _, item := range slice {
-		if fn(item) {
-			result = append(result, item)
+		if newItem, keep := fn(item); keep {
+			result = append(result, newItem)
 		}
 	}
 

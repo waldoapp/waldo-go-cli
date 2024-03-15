@@ -1,8 +1,9 @@
 package waldo
 
 import (
+	"cmp"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -49,7 +50,7 @@ func (la *ListAction) Perform() error {
 
 	recipes := la.sortRecipes(cfg.Recipes)
 
-	la.ioStreams.Printf("%-16.16s  %-8.8s  %-24.24s  %s\n", "RECIPE NAME", "PLATFORM", "APP NAME", "BUILD TOOL")
+	la.ioStreams.Printf("%-16.16s  %-24.24s  %-20.20s  %-8.8s  %s\n", "RECIPE NAME", "APP NAME", "APP ID", "PLATFORM", "BUILD TOOL")
 
 	for _, recipe := range recipes {
 		name := recipe.Name
@@ -58,21 +59,20 @@ func (la *ListAction) Perform() error {
 			continue
 		}
 
+		appName := la.formatString(recipe.AppName, "(none)")
+		appID := la.formatString(recipe.AppID, "(none)")
 		platform := recipe.Platform
-		appName := la.formatString(recipe.AppName, "(unknown)")
 		buildTool := recipe.BuildTool().String()
 
-		la.ioStreams.Printf("%-16.16s  %-8.8s  %-24.24s  %s\n", name, platform, appName, buildTool)
+		la.ioStreams.Printf("%-16.16s  %-24.24s  %-20.20s  %-8.8s  %s\n", name, appName, appID, platform, buildTool)
 
 		if la.options.LongFormat {
 			absPath := filepath.Join(cfg.BasePath(), recipe.BasePath)
 
 			buildRoot := la.formatString(lib.MakeRelativeToCWD(absPath), "(none)")
-			uploadToken := la.formatString(recipe.UploadToken, "(none)")
 			buildOptions := la.formatString(recipe.Summarize(), "(none)")
 
 			la.ioStreams.Printf("%16.16s: %s\n", "build root", buildRoot)
-			la.ioStreams.Printf("%16.16s: %s\n", "upload token", uploadToken)
 			la.ioStreams.Printf("%16.16s: %s\n", "build options", buildOptions)
 		}
 
@@ -131,8 +131,8 @@ func (la *ListAction) formatTime(value time.Time) string {
 }
 
 func (la *ListAction) sortRecipes(recipes []*data.Recipe) []*data.Recipe {
-	sort.Slice(recipes, func(i, j int) bool {
-		return strings.ToLower(recipes[i].Name) < strings.ToLower(recipes[j].Name)
+	slices.SortStableFunc(recipes, func(a, b *data.Recipe) int {
+		return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 	})
 
 	return recipes

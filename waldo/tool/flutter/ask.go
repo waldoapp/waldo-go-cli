@@ -8,11 +8,9 @@ import (
 )
 
 func askFlavor(flavors []string, ios *lib.IOStreams) string {
-	pr := ios.PromptReader()
-
 	sort.Strings(flavors)
 
-	idx := pr.ReadChoose(
+	idx := ios.PromptReader().ReadChoose(
 		"Supported build flavors",
 		flavors,
 		"Choose a build flavor")
@@ -21,11 +19,9 @@ func askFlavor(flavors []string, ios *lib.IOStreams) string {
 }
 
 func askPlatform(platforms []string, ios *lib.IOStreams) string {
-	pr := ios.PromptReader()
-
 	sort.Strings(platforms)
 
-	idx := pr.ReadChoose(
+	idx := ios.PromptReader().ReadChoose(
 		"Supported build platforms",
 		platforms,
 		"Choose a build platform")
