@@ -2,19 +2,18 @@ package cli
 
 import (
 	"github.com/waldoapp/waldo-go-cli/lib"
+	"github.com/waldoapp/waldo-go-cli/lib/xcmd"
 	"github.com/waldoapp/waldo-go-cli/waldo"
-
-	"github.com/spf13/cobra"
 )
 
-func NewInitCommand() *cobra.Command {
+func NewInitCommand() *xcmd.Command {
 	options := &waldo.InitOptions{}
 
-	cmd := &cobra.Command{
+	cmd := &xcmd.Command{
 		Use:   "init [-v | --verbose]",
 		Short: "Create an empty Waldo configuration.",
-		Args:  cobra.ExactArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
+		Args:  xcmd.ExactArgs(0),
+		Run: func(cmd *xcmd.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),

@@ -5,9 +5,8 @@ import (
 	"os/exec"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
+	"github.com/waldoapp/waldo-go-cli/lib/xcmd"
 	"github.com/waldoapp/waldo-go-cli/waldo/data"
-
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -29,33 +28,31 @@ OPTIONS:
 {{end}}`
 )
 
-func NewRootCommand() *cobra.Command {
-	cmd := &cobra.Command{
+func NewRootCommand() *xcmd.Command {
+	cmd := &xcmd.Command{
 		Use:   "waldo <subcommand>",
 		Short: "Work with Waldo from the command line."}
-
-	cmd.CompletionOptions.DisableDefaultCmd = true
 
 	cmd.SetHelpTemplate(helpTemplate)
 	cmd.SetUsageTemplate(usageTemplate)
 
-	cmd.AddCommand(fixup(NewAddCommand()))
-	cmd.AddCommand(fixup(NewAuthCommand()))
-	cmd.AddCommand(fixup(NewBuildCommand()))
-	cmd.AddCommand(fixup(NewInitCommand()))
-	cmd.AddCommand(fixup(NewListCommand()))
-	cmd.AddCommand(fixup(NewRemoveCommand()))
-	cmd.AddCommand(fixup(NewSyncCommand()))
-	cmd.AddCommand(fixup(NewTriggerCommand()))
-	cmd.AddCommand(fixup(NewUploadCommand()))
-	cmd.AddCommand(fixup(NewVersionCommand()))
+	cmd.AddCommand(NewAddCommand())
+	cmd.AddCommand(NewAuthCommand())
+	cmd.AddCommand(NewBuildCommand())
+	cmd.AddCommand(NewInitCommand())
+	cmd.AddCommand(NewListCommand())
+	cmd.AddCommand(NewRemoveCommand())
+	cmd.AddCommand(NewSyncCommand())
+	cmd.AddCommand(NewTriggerCommand())
+	cmd.AddCommand(NewUploadCommand())
+	cmd.AddCommand(NewVersionCommand())
 
-	return fixup(cmd)
+	return cmd
 }
 
 //-----------------------------------------------------------------------------
 
-func exitOnError(cmd *cobra.Command, err error) {
+func exitOnError(cmd *xcmd.Command, err error) {
 	if err != nil {
 		ioStreams := lib.NewIOStreams(
 			cmd.InOrStdin(),
@@ -70,11 +67,4 @@ func exitOnError(cmd *cobra.Command, err error) {
 
 		os.Exit(1)
 	}
-}
-
-func fixup(cmd *cobra.Command) *cobra.Command {
-	cmd.DisableAutoGenTag = true
-	cmd.DisableFlagsInUseLine = true
-
-	return cmd
 }

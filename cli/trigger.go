@@ -2,19 +2,18 @@ package cli
 
 import (
 	"github.com/waldoapp/waldo-go-cli/lib"
+	"github.com/waldoapp/waldo-go-cli/lib/xcmd"
 	"github.com/waldoapp/waldo-go-cli/waldo"
-
-	"github.com/spf13/cobra"
 )
 
-func NewTriggerCommand() *cobra.Command {
+func NewTriggerCommand() *xcmd.Command {
 	options := &waldo.TriggerOptions{}
 
-	cmd := &cobra.Command{
+	cmd := &xcmd.Command{
 		Use:   "trigger [--git_commit <c>] [--rule_name <r>] [--upload_token <t>] [-v | --verbose]",
 		Short: "Trigger a run on Waldo.",
-		Args:  cobra.ExactArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
+		Args:  xcmd.ExactArgs(0),
+		Run: func(cmd *xcmd.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),

@@ -2,19 +2,18 @@ package cli
 
 import (
 	"github.com/waldoapp/waldo-go-cli/lib"
+	"github.com/waldoapp/waldo-go-cli/lib/xcmd"
 	"github.com/waldoapp/waldo-go-cli/waldo"
-
-	"github.com/spf13/cobra"
 )
 
-func NewRemoveCommand() *cobra.Command {
+func NewRemoveCommand() *xcmd.Command {
 	options := &waldo.RemoveOptions{}
 
-	cmd := &cobra.Command{
+	cmd := &xcmd.Command{
 		Use:   "remove [-v | --verbose] <recipe-name>",
 		Short: "Remove a recipe.",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		Args:  xcmd.ExactArgs(1),
+		Run: func(cmd *xcmd.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),

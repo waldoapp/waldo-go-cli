@@ -2,19 +2,18 @@ package cli
 
 import (
 	"github.com/waldoapp/waldo-go-cli/lib"
+	"github.com/waldoapp/waldo-go-cli/lib/xcmd"
 	"github.com/waldoapp/waldo-go-cli/waldo"
-
-	"github.com/spf13/cobra"
 )
 
-func NewBuildCommand() *cobra.Command {
+func NewBuildCommand() *xcmd.Command {
 	options := &waldo.BuildOptions{}
 
-	cmd := &cobra.Command{
+	cmd := &xcmd.Command{
 		Use:   "build [-c | --clean] [-v | --verbose] [<recipe-name>]",
 		Short: "Build an app from the recipe.",
-		Args:  cobra.MaximumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		Args:  xcmd.MaximumNArgs(1),
+		Run: func(cmd *xcmd.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),

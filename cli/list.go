@@ -2,20 +2,19 @@ package cli
 
 import (
 	"github.com/waldoapp/waldo-go-cli/lib"
+	"github.com/waldoapp/waldo-go-cli/lib/xcmd"
 	"github.com/waldoapp/waldo-go-cli/waldo"
-
-	"github.com/spf13/cobra"
 )
 
-func NewListCommand() *cobra.Command {
+func NewListCommand() *xcmd.Command {
 	options := &waldo.ListOptions{}
 
-	cmd := &cobra.Command{
+	cmd := &xcmd.Command{
 		Use:     "list [-l | --long] [-u | --user]",
 		Short:   "List defined recipes.",
 		Aliases: []string{"ls"},
-		Args:    cobra.ExactArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
+		Args:    xcmd.ExactArgs(0),
+		Run: func(cmd *xcmd.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),

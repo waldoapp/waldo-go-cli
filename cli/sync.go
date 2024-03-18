@@ -2,19 +2,18 @@ package cli
 
 import (
 	"github.com/waldoapp/waldo-go-cli/lib"
+	"github.com/waldoapp/waldo-go-cli/lib/xcmd"
 	"github.com/waldoapp/waldo-go-cli/waldo"
-
-	"github.com/spf13/cobra"
 )
 
-func NewSyncCommand() *cobra.Command {
+func NewSyncCommand() *xcmd.Command {
 	options := &waldo.SyncOptions{}
 
-	cmd := &cobra.Command{
+	cmd := &xcmd.Command{
 		Use:   "sync [-c | --clean] [--git_branch <b>] [--git_commit <c>] [--variant_name <n>] [-v | --verbose] [<recipe-name>]",
 		Short: "Build an app from the recipe and then upload it to Waldo.",
-		Args:  cobra.MaximumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		Args:  xcmd.MaximumNArgs(1),
+		Run: func(cmd *xcmd.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),

@@ -2,19 +2,18 @@ package cli
 
 import (
 	"github.com/waldoapp/waldo-go-cli/lib"
+	"github.com/waldoapp/waldo-go-cli/lib/xcmd"
 	"github.com/waldoapp/waldo-go-cli/waldo"
-
-	"github.com/spf13/cobra"
 )
 
-func NewVersionCommand() *cobra.Command {
+func NewVersionCommand() *xcmd.Command {
 	options := &waldo.VersionOptions{}
 
-	cmd := &cobra.Command{
-		Use:   "version",
+	cmd := &xcmd.Command{
+		Use:   "version [options]",
 		Short: "Show version information.",
-		Args:  cobra.ExactArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
+		Args:  xcmd.ExactArgs(0),
+		Run: func(cmd *xcmd.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),

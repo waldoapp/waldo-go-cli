@@ -252,6 +252,10 @@ func (ua *UploadAction) makeAgentArgs() []string {
 
 	}
 
+	if len(ua.options.AppID) > 0 {
+		args = append(args, "--app_id", ua.options.AppID)
+	}
+
 	if len(ua.options.GitBranch) > 0 {
 		args = append(args, "--git_branch", ua.options.GitBranch)
 	}

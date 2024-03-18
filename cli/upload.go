@@ -2,19 +2,18 @@ package cli
 
 import (
 	"github.com/waldoapp/waldo-go-cli/lib"
+	"github.com/waldoapp/waldo-go-cli/lib/xcmd"
 	"github.com/waldoapp/waldo-go-cli/waldo"
-
-	"github.com/spf13/cobra"
 )
 
-func NewUploadCommand() *cobra.Command {
+func NewUploadCommand() *xcmd.Command {
 	options := &waldo.UploadOptions{}
 
-	cmd := &cobra.Command{
+	cmd := &xcmd.Command{
 		Use:   "upload [--git_branch <b>] [--git_commit <c>] [--upload_token <t>] [--variant_name <n>] [-v | --verbose ] <recipe-or-build-path>",
 		Short: "Upload a build artifact to Waldo.",
-		Args:  cobra.MaximumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		Args:  xcmd.MaximumNArgs(1),
+		Run: func(cmd *xcmd.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
 				cmd.InOrStdin(),
 				cmd.OutOrStdout(),
