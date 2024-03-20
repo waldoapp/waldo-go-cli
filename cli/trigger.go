@@ -31,7 +31,7 @@ func NewTriggerCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&options.Help, "help", false, "Show available options and exit.")
 	cmd.Flags().StringVar(&options.RuleName, "rule_name", "", "An optional rule name.")
 	cmd.Flags().StringVar(&options.UploadToken, "upload_token", "", "The upload token (overrides WALDO_UPLOAD_TOKEN).")
-	cmd.Flags().BoolVar(&options.Verbose, "verbose", false, "Show extra verbiage.")
+	cmd.Flags().BoolVarP(&options.Verbose, "verbose", "v", false, "Show extra verbiage.")
 	cmd.Flags().BoolVar(&options.Version, "version", false, "Show version information and exit.")
 
 	cmd.SetUsageTemplate(`

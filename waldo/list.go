@@ -93,8 +93,16 @@ func (la *ListAction) Perform() error {
 
 					lastUpload = la.formatTime(am.UploadTime)
 
-					if uploadToken := am.UploadToken; len(lastUpload) > 0 && len(uploadToken) > 0 {
-						lastUpload += " to " + uploadToken
+					uploadToken := am.UploadToken
+
+					if len(lastUpload) > 0 && len(uploadToken) > 0 {
+						appID := am.AppID
+
+						if len(appID) > 0 {
+							lastUpload += " to " + appID + " with " + uploadToken
+						} else {
+							lastUpload += " to " + uploadToken
+						}
 					}
 				}
 			}
