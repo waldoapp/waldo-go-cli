@@ -9,7 +9,6 @@ type SyncOptions struct {
 	GitBranch   string
 	GitCommit   string
 	RecipeName  string
-	UploadToken string
 	VariantName string
 	Verbose     bool
 }
@@ -61,7 +60,6 @@ func (sa *SyncAction) performUpload() error {
 		GitBranch:   sa.options.GitBranch,
 		GitCommit:   sa.options.GitCommit,
 		Target:      sa.options.RecipeName,
-		UploadToken: sa.options.UploadToken,
 		VariantName: sa.options.VariantName,
 		Verbose:     sa.options.Verbose}
 
