@@ -287,20 +287,22 @@ func (ua *UploadAction) processOptions(ciMode bool) (*data.UserData, *data.Recip
 		return nil, nil, err
 	}
 
-	//
-	// In CI mode, the target _must not_ be a recipe name:
-	//
 	if ciMode {
-		_, err = ua.detectRecipeName(false, false)
+		//
+		// In CI mode, the target _must not_ be a recipe name:
+		//
+		if isRecipe {
+			_, err = ua.detectRecipeName(false, false)
 
-		return nil, nil, err
-	}
-
-	//
-	// Otherwise, the target _may_ be a recipe name iff an app token has _not_
-	// been specified:
-	//
-	if isRecipe {
+			return nil, nil, err
+		} else {
+			ua.buildPath = ua.options.Target
+		}
+	} else if isRecipe {
+		//
+		// Otherwise, the target _may_ be a recipe name iff an app token has _not_
+		// been specified:
+		//
 		ua.recipeName, err = ua.detectRecipeName(false, len(ua.appToken) == 0)
 
 		if err != nil {
@@ -314,7 +316,7 @@ func (ua *UploadAction) processOptions(ciMode bool) (*data.UserData, *data.Recip
 	// If we now have a build path and a valid app token, we are done:
 	//
 	if len(ua.appToken) > 0 && len(ua.buildPath) > 0 {
-		return nil, nil, err
+		return nil, nil, nil
 	}
 
 	//
