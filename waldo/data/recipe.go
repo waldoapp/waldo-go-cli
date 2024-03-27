@@ -12,17 +12,17 @@ import (
 )
 
 type Recipe struct {
-	Name               string                          `yaml:"recipe"`
-	AppName            string                          `yaml:"app_name"`
-	AppID              string                          `yaml:"app_id"`
-	Platform           lib.Platform                    `yaml:"platform"`
-	BasePath           string                          `yaml:"build_root"` // relative to Configuration.BasePath
-	ExpoBuilder        *expo.ExpoBuilder               `yaml:"expo_build,omitempty"`
-	FlutterBuilder     *flutter.FlutterBuilder         `yaml:"flutter_build,omitempty"`
-	GradleBuilder      *gradle.GradleBuilder           `yaml:"gradle_build,omitempty"`
-	IonicBuilder       *ionic.IonicBuilder             `yaml:"ionic_build,omitempty"`
-	ReactNativeBuilder *reactnative.ReactNativeBuilder `yaml:"reactnative_build,omitempty"`
-	XcodeBuilder       *xcode.XcodeBuilder             `yaml:"xcode_build,omitempty"`
+	Name               string               `yaml:"recipe"`
+	AppName            string               `yaml:"app_name"`
+	AppID              string               `yaml:"app_id"`
+	Platform           lib.Platform         `yaml:"platform"`
+	BasePath           string               `yaml:"build_root"` // relative to Configuration.BasePath
+	ExpoBuilder        *expo.Builder        `yaml:"expo_build,omitempty"`
+	FlutterBuilder     *flutter.Builder     `yaml:"flutter_build,omitempty"`
+	GradleBuilder      *gradle.Builder      `yaml:"gradle_build,omitempty"`
+	IonicBuilder       *ionic.Builder       `yaml:"ionic_build,omitempty"`
+	ReactNativeBuilder *reactnative.Builder `yaml:"reactnative_build,omitempty"`
+	XcodeBuilder       *xcode.Builder       `yaml:"xcode_build,omitempty"`
 }
 
 //-----------------------------------------------------------------------------

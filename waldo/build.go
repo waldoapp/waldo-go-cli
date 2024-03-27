@@ -65,7 +65,7 @@ func (ba *BuildAction) Perform() error {
 //-----------------------------------------------------------------------------
 
 func (ba *BuildAction) buildRecipe(cfg *data.Configuration, r *data.Recipe) error {
-	ba.ioStreams.Printf("\nBuilding recipe %q…\n", r.Name)
+	ba.ioStreams.Printf("\nBuilding recipe %q\n", r.Name)
 
 	ud := data.SetupUserData(cfg)
 

@@ -37,7 +37,7 @@ func (aa *AuthAction) Perform() error {
 		return err
 	}
 
-	aa.ioStreams.Printf("\nAuthenticating with user token %q…\n", aa.options.UserToken)
+	aa.ioStreams.Printf("\nAuthenticating with user token %q\n", aa.options.UserToken)
 
 	fullName, err := api.AuthenticateUser(aa.options.UserToken, aa.options.Verbose, aa.ioStreams)
 

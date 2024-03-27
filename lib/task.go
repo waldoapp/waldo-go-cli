@@ -39,6 +39,15 @@ func (t *Task) Execute() error {
 }
 
 func (t *Task) Run() (string, string, error) {
+	stdoutBytes, stderrBytes, err := t.RunRaw()
+
+	stderr := strings.TrimRight(string(stderrBytes), "\n")
+	stdout := strings.TrimRight(string(stdoutBytes), "\n")
+
+	return stdout, stderr, err
+}
+
+func (t *Task) RunRaw() ([]byte, []byte, error) {
 	var (
 		stderrBuffer bytes.Buffer
 		stdoutBuffer bytes.Buffer
@@ -54,8 +63,5 @@ func (t *Task) Run() (string, string, error) {
 
 	err := cmd.Run()
 
-	stderr := strings.TrimRight(stderrBuffer.String(), "\n")
-	stdout := strings.TrimRight(stdoutBuffer.String(), "\n")
-
-	return stdout, stderr, err
+	return stdoutBuffer.Bytes(), stderrBuffer.Bytes(), err
 }

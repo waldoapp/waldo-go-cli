@@ -10,13 +10,13 @@ import (
 	"github.com/waldoapp/waldo-go-cli/waldo/tool/xcode"
 )
 
-type FlutterBuilder struct {
+type Builder struct {
 	Flavor string `yaml:"flavor,omitempty"`
 }
 
 //-----------------------------------------------------------------------------
 
-func IsPossibleFlutterContainer(path string) bool {
+func IsPossibleContainer(path string) bool {
 	pubspecPath := filepath.Join(path, "pubspec.yaml")
 	androidDirPath := filepath.Join(path, "android")
 	iosDirPath := filepath.Join(path, "ios")
@@ -25,22 +25,22 @@ func IsPossibleFlutterContainer(path string) bool {
 		return false
 	}
 
-	hasAndroidProject := gradle.IsPossibleGradleContainer(androidDirPath)
-	hasIosProject := xcode.IsPossibleXcodeContainer(iosDirPath)
+	hasAndroidProject := gradle.IsPossibleContainer(androidDirPath)
+	hasIosProject := xcode.IsPossibleContainer(iosDirPath)
 
 	return hasAndroidProject || hasIosProject
 }
 
-func MakeFlutterBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*FlutterBuilder, string, lib.Platform, error) {
+func MakeBuilder(basePath string, verbose bool, ios *lib.IOStreams) (*Builder, string, lib.Platform, error) {
 	platform, err := determinePlatform(verbose, ios)
 
 	if err != nil {
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	ios.Printf("\nFinding all supported build flavors…\n")
+	ios.Printf("\nFinding all supported build flavors\n")
 
-	fi, err := DetectFlutterInfo(absPath, platform, ios)
+	fi, err := DetectBuildInfo(basePath, platform, ios)
 
 	if err != nil {
 		return nil, "", lib.PlatformUnknown, err
@@ -52,61 +52,71 @@ func MakeFlutterBuilder(absPath, relPath string, verbose bool, ios *lib.IOStream
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	fb := &FlutterBuilder{Flavor: flavor}
+	fb := &Builder{Flavor: flavor}
 
 	return fb, fi.Name, platform, nil
 }
 
 //-----------------------------------------------------------------------------
 
-func (fb *FlutterBuilder) Build(basePath string, platform lib.Platform, clean, verbose bool, ios *lib.IOStreams) (string, error) {
-	target := fb.formatTarget(platform)
+func (b *Builder) Build(basePath string, platform lib.Platform, clean, verbose bool, ios *lib.IOStreams) (string, error) {
+	target := b.FormatTarget(platform)
 
-	ios.Printf("\nDetermining build path for %s…\n", target)
+	ios.Printf("\nDetermining build path for %s\n", target)
 
-	buildPath, err := fb.determineBuildPath(basePath, platform)
+	buildPath, err := b.determineBuildPath(basePath, platform)
 
 	if err != nil {
 		return "", err
 	}
 
-	ios.Printf("\nBuilding %s…\n", target)
+	ios.Printf("\nBuilding %s\n", target)
 
 	dashes := "\n" + strings.Repeat("-", 79) + "\n"
 
 	ios.Println(dashes)
 
 	if clean {
-		if err = fb.clean(basePath, verbose, ios); err != nil {
+		if err = b.clean(basePath, verbose, ios); err != nil {
 			return "", err
 		}
 	}
 
-	if err = fb.build(basePath, platform, verbose, ios); err != nil {
+	if err = b.build(basePath, platform, verbose, ios); err != nil {
 		return "", err
 	}
 
 	ios.Println(dashes)
 
-	ios.Printf("\nVerifying build path for %s…\n", target)
+	ios.Printf("\nVerifying build path for %s\n", target)
 
-	return fb.verifyBuildPath(buildPath, platform)
+	return b.verifyBuildPath(buildPath, platform)
 }
 
-func (fb *FlutterBuilder) Summarize() string {
+func (b *Builder) FormatTarget(platform lib.Platform) string {
+	result := string(platform)
+
+	if len(b.Flavor) > 0 {
+		result += " (" + b.Flavor + ")"
+	}
+
+	return result
+}
+
+func (b *Builder) Summarize() string {
 	summary := ""
 
-	lib.AppendIfNotEmpty(&summary, "flavor", fb.Flavor, "=", ", ")
+	lib.AppendIfNotEmpty(&summary, "flavor", b.Flavor, "=", ", ")
 
 	return summary
 }
 
 //-----------------------------------------------------------------------------
 
-func (fb *FlutterBuilder) androidBuildArgs() []string {
+func (b *Builder) androidBuildArgs() []string {
 	args := []string{"apk"}
 
-	switch strings.ToLower(fb.Flavor) {
+	switch strings.ToLower(b.Flavor) {
 	case "debug":
 		args = append(args, "--debug")
 
@@ -117,21 +127,21 @@ func (fb *FlutterBuilder) androidBuildArgs() []string {
 		args = append(args, "--release")
 
 	default:
-		args = append(args, "--flavor", fb.Flavor)
+		args = append(args, "--flavor", b.Flavor)
 	}
 
 	return args
 }
 
-func (fb *FlutterBuilder) build(basePath string, platform lib.Platform, verbose bool, ios *lib.IOStreams) error {
+func (b *Builder) build(basePath string, platform lib.Platform, verbose bool, ios *lib.IOStreams) error {
 	args := []string{"build"}
 
 	switch platform {
 	case lib.PlatformAndroid:
-		args = append(args, fb.androidBuildArgs()...)
+		args = append(args, b.androidBuildArgs()...)
 
 	case lib.PlatformIos:
-		args = append(args, fb.iosBuildArgs()...)
+		args = append(args, b.iosBuildArgs()...)
 
 	default:
 		return fmt.Errorf("Unknown build platform: %q", platform)
@@ -151,7 +161,7 @@ func (fb *FlutterBuilder) build(basePath string, platform lib.Platform, verbose 
 	return task.Execute()
 }
 
-func (fb *FlutterBuilder) clean(basePath string, verbose bool, ios *lib.IOStreams) error {
+func (b *Builder) clean(basePath string, verbose bool, ios *lib.IOStreams) error {
 	args := []string{"clean"}
 
 	if verbose {
@@ -166,12 +176,12 @@ func (fb *FlutterBuilder) clean(basePath string, verbose bool, ios *lib.IOStream
 	return task.Execute()
 }
 
-func (fb *FlutterBuilder) determineBuildPath(basePath string, platform lib.Platform) (string, error) {
+func (b *Builder) determineBuildPath(basePath string, platform lib.Platform) (string, error) {
 	relPath := ""
 
 	switch platform {
 	case lib.PlatformAndroid:
-		relPath = "build/app/outputs/flutter-apk/app-" + strings.ToLower(fb.Flavor) + ".apk"
+		relPath = "build/app/outputs/flutter-apk/app-" + strings.ToLower(b.Flavor) + ".apk"
 
 	case lib.PlatformIos:
 		relPath = "build/ios/iphonesimulator/Runner.app"
@@ -183,21 +193,11 @@ func (fb *FlutterBuilder) determineBuildPath(basePath string, platform lib.Platf
 	return filepath.Join(basePath, relPath), nil
 }
 
-func (fb *FlutterBuilder) formatTarget(platform lib.Platform) string {
-	result := string(platform)
-
-	if len(fb.Flavor) > 0 {
-		result += " (" + fb.Flavor + ")"
-	}
-
-	return result
-}
-
-func (fb *FlutterBuilder) iosBuildArgs() []string {
+func (b *Builder) iosBuildArgs() []string {
 	return []string{"ios", "--simulator", "--no-codesign"}
 }
 
-func (fb *FlutterBuilder) verifyBuildPath(path string, platform lib.Platform) (string, error) {
+func (b *Builder) verifyBuildPath(path string, platform lib.Platform) (string, error) {
 	switch platform {
 	case lib.PlatformAndroid:
 		if !lib.IsRegularFile(path) {

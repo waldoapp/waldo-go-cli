@@ -24,7 +24,7 @@ type BuildPath struct {
 //-----------------------------------------------------------------------------
 
 func DetectBuildPaths(rootPath string, verbose bool, ios *lib.IOStreams) ([]*BuildPath, error) {
-	ios.Printf("\nFinding possible build paths…\n")
+	ios.Printf("\nFinding possible build paths\n")
 
 	var buildPaths []*BuildPath
 
@@ -40,7 +40,7 @@ func DetectBuildPaths(rootPath string, verbose bool, ios *lib.IOStreams) ([]*Bui
 		if entry.IsDir() {
 			skipChildren := false
 
-			if expo.IsPossibleExpoContainer(path) {
+			if expo.IsPossibleContainer(path) {
 				buildPath := newBuildPath(BuildToolExpo, path)
 
 				if verbose {
@@ -52,7 +52,7 @@ func DetectBuildPaths(rootPath string, verbose bool, ios *lib.IOStreams) ([]*Bui
 				skipChildren = true
 			}
 
-			if flutter.IsPossibleFlutterContainer(path) {
+			if flutter.IsPossibleContainer(path) {
 				buildPath := newBuildPath(BuildToolFlutter, path)
 
 				if verbose {
@@ -64,7 +64,7 @@ func DetectBuildPaths(rootPath string, verbose bool, ios *lib.IOStreams) ([]*Bui
 				skipChildren = true
 			}
 
-			if gradle.IsPossibleGradleContainer(path) {
+			if gradle.IsPossibleContainer(path) {
 				buildPath := newBuildPath(BuildToolGradle, path)
 
 				if verbose {
@@ -76,7 +76,7 @@ func DetectBuildPaths(rootPath string, verbose bool, ios *lib.IOStreams) ([]*Bui
 				skipChildren = true
 			}
 
-			if ionic.IsPossibleIonicContainer(path) {
+			if ionic.IsPossibleContainer(path) {
 				buildPath := newBuildPath(BuildToolIonic, path)
 
 				if verbose {
@@ -88,7 +88,7 @@ func DetectBuildPaths(rootPath string, verbose bool, ios *lib.IOStreams) ([]*Bui
 				skipChildren = true
 			}
 
-			if reactnative.IsPossibleReactNativeContainer(path) {
+			if reactnative.IsPossibleContainer(path) {
 				buildPath := newBuildPath(BuildToolReactNative, path)
 
 				if verbose {
@@ -100,7 +100,7 @@ func DetectBuildPaths(rootPath string, verbose bool, ios *lib.IOStreams) ([]*Bui
 				skipChildren = true
 			}
 
-			if xcode.IsPossibleXcodeContainer(path) {
+			if xcode.IsPossibleContainer(path) {
 				buildPath := newBuildPath(BuildToolXcode, path)
 
 				if verbose {

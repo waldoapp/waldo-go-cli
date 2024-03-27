@@ -113,7 +113,7 @@ func (ad *AgentDownloader) determineWorkingPath() string {
 }
 
 func (ad *AgentDownloader) downloadAgent(retryAllowed bool) (bool, error) {
-	ad.ioStreams.Printf("\nDownloading Waldo Agent…\n\n")
+	ad.ioStreams.Printf("\nDownloading Waldo Agent\nn")
 
 	client := &http.Client{}
 
@@ -164,7 +164,7 @@ func (ad *AgentDownloader) downloadAgentWithRetry() error {
 
 		ad.ioStreams.EmitError(ad.errorPrefix, err)
 
-		ad.ioStreams.Printf("\nFailed download attempts: %d -- retrying…\n", attempts)
+		ad.ioStreams.Printf("\nFailed download attempts: %d -- retrying\n", attempts)
 	}
 
 	return nil

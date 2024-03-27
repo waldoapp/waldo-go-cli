@@ -8,20 +8,20 @@ import (
 	"github.com/waldoapp/waldo-go-cli/lib"
 )
 
-type GradleInfo struct {
+type BuildInfo struct {
 	Variants []string
 }
 
 //-----------------------------------------------------------------------------
 
-func DetectGradleInfo(basePath, module string) (*GradleInfo, error) {
-	gi := &GradleInfo{}
+func DetectBuildInfo(basePath, module string) (*BuildInfo, error) {
+	bi := &BuildInfo{}
 
 	tasks := fetchTasks(basePath, module)
 
-	gi.Variants = extractVariants(tasks)
+	bi.Variants = extractVariants(tasks)
 
-	return gi, nil
+	return bi, nil
 }
 
 //-----------------------------------------------------------------------------
@@ -33,11 +33,7 @@ var (
 //-----------------------------------------------------------------------------
 
 func candidateVariantFromTask(task string) string {
-	if !strings.HasPrefix(task, "assemble") {
-		return ""
-	}
-
-	if strings.HasSuffix(task, "Test") {
+	if !strings.HasPrefix(task, "assemble") || strings.HasSuffix(task, "Test") {
 		return ""
 	}
 
@@ -85,7 +81,7 @@ func fetchProperties(basePath, module string, ios *lib.IOStreams) map[string]str
 		verb = module + ":" + verb
 	}
 
-	args := append([]string{verb}, commonGradleArgs()...)
+	args := append([]string{verb}, commonArgs()...)
 
 	task := lib.NewTask(wrapperPath, args...)
 
@@ -104,7 +100,7 @@ func fetchProperties(basePath, module string, ios *lib.IOStreams) map[string]str
 func fetchTasks(basePath, module string) []string {
 	wrapperPath := filepath.Join(basePath, wrapperName())
 
-	args := append([]string{"tasks", "--all"}, commonGradleArgs()...)
+	args := append([]string{"tasks", "--all"}, commonArgs()...)
 
 	task := lib.NewTask(wrapperPath, args...)
 
@@ -125,11 +121,7 @@ func isAffix(affix string, variants []string) bool {
 			continue
 		}
 
-		if strings.HasPrefix(variant, affix) {
-			return true
-		}
-
-		if strings.HasSuffix(variant, affix) {
+		if strings.HasPrefix(variant, affix) || strings.HasSuffix(variant, affix) {
 			return true
 		}
 	}

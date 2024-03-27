@@ -11,14 +11,14 @@ import (
 	"github.com/waldoapp/waldo-go-cli/lib"
 )
 
-type GradleBuilder struct {
+type Builder struct {
 	Module  string `yaml:"module,omitempty"`
 	Variant string `yaml:"variant,omitempty"`
 }
 
 //-----------------------------------------------------------------------------
 
-func IsPossibleGradleContainer(path string) bool {
+func IsPossibleContainer(path string) bool {
 	wrapperPath := filepath.Join(path, wrapperName())
 	kotlinPath := filepath.Join(path, "build.gradle.kts")
 	groovyPath := filepath.Join(path, "build.gradle")
@@ -30,10 +30,10 @@ func IsPossibleGradleContainer(path string) bool {
 	return lib.IsRegularFile(wrapperPath)
 }
 
-func MakeGradleBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*GradleBuilder, string, lib.Platform, error) {
-	ios.Printf("\nFinding all modules in %q…\n", relPath)
+func MakeBuilder(basePath string, verbose bool, ios *lib.IOStreams) (*Builder, string, lib.Platform, error) {
+	ios.Printf("\nFinding all modules in %q\n", lib.MakeRelativeToCWD(basePath))
 
-	properties := fetchProperties(absPath, "", ios)
+	properties := fetchProperties(basePath, "", ios)
 
 	modules := extractModules(properties["subprojects"])
 
@@ -43,103 +43,111 @@ func MakeGradleBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	ios.Printf("\nFinding all build variants in %q…\n", module)
+	ios.Printf("\nFinding all build variants in %q\n", module)
 
-	gi, err := DetectGradleInfo(absPath, module)
-
-	if err != nil {
-		return nil, "", lib.PlatformUnknown, err
-	}
-
-	variant, err := determineVariant(module, gi.Variants, verbose, ios)
+	bi, err := DetectBuildInfo(basePath, module)
 
 	if err != nil {
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	gb := &GradleBuilder{
+	variant, err := determineVariant(module, bi.Variants, verbose, ios)
+
+	if err != nil {
+		return nil, "", lib.PlatformUnknown, err
+	}
+
+	b := &Builder{
 		Module:  module,
 		Variant: variant}
 
-	return gb, properties["name"], lib.PlatformAndroid, nil
+	return b, properties["name"], lib.PlatformAndroid, nil
 }
 
 //-----------------------------------------------------------------------------
 
-func (gb *GradleBuilder) Build(basePath string, clean, verbose bool, ios *lib.IOStreams) (string, error) {
-	target := gb.formatTarget()
+func (b *Builder) Build(basePath string, clean, verbose bool, ios *lib.IOStreams) (string, error) {
+	target := b.FormatTarget()
 
-	ios.Printf("\nDetecting module properties for %s…\n", target)
+	ios.Printf("\nDetecting module properties for %s\n", target)
 
-	properties, err := gb.detectModuleProperties(basePath, ios)
-
-	if err != nil {
-		return "", err
-	}
-
-	ios.Printf("\nDetermining build path for %s…\n", target)
-
-	buildPath, err := gb.determineBuildPath(properties)
+	properties, err := b.detectModuleProperties(basePath, ios)
 
 	if err != nil {
 		return "", err
 	}
 
-	ios.Printf("\nBuilding %s…\n", target)
+	ios.Printf("\nDetermining build path for %s\n", target)
+
+	buildPath, err := b.determineBuildPath(properties)
+
+	if err != nil {
+		return "", err
+	}
+
+	ios.Printf("\nBuilding %s\n", target)
 
 	dashes := "\n" + strings.Repeat("-", 79) + "\n"
 
 	ios.Println(dashes)
 
-	if err = gb.build(basePath, clean, verbose, ios); err != nil {
+	if err = b.build(basePath, clean, verbose, ios); err != nil {
 		return "", err
 	}
 
 	ios.Println(dashes)
 
-	ios.Printf("\nVerifying build path for %s…\n", target)
+	ios.Printf("\nVerifying build path for %s\n", target)
 
-	return gb.verifyBuildPath(buildPath)
+	return b.verifyBuildPath(buildPath)
 }
 
-func (gb *GradleBuilder) Clean(basePath string, verbose bool, ios *lib.IOStreams) error {
-	ios.Printf("\nCleaning…\n")
+func (b *Builder) Clean(basePath string, verbose bool, ios *lib.IOStreams) error {
+	ios.Printf("\nCleaning\n")
 
-	return gb.clean(basePath, verbose, ios)
+	return b.clean(basePath, verbose, ios)
 }
 
-func (gb *GradleBuilder) DetermineBuildPath(basePath string, ios *lib.IOStreams) (string, error) {
-	ios.Printf("\nDetecting module properties in %q…\n", basePath)
+func (b *Builder) DetermineBuildPath(basePath string, ios *lib.IOStreams) (string, error) {
+	ios.Printf("\nDetecting module properties in %q\n", basePath)
 
-	properties, err := gb.detectModuleProperties(basePath, ios)
+	properties, err := b.detectModuleProperties(basePath, ios)
 
 	if err != nil {
 		return "", err
 	}
 
-	ios.Printf("\nDetermining build path…\n")
+	ios.Printf("\nDetermining build path\n")
 
-	return gb.determineBuildPath(properties)
+	return b.determineBuildPath(properties)
 }
 
-func (gb *GradleBuilder) Summarize() string {
+func (b *Builder) FormatTarget() string {
+	result := b.Module
+
+	lib.AppendIfNotEmpty(&result, "variant", b.Variant, ": ", ", ")
+
+	return result
+}
+
+func (b *Builder) Summarize() string {
 	summary := ""
 
-	lib.AppendIfNotEmpty(&summary, "module", gb.Module, "=", ", ")
-	lib.AppendIfNotEmpty(&summary, "variant", gb.Variant, "=", ", ")
+	lib.AppendIfNotEmpty(&summary, "module", b.Module, "=", ", ")
+	lib.AppendIfNotEmpty(&summary, "variant", b.Variant, "=", ", ")
 
 	return summary
 }
 
-func (gb *GradleBuilder) VerifyBuildPath(basePath string, ios *lib.IOStreams) (string, error) {
-	ios.Printf("\nVerifying build path…\n")
+func (b *Builder) VerifyBuildPath(basePath string, ios *lib.IOStreams) (string, error) {
+	ios.Printf("\nVerifying build path\n")
 
-	return gb.verifyBuildPath(basePath)
+	return b.verifyBuildPath(basePath)
 }
 
 //-----------------------------------------------------------------------------
 
-func commonGradleArgs() []string {
+func commonArgs() []string {
 	return []string{"--console=plain", "--quiet"}
 }
 
@@ -155,7 +163,7 @@ func wrapperName() string {
 
 //-----------------------------------------------------------------------------
 
-func (gb *GradleBuilder) build(basePath string, clean, verbose bool, ios *lib.IOStreams) error {
+func (b *Builder) build(basePath string, clean, verbose bool, ios *lib.IOStreams) error {
 	wrapperPath := filepath.Join(basePath, wrapperName())
 
 	args := []string{}
@@ -164,7 +172,7 @@ func (gb *GradleBuilder) build(basePath string, clean, verbose bool, ios *lib.IO
 		args = append(args, "clean")
 	}
 
-	taskName := fmt.Sprintf("%s:assemble%s", gb.Module, strings.Title(gb.Variant))
+	taskName := fmt.Sprintf("%s:assemble%s", b.Module, strings.Title(b.Variant))
 
 	args = append(args, taskName)
 
@@ -182,7 +190,7 @@ func (gb *GradleBuilder) build(basePath string, clean, verbose bool, ios *lib.IO
 	return task.Execute()
 }
 
-func (gb *GradleBuilder) clean(basePath string, verbose bool, ios *lib.IOStreams) error {
+func (b *Builder) clean(basePath string, verbose bool, ios *lib.IOStreams) error {
 	wrapperPath := filepath.Join(basePath, wrapperName())
 
 	args := []string{"clean", "--console=plain"}
@@ -199,11 +207,11 @@ func (gb *GradleBuilder) clean(basePath string, verbose bool, ios *lib.IOStreams
 	return task.Execute()
 }
 
-func (gb *GradleBuilder) detectModuleProperties(basePath string, ios *lib.IOStreams) (map[string]string, error) {
-	return fetchProperties(basePath, gb.Module, ios), nil
+func (b *Builder) detectModuleProperties(basePath string, ios *lib.IOStreams) (map[string]string, error) {
+	return fetchProperties(basePath, b.Module, ios), nil
 }
 
-func (gb *GradleBuilder) determineBuildPath(properties map[string]string) (string, error) {
+func (b *Builder) determineBuildPath(properties map[string]string) (string, error) {
 	buildDir := properties["buildDir"]
 
 	if len(buildDir) == 0 {
@@ -213,22 +221,14 @@ func (gb *GradleBuilder) determineBuildPath(properties map[string]string) (strin
 	return filepath.Join(buildDir, "outputs", "apk"), nil
 }
 
-func (gb *GradleBuilder) formatTarget() string {
-	result := gb.Module
-
-	lib.AppendIfNotEmpty(&result, "variant", gb.Variant, ": ", ", ")
-
-	return result
-}
-
-func (gb *GradleBuilder) isPossibleBuildArtifact(path, basePath string) bool {
+func (b *Builder) isPossibleBuildArtifact(path, basePath string) bool {
 	reldir := filepath.Dir(path)[len(basePath):]
 	variant := strings.ReplaceAll(reldir, "/", "")
 
-	return strings.EqualFold(variant, gb.Variant)
+	return strings.EqualFold(variant, b.Variant)
 }
 
-func (gb *GradleBuilder) parseBuildSettings(text string) map[string]string {
+func (b *Builder) parseBuildSettings(text string) map[string]string {
 	settings := make(map[string]string)
 
 	for _, line := range strings.Split(text, "\n") {
@@ -249,7 +249,7 @@ func (gb *GradleBuilder) parseBuildSettings(text string) map[string]string {
 	return settings
 }
 
-func (gb *GradleBuilder) verifyBuildPath(basePath string) (string, error) {
+func (b *Builder) verifyBuildPath(basePath string) (string, error) {
 	var paths []string
 
 	err := filepath.WalkDir(basePath, func(path string, entry fs.DirEntry, err error) error {
@@ -261,7 +261,7 @@ func (gb *GradleBuilder) verifyBuildPath(basePath string) (string, error) {
 			return nil
 		}
 
-		if gb.isPossibleBuildArtifact(path, basePath) {
+		if b.isPossibleBuildArtifact(path, basePath) {
 			paths = append(paths, path)
 		}
 

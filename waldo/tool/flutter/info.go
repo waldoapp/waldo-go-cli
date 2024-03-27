@@ -12,29 +12,29 @@ import (
 	"github.com/waldoapp/waldo-go-cli/waldo/tool/xcode"
 )
 
-type FlutterInfo struct { // pubspec.yaml
+type BuildInfo struct { // pubspec.yaml
 	Name    string `yaml:"name"`
 	Flavors []string
 }
 
 //-----------------------------------------------------------------------------
 
-func DetectFlutterInfo(basePath string, platform lib.Platform, ios *lib.IOStreams) (*FlutterInfo, error) {
+func DetectBuildInfo(basePath string, platform lib.Platform, ios *lib.IOStreams) (*BuildInfo, error) {
 	data, err := os.ReadFile(filepath.Join(basePath, "pubspec.yaml"))
 
 	if err != nil {
 		return nil, err
 	}
 
-	var fi FlutterInfo
+	var bi BuildInfo
 
-	if err := tpw.DecodeFromYAML(data, &fi); err != nil {
+	if err := tpw.DecodeFromYAML(data, &bi); err != nil {
 		return nil, err
 	}
 
-	fi.Flavors, err = detectFlavors(basePath, platform, ios)
+	bi.Flavors, err = detectFlavors(basePath, platform, ios)
 
-	return &fi, nil
+	return &bi, nil
 }
 
 //-----------------------------------------------------------------------------
@@ -55,25 +55,25 @@ func detectFlavors(basePath string, platform lib.Platform, ios *lib.IOStreams) (
 func detectFlavorsForAndroid(basePath string, ios *lib.IOStreams) ([]string, error) {
 	androidPath := filepath.Join(basePath, "android")
 
-	gi, err := gradle.DetectGradleInfo(androidPath, "app")
+	bi, err := gradle.DetectBuildInfo(androidPath, "app")
 
 	if err != nil {
 		return []string{"debug", "release"}, nil
 	}
 
-	return gi.Variants, nil
+	return bi.Variants, nil
 }
 
 func detectFlavorsForIos(basePath string) ([]string, error) {
 	iosPath := filepath.Join(basePath, "ios")
 
-	xi, err := xcode.DetectXcodeInfo(iosPath, "Runner.xcodeproj")
+	bi, err := xcode.DetectBuildInfo(iosPath, "Runner.xcodeproj")
 
 	if err != nil {
 		return []string{"Debug"}, nil
 	}
 
-	flavors := lib.CompactMap(xi.Configurations(), func(flavor string) (string, bool) {
+	flavors := lib.CompactMap(bi.Configurations, func(flavor string) (string, bool) {
 		switch strings.ToLower(flavor) {
 		case "profile", "release":
 			return "", false

@@ -12,7 +12,7 @@ import (
 	"github.com/waldoapp/waldo-go-cli/waldo/tool/xcode"
 )
 
-type ReactNativeInfo struct {
+type BuildInfo struct { // package.json
 	Name            string            `json:"name"`
 	Scripts         map[string]string `json:"scripts"`
 	Dependencies    map[string]string `json:"dependencies"`
@@ -22,24 +22,24 @@ type ReactNativeInfo struct {
 
 //-----------------------------------------------------------------------------
 
-func DetectReactNativeInfo(basePath string, platform lib.Platform, ios *lib.IOStreams) (*ReactNativeInfo, error) {
+func DetectBuildInfo(basePath string, platform lib.Platform, ios *lib.IOStreams) (*BuildInfo, error) {
 	data, err := os.ReadFile(filepath.Join(basePath, "package.json"))
 
 	if err != nil {
 		return nil, err
 	}
 
-	var rni ReactNativeInfo
+	var bi BuildInfo
 
-	if err = json.Unmarshal(data, &rni); err != nil {
+	if err = json.Unmarshal(data, &bi); err != nil {
 		return nil, err
 	}
 
 	if platform != lib.PlatformUnknown && ios != nil {
-		rni.Modes, err = detectModes(basePath, rni.Name, platform)
+		bi.Modes, err = detectModes(basePath, bi.Name, platform)
 	}
 
-	return &rni, nil
+	return &bi, nil
 }
 
 //-----------------------------------------------------------------------------
@@ -60,13 +60,13 @@ func detectModes(basePath, name string, platform lib.Platform) ([]string, error)
 func detectModesForAndroid(basePath string) ([]string, error) {
 	androidPath := filepath.Join(basePath, "android")
 
-	gi, err := gradle.DetectGradleInfo(androidPath, "app")
+	bi, err := gradle.DetectBuildInfo(androidPath, "app")
 
 	if err != nil {
 		return []string{"release"}, nil
 	}
 
-	modes := lib.CompactMap(gi.Variants, func(mode string) (string, bool) {
+	modes := lib.CompactMap(bi.Variants, func(mode string) (string, bool) {
 		return mode, strings.ToLower(mode) == "release"
 	})
 
@@ -76,13 +76,13 @@ func detectModesForAndroid(basePath string) ([]string, error) {
 func detectModesForIos(basePath, name string) ([]string, error) {
 	iosPath := filepath.Join(basePath, "ios")
 
-	xi, err := xcode.DetectXcodeInfo(iosPath, name+".xcodeproj")
+	bi, err := xcode.DetectBuildInfo(iosPath, name+".xcodeproj")
 
 	if err != nil {
 		return []string{"Debug"}, nil
 	}
 
-	modes := lib.CompactMap(xi.Configurations(), func(mode string) (string, bool) {
+	modes := lib.CompactMap(bi.Configurations, func(mode string) (string, bool) {
 		return mode, strings.ToLower(mode) == "debug"
 	})
 

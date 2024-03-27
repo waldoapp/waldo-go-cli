@@ -7,25 +7,25 @@ import (
 	"github.com/waldoapp/waldo-go-cli/lib"
 )
 
-type IonicBuilder struct {
+type Builder struct {
 }
 
 //-----------------------------------------------------------------------------
 
-func IsPossibleIonicContainer(path string) bool {
+func IsPossibleContainer(path string) bool {
 	return false
 }
 
-func MakeIonicBuilder(absPath, relPath string, verbose bool, ios *lib.IOStreams) (*IonicBuilder, string, string, error) {
+func MakeBuilder(basePath string, verbose bool, ios *lib.IOStreams) (*Builder, string, string, error) {
 	return nil, "", "", errors.New("Don’t know how to make an Ionic recipe")
 }
 
 //-----------------------------------------------------------------------------
 
-func (ib *IonicBuilder) Build(basePath string, platform lib.Platform, clean, verbose bool, ios *lib.IOStreams) (string, error) {
+func (b *Builder) Build(basePath string, platform lib.Platform, clean, verbose bool, ios *lib.IOStreams) (string, error) {
 	return "", fmt.Errorf("Don’t know how to build this app with Ionic!")
 }
 
-func (ib *IonicBuilder) Summarize() string {
+func (b *Builder) Summarize() string {
 	return ""
 }
