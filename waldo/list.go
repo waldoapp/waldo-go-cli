@@ -2,6 +2,7 @@ package waldo
 
 import (
 	"cmp"
+	"fmt"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -99,9 +100,9 @@ func (la *ListAction) Perform() error {
 						appID := am.AppID
 
 						if len(appID) > 0 {
-							lastUpload += " to " + appID + " with " + uploadToken
+							lastUpload += fmt.Sprintf(" to %q with %q", appID, uploadToken)
 						} else {
-							lastUpload += " to " + uploadToken
+							lastUpload += fmt.Sprintf(" to %q", uploadToken)
 						}
 					}
 				}

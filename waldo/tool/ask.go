@@ -22,7 +22,7 @@ func DetermineApp(platform lib.Platform, items []*AppInfo, verbose bool, ios *li
 	if len(items) == 1 {
 		item := items[0]
 
-		ios.Printf("\nOnly one %s app found: %q (%s) %s\n", platform, item.AppName, item.AppID)
+		ios.Printf("\nOnly one %s app found: %q (%s)\n", platform, item.AppName, item.AppID)
 
 		return item, nil
 	}

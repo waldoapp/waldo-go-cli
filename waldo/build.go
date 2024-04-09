@@ -65,7 +65,7 @@ func (ba *BuildAction) Perform() error {
 //-----------------------------------------------------------------------------
 
 func (ba *BuildAction) buildRecipe(cfg *data.Configuration, r *data.Recipe) error {
-	ba.ioStreams.Printf("\nBuilding recipe %q…\n", r.Name)
+	ba.ioStreams.Printf("\nBuilding recipe %q\n", r.Name)
 
 	ud := data.SetupUserData(cfg)
 
@@ -85,6 +85,9 @@ func (ba *BuildAction) buildRecipe(cfg *data.Configuration, r *data.Recipe) erro
 
 	case tool.BuildToolGradle:
 		buildPath, err = r.GradleBuilder.Build(absBasePath, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
+
+	case tool.BuildToolIonic:
+		buildPath, err = r.IonicBuilder.Build(absBasePath, r.Platform, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
 
 	case tool.BuildToolReactNative:
 		buildPath, err = r.ReactNativeBuilder.Build(absBasePath, r.Platform, ba.options.Clean, ba.options.Verbose, ba.ioStreams)
