@@ -11,6 +11,7 @@ import (
 	"github.com/waldoapp/waldo-go-cli/waldo/tool/expo"
 	"github.com/waldoapp/waldo-go-cli/waldo/tool/flutter"
 	"github.com/waldoapp/waldo-go-cli/waldo/tool/gradle"
+	"github.com/waldoapp/waldo-go-cli/waldo/tool/ionic"
 	"github.com/waldoapp/waldo-go-cli/waldo/tool/reactnative"
 	"github.com/waldoapp/waldo-go-cli/waldo/tool/xcode"
 )
@@ -146,7 +147,7 @@ func (aa *AddAction) confirmRecipe(basePath string, recipe *data.Recipe) bool {
 
 func (aa *AddAction) determineApp(platform lib.Platform) (string, string, error) {
 	if aa.options.Verbose {
-		aa.ioStreams.Printf("\nFetching %v apps for user token %q…\n", platform, aa.userToken)
+		aa.ioStreams.Printf("\nFetching %v apps for user token %q\n", platform, aa.userToken)
 	}
 
 	items, err := api.FetchApps(aa.userToken, platform, aa.options.Verbose, aa.ioStreams)
@@ -180,7 +181,7 @@ func (aa *AddAction) makeRecipe(cfg *data.Configuration, buildPath *tool.BuildPa
 
 	switch buildPath.BuildTool {
 	case tool.BuildToolExpo:
-		builder, appName, platform, err := expo.MakeExpoBuilder(buildPath.AbsPath, buildPath.RelPath, verbose, ios)
+		builder, appName, platform, err := expo.MakeBuilder(buildPath.AbsPath, verbose, ios)
 
 		if err != nil {
 			return nil, err
@@ -191,7 +192,7 @@ func (aa *AddAction) makeRecipe(cfg *data.Configuration, buildPath *tool.BuildPa
 		recipe.ExpoBuilder = builder
 
 	case tool.BuildToolFlutter:
-		builder, appName, platform, err := flutter.MakeFlutterBuilder(buildPath.AbsPath, buildPath.RelPath, verbose, ios)
+		builder, appName, platform, err := flutter.MakeBuilder(buildPath.AbsPath, verbose, ios)
 
 		if err != nil {
 			return nil, err
@@ -202,7 +203,7 @@ func (aa *AddAction) makeRecipe(cfg *data.Configuration, buildPath *tool.BuildPa
 		recipe.FlutterBuilder = builder
 
 	case tool.BuildToolGradle:
-		builder, appName, platform, err := gradle.MakeGradleBuilder(buildPath.AbsPath, buildPath.RelPath, verbose, ios)
+		builder, appName, platform, err := gradle.MakeBuilder(buildPath.AbsPath, verbose, ios)
 
 		if err != nil {
 			return nil, err
@@ -212,8 +213,19 @@ func (aa *AddAction) makeRecipe(cfg *data.Configuration, buildPath *tool.BuildPa
 		recipe.Platform = platform
 		recipe.GradleBuilder = builder
 
+	case tool.BuildToolIonic:
+		builder, appName, platform, err := ionic.MakeBuilder(buildPath.AbsPath, verbose, ios)
+
+		if err != nil {
+			return nil, err
+		}
+
+		recipe.AppName = appName
+		recipe.Platform = platform
+		recipe.IonicBuilder = builder
+
 	case tool.BuildToolReactNative:
-		builder, appName, platform, err := reactnative.MakeReactNativeBuilder(buildPath.AbsPath, buildPath.RelPath, verbose, ios)
+		builder, appName, platform, err := reactnative.MakeBuilder(buildPath.AbsPath, verbose, ios)
 
 		if err != nil {
 			return nil, err
@@ -224,7 +236,7 @@ func (aa *AddAction) makeRecipe(cfg *data.Configuration, buildPath *tool.BuildPa
 		recipe.ReactNativeBuilder = builder
 
 	case tool.BuildToolXcode:
-		builder, appName, platform, err := xcode.MakeXcodeBuilder(buildPath.AbsPath, buildPath.RelPath, verbose, ios)
+		builder, appName, platform, err := xcode.MakeBuilder(buildPath.AbsPath, verbose, ios)
 
 		if err != nil {
 			return nil, err
@@ -235,7 +247,7 @@ func (aa *AddAction) makeRecipe(cfg *data.Configuration, buildPath *tool.BuildPa
 		recipe.XcodeBuilder = builder
 
 	default:
-		return nil, fmt.Errorf("Unknown build tool: %s", buildPath.BuildTool.String())
+		return nil, fmt.Errorf("Unknown build tool: %q", buildPath.BuildTool.String())
 	}
 
 	appName, appID, err := aa.determineApp(recipe.Platform)

@@ -113,14 +113,14 @@ func (ad *AgentDownloader) determineWorkingPath() string {
 }
 
 func (ad *AgentDownloader) downloadAgent(retryAllowed bool) (bool, error) {
-	ad.ioStreams.Printf("\nDownloading Waldo Agent…\n\n")
+	ad.ioStreams.Printf("\nDownloading Waldo Agent\n\n")
 
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", ad.assetURL, nil)
 
 	if err != nil {
-		return false, fmt.Errorf("Unable to download Waldo Agent, error: %v, url: %s", err, ad.assetURL)
+		return false, fmt.Errorf("Unable to download Waldo Agent, error: %v, url: %q", err, ad.assetURL)
 	}
 
 	if ad.verbose {
@@ -130,7 +130,7 @@ func (ad *AgentDownloader) downloadAgent(retryAllowed bool) (bool, error) {
 	rsp, err := client.Do(req)
 
 	if err != nil {
-		return retryAllowed, fmt.Errorf("Unable to download Waldo Agent, error: %v, url: %s", err, ad.assetURL)
+		return retryAllowed, fmt.Errorf("Unable to download Waldo Agent, error: %v, url: %q", err, ad.assetURL)
 	}
 
 	if ad.verbose {
@@ -148,7 +148,7 @@ func (ad *AgentDownloader) downloadAgent(retryAllowed bool) (bool, error) {
 	err = ad.saveResponseBody(rsp, ad.agentPath)
 
 	if err != nil {
-		return false, fmt.Errorf("Unable to download Waldo Agent, error: %v, url: %s", err, ad.assetURL)
+		return false, fmt.Errorf("Unable to download Waldo Agent, error: %v, url: %q", err, ad.assetURL)
 	}
 
 	return false, nil
@@ -164,7 +164,7 @@ func (ad *AgentDownloader) downloadAgentWithRetry() error {
 
 		ad.ioStreams.EmitError(ad.errorPrefix, err)
 
-		ad.ioStreams.Printf("\nFailed download attempts: %d -- retrying…\n", attempts)
+		ad.ioStreams.Printf("\nFailed download attempts: %d -- retrying\n", attempts)
 	}
 
 	return nil

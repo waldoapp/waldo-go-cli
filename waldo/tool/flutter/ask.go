@@ -7,29 +7,7 @@ import (
 	"github.com/waldoapp/waldo-go-cli/lib"
 )
 
-func askFlavor(flavors []string, ios *lib.IOStreams) string {
-	sort.Strings(flavors)
-
-	idx := ios.PromptReader().ReadChoose(
-		"Supported build flavors",
-		flavors,
-		"Choose a build flavor")
-
-	return flavors[idx]
-}
-
-func askPlatform(platforms []string, ios *lib.IOStreams) string {
-	sort.Strings(platforms)
-
-	idx := ios.PromptReader().ReadChoose(
-		"Supported build platforms",
-		platforms,
-		"Choose a build platform")
-
-	return platforms[idx]
-}
-
-func determineFlavor(flavors []string, verbose bool, ios *lib.IOStreams) (string, error) {
+func DetermineFlavor(flavors []string, verbose bool, ios *lib.IOStreams) (string, error) {
 	if len(flavors) > 1 {
 		if verbose {
 			ios.Printf("\nMore than supported one build flavor found\n")
@@ -51,7 +29,7 @@ func determineFlavor(flavors []string, verbose bool, ios *lib.IOStreams) (string
 	return "", nil
 }
 
-func determinePlatform(verbose bool, ios *lib.IOStreams) (lib.Platform, error) {
+func DeterminePlatform(verbose bool, ios *lib.IOStreams) (lib.Platform, error) {
 	platforms := []string{
 		string(lib.PlatformAndroid),
 		string(lib.PlatformIos)}
@@ -71,4 +49,28 @@ func determinePlatform(verbose bool, ios *lib.IOStreams) (lib.Platform, error) {
 	}
 
 	return "", errors.New("No build platforms supported")
+}
+
+//-----------------------------------------------------------------------------
+
+func askFlavor(flavors []string, ios *lib.IOStreams) string {
+	sort.Strings(flavors)
+
+	idx := ios.PromptReader().ReadChoose(
+		"Supported build flavors",
+		flavors,
+		"Choose a build flavor")
+
+	return flavors[idx]
+}
+
+func askPlatform(platforms []string, ios *lib.IOStreams) string {
+	sort.Strings(platforms)
+
+	idx := ios.PromptReader().ReadChoose(
+		"Supported build platforms",
+		platforms,
+		"Choose a build platform")
+
+	return platforms[idx]
 }
