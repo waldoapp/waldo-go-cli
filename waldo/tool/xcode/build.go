@@ -45,7 +45,7 @@ func IsPossibleContainer(path string) bool {
 }
 
 func MakeBuilder(basePath string, verbose bool, ios *lib.IOStreams) (*Builder, string, lib.Platform, error) {
-	ios.Printf("\nFinding all workspaces and projects in %q\n", lib.MakeRelativeToCWD(basePath))
+	ios.Printf("\nFinding all Xcode workspaces and projects in %q\n", lib.MakeRelativeToCWD(basePath))
 
 	fileName, err := DetermineProject(findProjects(basePath), verbose, ios)
 
@@ -53,7 +53,7 @@ func MakeBuilder(basePath string, verbose bool, ios *lib.IOStreams) (*Builder, s
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	ios.Printf("\nFinding all schemes and configurations in %q\n", fileName)
+	ios.Printf("\nFinding all Xcode schemes and configurations in %q\n", fileName)
 
 	bi, err := DetectBuildInfo(basePath, fileName)
 
@@ -102,9 +102,9 @@ func (b *Builder) Build(basePath string, clean, verbose bool, ios *lib.IOStreams
 		return "", err
 	}
 
-	target := b.FormatTarget()
+	target := b.formatTarget()
 
-	ios.Printf("\nBuilding %s\n", target)
+	ios.Printf("\nBuilding %v\n", target)
 
 	dashes := "\n" + strings.Repeat("-", 79) + "\n"
 
@@ -116,19 +116,21 @@ func (b *Builder) Build(basePath string, clean, verbose bool, ios *lib.IOStreams
 
 	ios.Println(dashes)
 
-	ios.Printf("\nVerifying build path for %s\n", target)
+	ios.Printf("\nVerifying build path for %v\n", target)
 
 	return b.verifyBuildPath(buildPath)
 }
 
 func (b *Builder) Clean(basePath string, verbose bool, ios *lib.IOStreams) error {
-	ios.Printf("\nCleaning %s\n", b.FormatTarget())
+	ios.Printf("\nCleaning %v\n", b.formatTarget())
 
 	return b.clean(basePath, verbose, ios)
 }
 
 func (b *Builder) DetermineBuildPath(basePath string, ios *lib.IOStreams) (string, error) {
-	ios.Printf("\nDetecting build settings for %s\n", b.FormatTarget())
+	target := b.formatTarget()
+
+	ios.Printf("\nDetecting build settings for %v\n", target)
 
 	settings, err := b.detectBuildSettings(basePath)
 
@@ -136,24 +138,9 @@ func (b *Builder) DetermineBuildPath(basePath string, ios *lib.IOStreams) (strin
 		return "", err
 	}
 
-	ios.Printf("\nDetermining build path\n")
+	ios.Printf("\nDetermining build path for %v\n", target)
 
 	return b.determineBuildPath(settings)
-}
-
-func (b *Builder) FormatTarget() string {
-	result := ""
-
-	if len(b.Workspace) > 0 {
-		result += b.Workspace
-	} else {
-		result += b.Project
-	}
-
-	lib.AppendIfNotEmpty(&result, "scheme", b.Scheme, ": ", ", ")
-	lib.AppendIfNotEmpty(&result, "configuration", b.Configuration, ": ", ", ")
-
-	return result
 }
 
 func (b *Builder) Summarize() string {
@@ -168,7 +155,7 @@ func (b *Builder) Summarize() string {
 }
 
 func (b *Builder) VerifyBuildPath(basePath string, ios *lib.IOStreams) (string, error) {
-	ios.Printf("\nVerifying build path\n")
+	ios.Printf("\nVerifying build path for %v\n", b.formatTarget())
 
 	return b.verifyBuildPath(basePath)
 }
@@ -294,6 +281,17 @@ func (b *Builder) determineBuildPath(settings BuildSettings) (string, error) {
 	}
 
 	return filepath.Join(buildDir, buildName), nil
+}
+
+func (b *Builder) formatTarget() string {
+	result := "Xcode"
+
+	lib.AppendIfNotEmpty(&result, "workspace", b.Workspace, ": ", ", ")
+	lib.AppendIfNotEmpty(&result, "project", b.Project, ": ", ", ")
+	lib.AppendIfNotEmpty(&result, "scheme", b.Scheme, ": ", ", ")
+	lib.AppendIfNotEmpty(&result, "configuration", b.Configuration, ": ", ", ")
+
+	return result
 }
 
 func (b *Builder) verifyBuildPath(path string) (string, error) {

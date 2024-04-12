@@ -50,7 +50,7 @@ func NewUploadAction(options *UploadOptions, ioStreams *lib.IOStreams) *UploadAc
 
 func (ua *UploadAction) Perform() error {
 	if ua.options.LegacyVersion {
-		ua.ioStreams.Printf("\n%s\n", data.FullVersion())
+		ua.ioStreams.Printf("\n%v\n", data.FullVersion())
 
 		return nil
 	}

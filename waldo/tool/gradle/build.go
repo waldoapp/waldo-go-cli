@@ -46,7 +46,7 @@ func IsPossibleContainer(path string) bool {
 }
 
 func MakeBuilder(basePath string, verbose bool, ios *lib.IOStreams) (*Builder, string, lib.Platform, error) {
-	ios.Printf("\nFinding all modules in %q\n", lib.MakeRelativeToCWD(basePath))
+	ios.Printf("\nFinding all Gradle modules in %q\n", lib.MakeRelativeToCWD(basePath))
 
 	properties := fetchProperties(basePath, "", ios)
 
@@ -58,7 +58,7 @@ func MakeBuilder(basePath string, verbose bool, ios *lib.IOStreams) (*Builder, s
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	ios.Printf("\nFinding all build variants in %q\n", module)
+	ios.Printf("\nFinding all Gradle build variants in %q\n", module)
 
 	bi, err := DetectBuildInfo(basePath, module)
 
@@ -82,9 +82,9 @@ func MakeBuilder(basePath string, verbose bool, ios *lib.IOStreams) (*Builder, s
 //-----------------------------------------------------------------------------
 
 func (b *Builder) Build(basePath string, clean, verbose bool, ios *lib.IOStreams) (string, error) {
-	target := b.FormatTarget()
+	target := b.formatTarget()
 
-	ios.Printf("\nDetecting module properties for %s\n", target)
+	ios.Printf("\nDetecting module properties for %v\n", target)
 
 	properties, err := b.detectModuleProperties(basePath, ios)
 
@@ -92,7 +92,7 @@ func (b *Builder) Build(basePath string, clean, verbose bool, ios *lib.IOStreams
 		return "", err
 	}
 
-	ios.Printf("\nDetermining build path for %s\n", target)
+	ios.Printf("\nDetermining build path for %v\n", target)
 
 	buildPath, err := b.determineBuildPath(properties)
 
@@ -100,7 +100,7 @@ func (b *Builder) Build(basePath string, clean, verbose bool, ios *lib.IOStreams
 		return "", err
 	}
 
-	ios.Printf("\nBuilding %s\n", target)
+	ios.Printf("\nBuilding %v\n", target)
 
 	dashes := "\n" + strings.Repeat("-", 79) + "\n"
 
@@ -112,19 +112,21 @@ func (b *Builder) Build(basePath string, clean, verbose bool, ios *lib.IOStreams
 
 	ios.Println(dashes)
 
-	ios.Printf("\nVerifying build path for %s\n", target)
+	ios.Printf("\nVerifying build path for %v\n", target)
 
 	return b.verifyBuildPath(buildPath)
 }
 
 func (b *Builder) Clean(basePath string, verbose bool, ios *lib.IOStreams) error {
-	ios.Printf("\nCleaning\n")
+	ios.Printf("\nCleaning %v\n", b.formatTarget())
 
 	return b.clean(basePath, verbose, ios)
 }
 
 func (b *Builder) DetermineBuildPath(basePath string, ios *lib.IOStreams) (string, error) {
-	ios.Printf("\nDetecting module properties in %q\n", basePath)
+	target := b.formatTarget()
+
+	ios.Printf("\nDetecting module properties for %v\n", target)
 
 	properties, err := b.detectModuleProperties(basePath, ios)
 
@@ -132,17 +134,9 @@ func (b *Builder) DetermineBuildPath(basePath string, ios *lib.IOStreams) (strin
 		return "", err
 	}
 
-	ios.Printf("\nDetermining build path\n")
+	ios.Printf("\nDetermining build path for %v\n", target)
 
 	return b.determineBuildPath(properties)
-}
-
-func (b *Builder) FormatTarget() string {
-	result := b.Module
-
-	lib.AppendIfNotEmpty(&result, "variant", b.Variant, ": ", ", ")
-
-	return result
 }
 
 func (b *Builder) Summarize() string {
@@ -155,7 +149,7 @@ func (b *Builder) Summarize() string {
 }
 
 func (b *Builder) VerifyBuildPath(basePath string, ios *lib.IOStreams) (string, error) {
-	ios.Printf("\nVerifying build path\n")
+	ios.Printf("\nVerifying build path for %v\n", b.formatTarget())
 
 	return b.verifyBuildPath(basePath)
 }
@@ -342,7 +336,7 @@ func (b *Builder) build(basePath string, clean, verbose bool, ios *lib.IOStreams
 		args = append(args, "clean")
 	}
 
-	taskName := fmt.Sprintf("%s:assemble%s", b.Module, strings.Title(b.Variant))
+	taskName := fmt.Sprintf("%v:assemble%v", b.Module, strings.Title(b.Variant))
 
 	args = append(args, taskName)
 
@@ -383,6 +377,15 @@ func (b *Builder) determineBuildPath(properties map[string]string) (string, erro
 	}
 
 	return filepath.Join(buildDir, "outputs", "apk"), nil
+}
+
+func (b *Builder) formatTarget() string {
+	result := "Gradle"
+
+	lib.AppendIfNotEmpty(&result, "module", b.Module, ": ", ", ")
+	lib.AppendIfNotEmpty(&result, "variant", b.Variant, ": ", ", ")
+
+	return result
 }
 
 func (b *Builder) isPossibleBuildArtifact(path, basePath string) bool {

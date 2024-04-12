@@ -36,7 +36,7 @@ func FetchApps(userToken string, platform lib.Platform, verbose bool, ios *lib.I
 		return nil, fmt.Errorf("Unable to fetch apps, error: %v", err)
 	}
 
-	req.Header.Add("Authorization", fmt.Sprintf("Token %s", userToken))
+	req.Header.Add("Authorization", fmt.Sprintf("Token %v", userToken))
 	req.Header.Add("User-Agent", data.FullVersion())
 
 	if verbose {
@@ -87,7 +87,7 @@ func makeURL(platform lib.Platform) string {
 	endpoint := getFetchAppsEndpoint()
 
 	if ptype := platformType(platform); len(ptype) > 0 {
-		return fmt.Sprintf("%s?type=%s", endpoint, ptype)
+		return fmt.Sprintf("%v?type=%v", endpoint, ptype)
 	}
 
 	return endpoint

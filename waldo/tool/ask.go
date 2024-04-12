@@ -13,7 +13,7 @@ import (
 func DetermineApp(platform lib.Platform, items []*AppInfo, verbose bool, ios *lib.IOStreams) (*AppInfo, error) {
 	if len(items) > 1 {
 		if verbose {
-			ios.Printf("\nMore than one %s app found\n", platform)
+			ios.Printf("\nMore than one %v app found\n", platform)
 		}
 
 		return askApp(platform, items, ios), nil
@@ -22,12 +22,12 @@ func DetermineApp(platform lib.Platform, items []*AppInfo, verbose bool, ios *li
 	if len(items) == 1 {
 		item := items[0]
 
-		ios.Printf("\nOnly one %s app found: %q (%s)\n", platform, item.AppName, item.AppID)
+		ios.Printf("\nOnly one %v app found: %q (%v)\n", platform, item.AppName, item.AppID)
 
 		return item, nil
 	}
 
-	return nil, fmt.Errorf("No %s apps found", platform)
+	return nil, fmt.Errorf("No %v apps found", platform)
 }
 
 func DetermineBuildPath(items []*BuildPath, verbose bool, ios *lib.IOStreams) (*BuildPath, error) {
@@ -42,7 +42,7 @@ func DetermineBuildPath(items []*BuildPath, verbose bool, ios *lib.IOStreams) (*
 	if len(items) == 1 {
 		item := items[0]
 
-		ios.Printf("\nOnly one build path found: %q (%s)\n", item.RelPath, item.BuildTool.String())
+		ios.Printf("\nOnly one build path found: %q (%v)\n", item.RelPath, item.BuildTool)
 
 		return item, nil
 	}
@@ -60,11 +60,11 @@ func askApp(platform lib.Platform, items []*AppInfo, ios *lib.IOStreams) *AppInf
 	})
 
 	choices := lib.Map(items, func(item *AppInfo) string {
-		return fmt.Sprintf("%-*s (%s)", maxLen, item.AppName, item.AppID)
+		return fmt.Sprintf("%-*v (%v)", maxLen, item.AppName, item.AppID)
 	})
 
 	idx := ios.PromptReader().ReadChoose(
-		fmt.Sprintf("Available %s apps", platform),
+		fmt.Sprintf("Available %v apps", platform),
 		choices,
 		"Choose an app")
 
@@ -79,7 +79,7 @@ func askBuildPath(items []*BuildPath, ios *lib.IOStreams) *BuildPath {
 	})
 
 	choices := lib.Map(items, func(item *BuildPath) string {
-		return fmt.Sprintf("%-*s (%s)", maxLen, item.RelPath, item.BuildTool.String())
+		return fmt.Sprintf("%-*v (%v)", maxLen, item.RelPath, item.BuildTool)
 	})
 
 	idx := ios.PromptReader().ReadChoose(

@@ -12,7 +12,7 @@ func DumpRequest(ios *IOStreams, req *http.Request, body bool) {
 		return
 	}
 
-	ios.Printf("\n--- Request ---\n%s\n", dump)
+	ios.Printf("\n--- Request ---\n%v\n", dump)
 
 }
 
@@ -23,7 +23,7 @@ func DumpResponse(ios *IOStreams, rsp *http.Response, body bool) {
 		return
 	}
 
-	ios.Printf("\n--- Response ---\n%s\n", dump)
+	ios.Printf("\n--- Response ---\n%v\n", dump)
 }
 
 func ShouldRetry(rsp *http.Response) bool {

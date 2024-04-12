@@ -7,6 +7,12 @@ This project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [3.5.0] - 2024-04-12
+
+### Added
+
+- Add support for Expo recipes.
+
 ## [3.4.0] - 2024-03-21
 
 ### Changed
@@ -147,7 +153,8 @@ Initial public release of enhanced functionality.
 
 Initial public release.
 
-[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/3.4.0...HEAD
+[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/3.5.0...HEAD
+[3.5.0]:		https://github.com/waldoapp/waldo-go-cli/compare/3.4.0...3.5.0
 [3.4.0]:		https://github.com/waldoapp/waldo-go-cli/compare/3.3.0...3.4.0
 [3.3.0]:		https://github.com/waldoapp/waldo-go-cli/compare/3.2.1...3.3.0
 [3.2.1]:		https://github.com/waldoapp/waldo-go-cli/compare/3.2.0...3.2.1

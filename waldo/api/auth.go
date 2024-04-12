@@ -30,7 +30,7 @@ func AuthenticateUser(userToken string, verbose bool, ios *lib.IOStreams) (strin
 		return "", fmt.Errorf("Unable to authenticate user, error: %v", err)
 	}
 
-	req.Header.Add("Authorization", fmt.Sprintf("Token %s", userToken))
+	req.Header.Add("Authorization", fmt.Sprintf("Token %v", userToken))
 	req.Header.Add("User-Agent", data.FullVersion())
 
 	if verbose {
