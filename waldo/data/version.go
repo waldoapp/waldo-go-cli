@@ -7,11 +7,11 @@ import (
 )
 
 func BriefVersion() string {
-	return fmt.Sprintf("%s %s", CLIName, CLIVersion)
+	return fmt.Sprintf("%v %v", CLIName, CLIVersion)
 }
 
 func FullVersion() string {
 	runtimeInfo := lib.DetectRuntimeInfo()
 
-	return fmt.Sprintf("%s %s (%s/%s)", CLIName, CLIVersion, runtimeInfo.Platform, runtimeInfo.Arch)
+	return fmt.Sprintf("%v %v (%v/%v)", CLIName, CLIVersion, runtimeInfo.Platform, runtimeInfo.Arch)
 }

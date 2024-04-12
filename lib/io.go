@@ -28,7 +28,7 @@ func NewIOStreams(in io.Reader, out, err io.Writer) *IOStreams {
 func (ios *IOStreams) EmitError(prefix string, err error) {
 	fmt.Fprintf(ios.outWriter, "\n") // flush output
 
-	fmt.Fprintf(ios.errWriter, "%s: %v\n", prefix, err)
+	fmt.Fprintf(ios.errWriter, "%v: %v\n", prefix, err)
 }
 
 func (ios *IOStreams) Print(a ...any) (n int, err error) {
@@ -80,11 +80,11 @@ func (pr *PromptReader) ReadChoose(hdr string, choices []string, prompt string) 
 
 	for {
 		if len(hdr) > 0 {
-			fmt.Fprintf(pr.outWriter, "\n%s:\n\n", hdr)
+			fmt.Fprintf(pr.outWriter, "\n%v:\n\n", hdr)
 		}
 
 		for cidx, choice := range choices {
-			fmt.Fprintf(pr.outWriter, "  %d - %s\n", cidx+1, choice)
+			fmt.Fprintf(pr.outWriter, "  %v - %v\n", cidx+1, choice)
 		}
 
 		value, err := pr.promptReadTrimmedString(fmtPrompt)
@@ -143,11 +143,11 @@ func (pr *PromptReader) ReadYN(prompt string) bool {
 //-----------------------------------------------------------------------------
 
 func (pr *PromptReader) formatChoosePrompt(prompt string, minChoice, maxChoice int) string {
-	return fmt.Sprintf("\n%s (%d..%d): ", prompt, minChoice, maxChoice)
+	return fmt.Sprintf("\n%v (%d..%d): ", prompt, minChoice, maxChoice)
 }
 
 func (pr *PromptReader) formatYNPrompt(prompt string) string {
-	return fmt.Sprintf("\n%s (Y/N)? ", prompt)
+	return fmt.Sprintf("\n%v (Y/N)? ", prompt)
 }
 
 func (pr *PromptReader) promptReadTrimmedString(prompt string) (string, error) {

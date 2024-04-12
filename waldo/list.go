@@ -51,7 +51,7 @@ func (la *ListAction) Perform() error {
 
 	recipes := la.sortRecipes(cfg.Recipes)
 
-	la.ioStreams.Printf("%-16.16s  %-24.24s  %-20.20s  %-8.8s  %s\n", "RECIPE NAME", "APP NAME", "APP ID", "PLATFORM", "BUILD TOOL")
+	la.ioStreams.Printf("%-16.16v  %-24.24v  %-20.20v  %-8.8v  %v\n", "RECIPE NAME", "APP NAME", "APP ID", "PLATFORM", "BUILD TOOL")
 
 	for _, recipe := range recipes {
 		name := recipe.Name
@@ -65,7 +65,7 @@ func (la *ListAction) Perform() error {
 		platform := recipe.Platform
 		buildTool := recipe.BuildTool().String()
 
-		la.ioStreams.Printf("%-16.16s  %-24.24s  %-20.20s  %-8.8s  %s\n", name, appName, appID, platform, buildTool)
+		la.ioStreams.Printf("%-16.16v  %-24.24v  %-20.20v  %-8.8v  %v\n", name, appName, appID, platform, buildTool)
 
 		if la.options.LongFormat {
 			absPath := filepath.Join(cfg.BasePath(), recipe.BasePath)
@@ -73,8 +73,8 @@ func (la *ListAction) Perform() error {
 			buildRoot := la.formatString(lib.MakeRelativeToCWD(absPath), "(none)")
 			buildOptions := la.formatString(recipe.Summarize(), "(none)")
 
-			la.ioStreams.Printf("%16.16s: %s\n", "build root", buildRoot)
-			la.ioStreams.Printf("%16.16s: %s\n", "build options", buildOptions)
+			la.ioStreams.Printf("%16.16s: %v\n", "build root", buildRoot)
+			la.ioStreams.Printf("%16.16s: %v\n", "build options", buildOptions)
 		}
 
 		if la.options.UserInfo {
@@ -112,9 +112,9 @@ func (la *ListAction) Perform() error {
 			lastBuild = la.formatString(lastBuild, "(unknown)")
 			lastUpload = la.formatString(lastUpload, "(unknown)")
 
-			la.ioStreams.Printf("%16.16s: %s\n", "build path", buildPath)
-			la.ioStreams.Printf("%16.16s: %s\n", "last build", lastBuild)
-			la.ioStreams.Printf("%16.16s: %s\n", "last upload", lastUpload)
+			la.ioStreams.Printf("%16.16s: %v\n", "build path", buildPath)
+			la.ioStreams.Printf("%16.16s: %v\n", "last build", lastBuild)
+			la.ioStreams.Printf("%16.16s: %v\n", "last upload", lastUpload)
 		}
 	}
 

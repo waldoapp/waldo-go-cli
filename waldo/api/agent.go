@@ -91,7 +91,7 @@ func (ad *AgentDownloader) determineAssetURL() string {
 	platform := strings.ToLower(string(ad.runtimeInfo.Platform))
 	arch := strings.ToLower(string(ad.runtimeInfo.Arch))
 
-	assetName := fmt.Sprintf("waldo-agent-%s-%s", platform, arch)
+	assetName := fmt.Sprintf("waldo-agent-%v-%v", platform, arch)
 
 	if platform == "windows" {
 		assetName += ".exe"

@@ -24,7 +24,7 @@ func NewVersionAction(options *VersionOptions, ioStreams *lib.IOStreams) *Versio
 //-----------------------------------------------------------------------------
 
 func (va *VersionAction) Perform() error {
-	va.ioStreams.Printf("\n%s\n", data.FullVersion())
+	va.ioStreams.Printf("\n%v\n", data.FullVersion())
 
 	return nil
 }

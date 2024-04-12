@@ -69,7 +69,7 @@ func MakeBuilder(basePath string, verbose bool, ios *lib.IOStreams) (*Builder, s
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	ios.Printf("\nFinding all supported build flavors\n")
+	ios.Printf("\nFinding all supported Flutter build flavors\n")
 
 	fi, err := DetectBuildInfo(basePath, platform, ios)
 
@@ -91,9 +91,9 @@ func MakeBuilder(basePath string, verbose bool, ios *lib.IOStreams) (*Builder, s
 //-----------------------------------------------------------------------------
 
 func (b *Builder) Build(basePath string, platform lib.Platform, clean, verbose bool, ios *lib.IOStreams) (string, error) {
-	target := b.FormatTarget(platform)
+	target := b.formatTarget(platform)
 
-	ios.Printf("\nDetermining build path for %s\n", target)
+	ios.Printf("\nDetermining build path for %v\n", target)
 
 	buildPath, err := b.determineBuildPath(basePath, platform)
 
@@ -101,7 +101,7 @@ func (b *Builder) Build(basePath string, platform lib.Platform, clean, verbose b
 		return "", err
 	}
 
-	ios.Printf("\nBuilding %s\n", target)
+	ios.Printf("\nBuilding %v\n", target)
 
 	dashes := "\n" + strings.Repeat("-", 79) + "\n"
 
@@ -119,19 +119,9 @@ func (b *Builder) Build(basePath string, platform lib.Platform, clean, verbose b
 
 	ios.Println(dashes)
 
-	ios.Printf("\nVerifying build path for %s\n", target)
+	ios.Printf("\nVerifying build path for %v\n", target)
 
 	return b.verifyBuildPath(buildPath, platform)
-}
-
-func (b *Builder) FormatTarget(platform lib.Platform) string {
-	result := string(platform)
-
-	if len(b.Flavor) > 0 {
-		lib.AppendIfNotEmpty(&result, "flavor", b.Flavor, ": ", ", ")
-	}
-
-	return result
 }
 
 func (b *Builder) Summarize() string {
@@ -271,6 +261,14 @@ func (b *Builder) determineBuildPath(basePath string, platform lib.Platform) (st
 	}
 
 	return filepath.Join(basePath, relPath), nil
+}
+
+func (b *Builder) formatTarget(platform lib.Platform) string {
+	result := fmt.Sprintf("Flutter (%v)", platform)
+
+	lib.AppendIfNotEmpty(&result, "flavor", b.Flavor, ": ", ", ")
+
+	return result
 }
 
 func (b *Builder) iosBuildArgs() []string {

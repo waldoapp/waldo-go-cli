@@ -135,12 +135,12 @@ func (aa *AddAction) confirmRecipe(basePath string, recipe *data.Recipe) bool {
 		buildOptions = summary
 	}
 
-	aa.ioStreams.Printf("  App name:      %s\n", appName)
-	aa.ioStreams.Printf("  App ID:        %s\n", appID)
-	aa.ioStreams.Printf("  Platform:      %s\n", recipe.Platform)
-	aa.ioStreams.Printf("  Build tool:    %s\n", buildTool)
-	aa.ioStreams.Printf("  Build root:    %s\n", buildRoot)
-	aa.ioStreams.Printf("  Build options: %s\n", buildOptions)
+	aa.ioStreams.Printf("  App name:      %v\n", appName)
+	aa.ioStreams.Printf("  App ID:        %v\n", appID)
+	aa.ioStreams.Printf("  Platform:      %v\n", recipe.Platform)
+	aa.ioStreams.Printf("  Build tool:    %v\n", buildTool)
+	aa.ioStreams.Printf("  Build root:    %v\n", buildRoot)
+	aa.ioStreams.Printf("  Build options: %v\n", buildOptions)
 
 	return aa.promptReader.ReadYN(fmt.Sprintf("Add recipe %q", recipe.Name))
 }
