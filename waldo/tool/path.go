@@ -16,9 +16,11 @@ import (
 )
 
 type BuildPath struct {
-	AbsPath   string
-	RelPath   string
-	BuildTool BuildTool
+	AbsPath        string
+	RelPath        string
+	BuildTool      BuildTool
+	AndroidSupport bool
+	IosSupport     bool
 }
 
 //-----------------------------------------------------------------------------
@@ -40,74 +42,38 @@ func DetectBuildPaths(rootPath string, verbose bool, ios *lib.IOStreams) ([]*Bui
 		if entry.IsDir() {
 			skipChildren := false
 
-			if expo.IsPossibleContainer(path) {
-				buildPath := newBuildPath(BuildToolExpo, path)
-
-				if verbose {
-					ios.Printf("\nFound possible Expo container: %q\n", path)
-				}
-
-				buildPaths = append(buildPaths, buildPath)
+			if bp := checkContainer(BuildToolExpo, expo.IsPossibleContainer, path, verbose, ios); bp != nil {
+				buildPaths = append(buildPaths, bp)
 
 				skipChildren = true
 			}
 
-			if flutter.IsPossibleContainer(path) {
-				buildPath := newBuildPath(BuildToolFlutter, path)
-
-				if verbose {
-					ios.Printf("\nFound possible Flutter container: %q\n", path)
-				}
-
-				buildPaths = append(buildPaths, buildPath)
+			if bp := checkContainer(BuildToolFlutter, flutter.IsPossibleContainer, path, verbose, ios); bp != nil {
+				buildPaths = append(buildPaths, bp)
 
 				skipChildren = true
 			}
 
-			if gradle.IsPossibleContainer(path) {
-				buildPath := newBuildPath(BuildToolGradle, path)
-
-				if verbose {
-					ios.Printf("\nFound possible Gradle container: %q\n", path)
-				}
-
-				buildPaths = append(buildPaths, buildPath)
+			if bp := checkContainer(BuildToolGradle, gradle.IsPossibleContainer, path, verbose, ios); bp != nil {
+				buildPaths = append(buildPaths, bp)
 
 				skipChildren = true
 			}
 
-			if ionic.IsPossibleContainer(path) {
-				buildPath := newBuildPath(BuildToolIonic, path)
-
-				if verbose {
-					ios.Printf("\nFound possible Ionic container: %q\n", path)
-				}
-
-				buildPaths = append(buildPaths, buildPath)
+			if bp := checkContainer(BuildToolIonic, ionic.IsPossibleContainer, path, verbose, ios); bp != nil {
+				buildPaths = append(buildPaths, bp)
 
 				skipChildren = true
 			}
 
-			if reactnative.IsPossibleContainer(path) {
-				buildPath := newBuildPath(BuildToolReactNative, path)
-
-				if verbose {
-					ios.Printf("\nFound possible React Native container: %q\n", path)
-				}
-
-				buildPaths = append(buildPaths, buildPath)
+			if bp := checkContainer(BuildToolReactNative, reactnative.IsPossibleContainer, path, verbose, ios); bp != nil {
+				buildPaths = append(buildPaths, bp)
 
 				skipChildren = true
 			}
 
-			if xcode.IsPossibleContainer(path) {
-				buildPath := newBuildPath(BuildToolXcode, path)
-
-				if verbose {
-					ios.Printf("\nFound possible Xcode container: %q\n", path)
-				}
-
-				buildPaths = append(buildPaths, buildPath)
+			if bp := checkContainer(BuildToolXcode, xcode.IsPossibleContainer, path, verbose, ios); bp != nil {
+				buildPaths = append(buildPaths, bp)
 
 				skipChildren = true
 			}
@@ -133,7 +99,25 @@ func DetectBuildPaths(rootPath string, verbose bool, ios *lib.IOStreams) ([]*Bui
 
 //-----------------------------------------------------------------------------
 
-func newBuildPath(buildTool BuildTool, path string) *BuildPath {
+type checkFunc func(path string) (bool, bool)
+
+func checkContainer(bt BuildTool, fn checkFunc, path string, verbose bool, ios *lib.IOStreams) *BuildPath {
+	hasAndroid, hasIos := fn(path)
+
+	if !hasAndroid && !hasIos {
+		return nil
+	}
+
+	bp := newBuildPath(bt, path, hasAndroid, hasIos)
+
+	if verbose {
+		bp.describe(ios)
+	}
+
+	return bp
+}
+
+func newBuildPath(bt BuildTool, path string, androidSupport, iosSupport bool) *BuildPath {
 	absPath, err := filepath.Abs(path)
 
 	if err != nil {
@@ -141,10 +125,14 @@ func newBuildPath(buildTool BuildTool, path string) *BuildPath {
 	}
 
 	return &BuildPath{
-		AbsPath:   absPath,
-		RelPath:   lib.MakeRelativeToCWD(absPath),
-		BuildTool: buildTool}
+		AbsPath:        absPath,
+		RelPath:        lib.MakeRelativeToCWD(absPath),
+		BuildTool:      bt,
+		AndroidSupport: androidSupport,
+		IosSupport:     iosSupport}
 }
+
+//-----------------------------------------------------------------------------
 
 func shouldSkip(name string, entry fs.DirEntry) bool {
 	if !entry.IsDir() {
@@ -169,4 +157,20 @@ func shouldSkip(name string, entry fs.DirEntry) bool {
 	}
 
 	return false
+}
+
+//-----------------------------------------------------------------------------
+
+func (bp *BuildPath) describe(ios *lib.IOStreams) {
+	bt := bp.BuildTool
+
+	ios.Printf("\nFound possible %v container: %q\n", bt, bp.RelPath)
+
+	if bt.CanSupportAndroid() && !bp.AndroidSupport {
+		ios.Printf("      (Android support may be missing)\n")
+	}
+
+	if bt.CanSupportIos() && !bp.IosSupport {
+		ios.Printf("      (iOS support may be missing)\n")
+	}
 }

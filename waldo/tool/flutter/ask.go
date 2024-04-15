@@ -22,11 +22,7 @@ func DetermineFlavor(flavors []string, verbose bool, ios *lib.IOStreams) (string
 		return flavors[0], nil
 	}
 
-	if verbose {
-		ios.Printf("\nNo supported Flutter build flavors found\n")
-	}
-
-	return "", nil
+	return "", errors.New("No supported Flutter build flavors found")
 }
 
 func DeterminePlatform(verbose bool, ios *lib.IOStreams) (lib.Platform, error) {
