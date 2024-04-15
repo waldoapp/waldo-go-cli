@@ -24,11 +24,7 @@ func DetermineConfiguration(pwName string, configurations []string, verbose bool
 		return configurations[0], nil
 	}
 
-	if verbose {
-		ios.Printf("\nNo Xcode configurations found in %q\n", pwName)
-	}
-
-	return "", nil
+	return "", fmt.Errorf("No Xcode configurations found in %q", pwName)
 }
 
 func DetermineProject(pwNames []string, verbose bool, ios *lib.IOStreams) (string, error) {

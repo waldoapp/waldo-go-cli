@@ -7,11 +7,15 @@ This project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
-## [3.5.0] - 2024-04-12
+## [3.5.0] - 2024-04-15
 
 ### Added
 
 - Add support for Expo recipes.
+
+###
+
+- Fix issues with building for Android platform.
 
 ## [3.4.0] - 2024-03-21
 

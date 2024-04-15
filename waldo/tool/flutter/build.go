@@ -21,45 +21,40 @@ type BuildInfo struct {
 	// From pubspec.yaml:
 	//
 	Name string `yaml:"name"`
-	//
-	// Extra info:
-	//
-	Flavors []string
 }
 
 //-----------------------------------------------------------------------------
 
-func DetectBuildInfo(basePath string, platform lib.Platform, ios *lib.IOStreams) (*BuildInfo, error) {
+func DetectBuildInfo(basePath string, platform lib.Platform) (*BuildInfo, error) {
 	data, err := os.ReadFile(filepath.Join(basePath, "pubspec.yaml"))
 
 	if err != nil {
 		return nil, err
 	}
 
-	var bi BuildInfo
+	bi := &BuildInfo{}
 
-	if err := tpw.DecodeFromYAML(data, &bi); err != nil {
+	if err := tpw.DecodeFromYAML(data, bi); err != nil {
 		return nil, err
 	}
 
-	bi.Flavors, err = detectFlavors(basePath, platform, ios)
-
-	return &bi, nil
+	return bi, nil
 }
 
-func IsPossibleContainer(path string) bool {
+func IsPossibleContainer(path string) (bool, bool) {
 	pubspecPath := filepath.Join(path, "pubspec.yaml")
+
+	if !lib.IsRegularFile(pubspecPath) {
+		return false, false
+	}
+
 	androidDirPath := filepath.Join(path, "android")
 	iosDirPath := filepath.Join(path, "ios")
 
-	if !lib.IsRegularFile(pubspecPath) {
-		return false
-	}
+	hasAndroidProject, _ := gradle.IsPossibleContainer(androidDirPath)
+	_, hasIosProject := xcode.IsPossibleContainer(iosDirPath)
 
-	hasAndroidProject := gradle.IsPossibleContainer(androidDirPath)
-	hasIosProject := xcode.IsPossibleContainer(iosDirPath)
-
-	return hasAndroidProject || hasIosProject
+	return hasAndroidProject, hasIosProject
 }
 
 func MakeBuilder(basePath string, verbose bool, ios *lib.IOStreams) (*Builder, string, lib.Platform, error) {
@@ -69,23 +64,30 @@ func MakeBuilder(basePath string, verbose bool, ios *lib.IOStreams) (*Builder, s
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	ios.Printf("\nFinding all supported Flutter build flavors\n")
-
-	fi, err := DetectBuildInfo(basePath, platform, ios)
+	bi, err := DetectBuildInfo(basePath, platform)
 
 	if err != nil {
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	flavor, err := DetermineFlavor(fi.Flavors, verbose, ios)
+	b := &Builder{}
+
+	switch platform {
+	case lib.PlatformAndroid:
+		err = b.configureGradle(bi, basePath, verbose, ios)
+
+	case lib.PlatformIos:
+		err = b.configureXcode(bi, basePath, verbose, ios)
+
+	default:
+		err = fmt.Errorf("Unknown build platform: %q", platform)
+	}
 
 	if err != nil {
 		return nil, "", lib.PlatformUnknown, err
 	}
 
-	fb := &Builder{Flavor: flavor}
-
-	return fb, fi.Name, platform, nil
+	return b, bi.Name, platform, nil
 }
 
 //-----------------------------------------------------------------------------
@@ -101,17 +103,23 @@ func (b *Builder) Build(basePath string, platform lib.Platform, clean, verbose b
 		return "", err
 	}
 
-	ios.Printf("\nBuilding %v\n", target)
-
 	dashes := "\n" + strings.Repeat("-", 79) + "\n"
 
-	ios.Println(dashes)
-
 	if clean {
+		ios.Printf("\nCleaning %v\n", target)
+
+		ios.Println(dashes)
+
 		if err = b.clean(basePath, verbose, ios); err != nil {
 			return "", err
 		}
+
+		ios.Println(dashes)
 	}
+
+	ios.Printf("\nBuilding %v\n", target)
+
+	ios.Println(dashes)
 
 	if err = b.build(basePath, platform, verbose, ios); err != nil {
 		return "", err
@@ -130,55 +138,6 @@ func (b *Builder) Summarize() string {
 	lib.AppendIfNotEmpty(&summary, "flavor", b.Flavor, "=", ", ")
 
 	return summary
-}
-
-//-----------------------------------------------------------------------------
-
-func detectFlavors(basePath string, platform lib.Platform, ios *lib.IOStreams) ([]string, error) {
-	switch platform {
-	case lib.PlatformAndroid:
-		return detectFlavorsForAndroid(basePath, ios)
-
-	case lib.PlatformIos:
-		return detectFlavorsForIos(basePath)
-
-	default:
-		return nil, fmt.Errorf("Unknown build platform: %q", platform)
-	}
-}
-
-func detectFlavorsForAndroid(basePath string, ios *lib.IOStreams) ([]string, error) {
-	androidPath := filepath.Join(basePath, "android")
-
-	bi, err := gradle.DetectBuildInfo(androidPath, "app")
-
-	if err != nil {
-		return []string{"debug", "release"}, nil
-	}
-
-	return bi.Variants, nil
-}
-
-func detectFlavorsForIos(basePath string) ([]string, error) {
-	iosPath := filepath.Join(basePath, "ios")
-
-	bi, err := xcode.DetectBuildInfo(iosPath, "Runner.xcodeproj")
-
-	if err != nil {
-		return []string{"Debug"}, nil
-	}
-
-	flavors := lib.CompactMap(bi.Configurations, func(flavor string) (string, bool) {
-		switch strings.ToLower(flavor) {
-		case "profile", "release":
-			return "", false
-
-		default:
-			return flavor, true
-		}
-	})
-
-	return flavors, nil
 }
 
 //-----------------------------------------------------------------------------
@@ -246,6 +205,56 @@ func (b *Builder) clean(basePath string, verbose bool, ios *lib.IOStreams) error
 	return task.Execute()
 }
 
+func (b *Builder) configureGradle(bi *BuildInfo, basePath string, verbose bool, ios *lib.IOStreams) error {
+	androidPath := filepath.Join(basePath, "android")
+
+	gbi, err := gradle.DetectBuildInfo(androidPath, "app")
+
+	if err != nil {
+		return err
+	}
+
+	flavor, err := DetermineFlavor(gbi.Variants, verbose, ios)
+
+	if err != nil {
+		return err
+	}
+
+	b.Flavor = flavor
+
+	return nil
+}
+
+func (b *Builder) configureXcode(bi *BuildInfo, basePath string, verbose bool, ios *lib.IOStreams) error {
+	iosPath := filepath.Join(basePath, "ios")
+
+	xbi, err := xcode.DetectBuildInfo(iosPath, "Runner.xcodeproj")
+
+	if err != nil {
+		return err
+	}
+
+	flavors := lib.CompactMap(xbi.Configurations, func(flavor string) (string, bool) {
+		switch strings.ToLower(flavor) {
+		case "profile", "release":
+			return "", false
+
+		default:
+			return flavor, true
+		}
+	})
+
+	flavor, err := DetermineFlavor(flavors, verbose, ios)
+
+	if err != nil {
+		return err
+	}
+
+	b.Flavor = flavor
+
+	return nil
+}
+
 func (b *Builder) determineBuildPath(basePath string, platform lib.Platform) (string, error) {
 	relPath := ""
 
@@ -288,7 +297,7 @@ func (b *Builder) verifyBuildPath(path string, platform lib.Platform) (string, e
 		}
 
 	default:
-		return "", fmt.Errorf("Unknown build platform: %q", platform)
+		return "", fmt.Errorf("Unable to locate build path, expected: %q", path)
 	}
 
 	return path, nil

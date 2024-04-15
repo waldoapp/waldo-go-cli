@@ -33,16 +33,16 @@ func DetectBuildInfo(basePath, module string) (*BuildInfo, error) {
 	return bi, nil
 }
 
-func IsPossibleContainer(path string) bool {
+func IsPossibleContainer(path string) (bool, bool) {
 	wrapperPath := filepath.Join(path, wrapperName())
 	kotlinPath := filepath.Join(path, "build.gradle.kts")
 	groovyPath := filepath.Join(path, "build.gradle")
 
 	if !lib.IsRegularFile(kotlinPath) && !lib.IsRegularFile(groovyPath) {
-		return false
+		return false, false
 	}
 
-	return lib.IsRegularFile(wrapperPath)
+	return lib.IsRegularFile(wrapperPath), false
 }
 
 func MakeBuilder(basePath string, verbose bool, ios *lib.IOStreams) (*Builder, string, lib.Platform, error) {

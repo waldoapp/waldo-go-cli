@@ -37,11 +37,11 @@ func DetectBuildInfo(basePath, fileName string) (*BuildInfo, error) {
 	return bi, nil
 }
 
-func IsPossibleContainer(path string) bool {
+func IsPossibleContainer(path string) (bool, bool) {
 	workPath := filepath.Join(path, "*.xcworkspace")
 	projPath := filepath.Join(path, "*.xcodeproj")
 
-	return lib.HasDirectoryMatching(workPath) || lib.HasDirectoryMatching(projPath)
+	return false, lib.HasDirectoryMatching(workPath) || lib.HasDirectoryMatching(projPath)
 }
 
 func MakeBuilder(basePath string, verbose bool, ios *lib.IOStreams) (*Builder, string, lib.Platform, error) {

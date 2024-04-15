@@ -22,11 +22,7 @@ func DetermineMode(modes []string, verbose bool, ios *lib.IOStreams) (string, er
 		return modes[0], nil
 	}
 
-	if verbose {
-		ios.Printf("\nNo supported React Native build modes found\n")
-	}
-
-	return "", nil
+	return "", errors.New("No supported React Native build modes found")
 }
 
 func DeterminePlatform(verbose bool, ios *lib.IOStreams) (lib.Platform, error) {

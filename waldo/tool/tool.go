@@ -12,6 +12,26 @@ const (
 	BuildToolXcode
 )
 
+func (bt BuildTool) CanSupportAndroid() bool {
+	switch bt {
+	case BuildToolXcode, BuildToolUnknown:
+		return false
+
+	default:
+		return true
+	}
+}
+
+func (bt BuildTool) CanSupportIos() bool {
+	switch bt {
+	case BuildToolGradle, BuildToolUnknown:
+		return false
+
+	default:
+		return true
+	}
+}
+
 func (bt BuildTool) String() string {
 	return [...]string{
 		"Unknown",

@@ -12,8 +12,8 @@ type Builder struct {
 
 //-----------------------------------------------------------------------------
 
-func IsPossibleContainer(path string) bool {
-	return false
+func IsPossibleContainer(path string) (bool, bool) {
+	return false, false
 }
 
 func MakeBuilder(basePath string, verbose bool, ios *lib.IOStreams) (*Builder, string, lib.Platform, error) {

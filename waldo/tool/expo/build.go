@@ -46,32 +46,33 @@ func DetectBuildInfo(basePath string, platform lib.Platform) (*BuildInfo, error)
 	return bi, nil
 }
 
-func IsPossibleContainer(path string) bool {
+func IsPossibleContainer(path string) (bool, bool) {
 	packagePath := filepath.Join(path, "package.json")
-	androidDirPath := filepath.Join(path, "android")
-	iosDirPath := filepath.Join(path, "ios")
 
 	if !lib.IsRegularFile(packagePath) {
-		return false
+		return false, false
 	}
 
 	bi, err := DetectBuildInfo(path, lib.PlatformUnknown)
 
 	if err != nil {
-		return false
+		return false, false
 	}
 
 	_, exFound := bi.Dependencies["expo"]
 	_, rnFound := bi.Dependencies["react-native"]
 
 	if !exFound || !rnFound {
-		return false
+		return false, false
 	}
 
-	hasAndroidProject := gradle.IsPossibleContainer(androidDirPath)
-	hasIosProject := xcode.IsPossibleContainer(iosDirPath)
+	androidDirPath := filepath.Join(path, "android")
+	iosDirPath := filepath.Join(path, "ios")
 
-	return hasAndroidProject || hasIosProject
+	hasAndroidProject, _ := gradle.IsPossibleContainer(androidDirPath)
+	_, hasIosProject := xcode.IsPossibleContainer(iosDirPath)
+
+	return hasAndroidProject, hasIosProject
 }
 
 func MakeBuilder(basePath string, verbose bool, ios *lib.IOStreams) (*Builder, string, lib.Platform, error) {
@@ -204,9 +205,15 @@ func (b *Builder) configureGradle(bi *BuildInfo, basePath string, verbose bool, 
 		return variant, strings.ToLower(variant) != "debug"
 	})
 
-	b.Variant, err = gradle.DetermineVariant("app", variants, verbose, ios)
+	variant, err := gradle.DetermineVariant("app", variants, verbose, ios)
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	b.Variant = variant
+
+	return nil
 }
 
 func (b *Builder) configureXcode(bi *BuildInfo, basePath string, verbose bool, ios *lib.IOStreams) error {
