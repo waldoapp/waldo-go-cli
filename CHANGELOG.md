@@ -13,7 +13,7 @@ This project adheres to [Semantic Versioning].
 
 - Add support for Expo recipes.
 
-###
+### Fixed
 
 - Fix issues with building for Android platform.
 
