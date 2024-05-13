@@ -39,6 +39,7 @@ func NewRootCommand() *cobra.Command {
 	cmd.SetHelpTemplate(helpTemplate)
 	cmd.SetUsageTemplate(usageTemplate)
 
+	cmd.AddCommand(fixup(NewAppsCommand()))
 	cmd.AddCommand(fixup(NewAuthCommand()))
 	cmd.AddCommand(fixup(NewTriggerCommand()))
 	cmd.AddCommand(fixup(NewUploadCommand()))

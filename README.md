@@ -8,6 +8,7 @@
 [Waldo](https://www.waldo.com) provides fast, reliable, and maintainable testing for the most critical flows in your app. Waldo CLI is a command-line tool which allows you to interact with Waldo in several useful ways:
 
 - Authenticate user access to Waldo with an API token.
+- Show available apps for the currently authenticated user.
 - Upload an iOS or Android build to Waldo for processing. See [here](https://docs.waldo.com/docs/ios-uploading-your-simulator-build-to-waldo) and [here](https://docs.waldo.com/docs/android-uploading-your-emulator-build-to-waldo) for more details.
 - Trigger a run of of one or more test flows for your app. See [here](https://docs.waldo.com/docs/ci-run) for more details.
 
