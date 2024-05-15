@@ -28,11 +28,11 @@ func NewTriggerCommand() *cobra.Command {
 		}}
 
 	cmd.Flags().StringVar(&options.GitCommit, "git_commit", "", "The originating git commit hash.")
-	cmd.Flags().BoolVar(&options.Help, "help", false, "Show available options and exit.")
+	cmd.Flags().BoolVar(&options.LegacyHelp, "help", false, "Show available options and exit.")
 	cmd.Flags().StringVar(&options.RuleName, "rule_name", "", "An optional rule name.")
 	cmd.Flags().StringVar(&options.UploadToken, "upload_token", "", "The upload token (overrides WALDO_UPLOAD_TOKEN).")
 	cmd.Flags().BoolVarP(&options.Verbose, "verbose", "v", false, "Show extra verbiage.")
-	cmd.Flags().BoolVar(&options.Version, "version", false, "Show version information and exit.")
+	cmd.Flags().BoolVar(&options.LegacyVersion, "version", false, "Show version information and exit.")
 
 	cmd.SetUsageTemplate(`
 USAGE: waldo trigger [--git_commit <c>] [--rule_name <r>] [--upload_token <t>] [-v | --verbose]

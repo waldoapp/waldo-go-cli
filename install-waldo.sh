@@ -8,12 +8,20 @@ waldo_cli_url="${WALDO_CLI_URL:-https://github.com/waldoapp/waldo-go-cli/release
 waldo_exec1_name="waldo"
 waldo_exec2_name="sim_appcenter_build_and_upload.sh"
 
-waldo_asset1_name=""
-waldo_asset2_name=""
+waldo_asset1_name=
+waldo_asset2_name=
 
-function check_platform() {
-    if [[ -z $(which curl) ]]; then
+function check_curl_command() {
+    if ! command -v curl &>/dev/null; then
         fail "No ‘curl’ command found"
+    fi
+}
+
+function detect_ci_mode() {
+    local _ci_mode=${CI:-}
+
+    if [[ $_ci_mode != true && $_ci_mode != 1 ]]; then
+        fail "No CI environment detected -- please use ‘install.sh’ instead"
     fi
 }
 
@@ -59,7 +67,13 @@ function fail() {
 }
 
 function install_binaries() {
-    mkdir -p "$waldo_cli_bin" || return
+    mkdir -p "$waldo_cli_bin"
+
+    local _mkdir_status=$?
+
+    if (( $_mkdir_status != 0 )); then
+        fail "Unable to create directory ‘${waldo_cli_bin}’"
+    fi
 
     if [[ ! -w $waldo_cli_bin ]]; then
         fail "No write access to ‘${waldo_cli_bin}’"
@@ -70,8 +84,6 @@ function install_binaries() {
     if [[ -n ${APPCENTER_BUILD_ID:-} ]]; then
         install_binary "${waldo_asset2_name}" "${waldo_exec2_name}" || return
     fi
-
-    return
 }
 
 function install_binary() {
@@ -103,7 +115,8 @@ function install_binary() {
     echo "Installed ‘${_asset_url}’ as ‘${_exec_path}’"
 }
 
-check_platform || exit
+detect_ci_mode || exit
+check_curl_command || exit
 determine_asset_names || exit
 install_binaries || exit
 

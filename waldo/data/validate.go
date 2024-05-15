@@ -7,11 +7,22 @@ import (
 )
 
 var (
-	appIDRE      = regexp.MustCompile(`^app-[0-9a-fA-F]+$`)
-	appTokenRE   = regexp.MustCompile(`^[0-9a-fA-F]+$`)
-	recipeNameRE = regexp.MustCompile(`^[a-zA-Z][0-9a-zA-Z_-]*$`)
-	userTokenRE  = regexp.MustCompile(`^u-[0-9a-fA-F]+$`)
+	apiTokenRE = regexp.MustCompile(`^u-[0-9a-fA-F]+$`)
+	appIDRE    = regexp.MustCompile(`^app-[0-9a-fA-F]+$`)
+	ciTokenRE  = regexp.MustCompile(`^[0-9a-fA-F]+$`)
 )
+
+func ValidateAPIToken(token string) error {
+	if len(token) == 0 {
+		return errors.New("No API token specified")
+	}
+
+	if !apiTokenRE.MatchString(token) {
+		return fmt.Errorf("Invalid API token syntax: %q", token)
+	}
+
+	return nil
+}
 
 func ValidateAppID(id string) error {
 	if len(id) == 0 {
@@ -25,37 +36,25 @@ func ValidateAppID(id string) error {
 	return nil
 }
 
-func ValidateAppToken(token string) error {
+func ValidateCIToken(token string) error {
 	if len(token) == 0 {
-		return errors.New("No upload token specified") // refer to it as _upload_ token for legacy purposes
+		return errors.New("No CI token specified")
 	}
 
-	if !appTokenRE.MatchString(token) {
-		return fmt.Errorf("Invalid upload token syntax: %q", token) // refer to it as _upload_ token for legacy purposes
+	if !ciTokenRE.MatchString(token) {
+		return fmt.Errorf("Invalid CI token syntax: %q", token)
 	}
 
 	return nil
 }
 
-func ValidateRecipeName(name string) error {
-	if len(name) == 0 {
-		return errors.New("No recipe name specified")
-	}
-
-	if !recipeNameRE.MatchString(name) {
-		return fmt.Errorf("Invalid recipe name syntax: %q", name)
-	}
-
-	return nil
-}
-
-func ValidateUserToken(token string) error {
+func ValidateUploadToken(token string) error {
 	if len(token) == 0 {
-		return errors.New("No user token specified")
+		return errors.New("No upload token specified")
 	}
 
-	if !userTokenRE.MatchString(token) {
-		return fmt.Errorf("Invalid user token syntax: %q", token)
+	if !apiTokenRE.MatchString(token) && !ciTokenRE.MatchString(token) {
+		return fmt.Errorf("Invalid upload token syntax: %q", token)
 	}
 
 	return nil

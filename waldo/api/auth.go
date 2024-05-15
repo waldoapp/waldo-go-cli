@@ -21,7 +21,7 @@ type AuthenticateUserResponse struct {
 
 //-----------------------------------------------------------------------------
 
-func AuthenticateUser(userToken string, verbose bool, ios *lib.IOStreams) (string, error) {
+func AuthenticateUser(apiToken string, verbose bool, ios *lib.IOStreams) (string, error) {
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", getAuthenticateUserEndpoint(), nil)
@@ -30,7 +30,7 @@ func AuthenticateUser(userToken string, verbose bool, ios *lib.IOStreams) (strin
 		return "", fmt.Errorf("Unable to authenticate user, error: %v", err)
 	}
 
-	req.Header.Add("Authorization", fmt.Sprintf("Token %v", userToken))
+	req.Header.Add("Authorization", fmt.Sprintf("Token %v", apiToken))
 	req.Header.Add("User-Agent", data.FullVersion())
 
 	if verbose {

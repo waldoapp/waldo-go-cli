@@ -9,8 +9,8 @@ import (
 )
 
 type AuthOptions struct {
-	UserToken string
-	Verbose   bool
+	APIToken string
+	Verbose  bool
 }
 
 type AuthAction struct {
@@ -33,13 +33,13 @@ func NewAuthAction(options *AuthOptions, ioStreams *lib.IOStreams) *AuthAction {
 //-----------------------------------------------------------------------------
 
 func (aa *AuthAction) Perform() error {
-	if err := data.ValidateUserToken(aa.options.UserToken); err != nil {
+	if err := data.ValidateAPIToken(aa.options.APIToken); err != nil {
 		return err
 	}
 
-	aa.ioStreams.Printf("\nAuthenticating with user token %q\n", aa.options.UserToken)
+	aa.ioStreams.Printf("\nAuthenticating with API token %q\n", aa.options.APIToken)
 
-	fullName, err := api.AuthenticateUser(aa.options.UserToken, aa.options.Verbose, aa.ioStreams)
+	fullName, err := api.AuthenticateUser(aa.options.APIToken, aa.options.Verbose, aa.ioStreams)
 
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ func (aa *AuthAction) Perform() error {
 		return fmt.Errorf("Unable to authenticate user, error: %v", err)
 	}
 
-	profile.UserToken = aa.options.UserToken
+	profile.APIToken = aa.options.APIToken
 
 	profile.MarkDirty()
 

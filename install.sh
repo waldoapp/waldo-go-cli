@@ -17,15 +17,15 @@ waldo_found_in_path=false
 waldo_is_reinstall=false
 
 function authenticate() {
-    local _user_token=${WALDO_USER_TOKEN:-${TOKEN:-}}
+    local _api_token=${TOKEN:-}
     local _auth_status
 
-    if [[ -z $_user_token ]]; then
-        _user_token=$(find_user_token)
+    if [[ -z $_api_token ]]; then
+        _api_token=$(find_api_token)
     fi
 
-    if [[ -n $_user_token ]]; then
-        do_authentication $_user_token
+    if [[ -n $_api_token ]]; then
+        do_authentication $_api_token
 
         _auth_status=$?
     else
@@ -34,13 +34,13 @@ function authenticate() {
 
     if (( $_auth_status != 0 )); then
         echo ""
-        echo "You have not yet been authenticated with Waldo. Many Waldo CLI commands will be unavailable to you."
+        echo "You have not yet been authenticated to access Waldo. Some Waldo CLI functionality will be unavailable to you."
         echo ""
         echo "You must first run the following command:"
         echo ""
-        echo "    waldo auth <user-token>"
+        echo "    waldo auth <api-token>"
         echo ""
-        echo "You can retrieve your user token here: https://app.waldo.com/settings/profile"
+        echo "You can retrieve your API token here: https://app.waldo.com/settings/profile"
     fi
 }
 
@@ -161,6 +161,23 @@ function fail() {
     exit 1
 }
 
+function find_api_token() {
+    local _profile_path="${HOME}/.waldo/profile.yml"
+
+    if [[ ! -r $_profile_path ]]; then
+        return
+    fi
+
+    local _regex='user_token:[ ]*([^ ]+)[ ]*'
+
+    while read -r line; do
+        if [[ $line =~ $_regex ]]; then
+            echo ${BASH_REMATCH[1]}
+            return
+        fi
+    done < "$_profile_path"
+}
+
 function find_startup_file() {
     local _bash_login="${HOME}/.bash_login"
     local _bash_profile="${HOME}/.bash_profile"
@@ -196,23 +213,6 @@ function find_startup_file() {
     fi
 }
 
-function find_user_token() {
-    local _profile_path="${HOME}/.waldo/profile.yml"
-
-    if [[ ! -r $_profile_path ]]; then
-        return
-    fi
-
-    local _regex='user_token:[ ]*([^ ]+)[ ]*'
-
-    while read -r line; do
-        if [[ $line =~ $_regex ]]; then
-            echo ${BASH_REMATCH[1]}
-            return
-        fi
-    done < "$_profile_path"
-}
-
 function install_binaries() {
     mkdir -p "$waldo_cli_bin"
 
@@ -226,10 +226,10 @@ function install_binaries() {
         fail "No write access to ‘${waldo_cli_bin}’"
     fi
 
-    install_binary "${waldo_asset1_name}" "${waldo_exec1_name}"
+    install_binary "${waldo_asset1_name}" "${waldo_exec1_name}" || return
 
     if [[ -n ${APPCENTER_BUILD_ID:-} ]]; then
-        install_binary "${waldo_asset2_name}" "${waldo_exec2_name}"
+        install_binary "${waldo_asset2_name}" "${waldo_exec2_name}" || return
     fi
 
     waldo_exec_path="${waldo_cli_bin}/${waldo_exec1_name}"
@@ -265,12 +265,12 @@ function install_binary() {
     echo "Installed ‘${_asset_url}’ as ‘${_exec_path}’"
 }
 
-detect_ci_mode
-check_destination
-check_curl_command
-determine_asset_names
-install_binaries
-check_installation
-authenticate
+detect_ci_mode || exit
+check_destination || exit
+check_curl_command || exit
+determine_asset_names || exit
+install_binaries || exit
+check_installation || exit
+authenticate || exit
 
 exit

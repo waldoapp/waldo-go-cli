@@ -17,7 +17,7 @@ const (
 
 type Profile struct {
 	FormatVersion int    `yaml:"format_version"`
-	UserToken     string `yaml:"user_token,omitempty"`
+	APIToken      string `yaml:"user_token,omitempty"`
 
 	basePath    string // absolute
 	dirty       bool

@@ -1,11 +1,23 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. The format
-is based on [Keep a Changelog].
+All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog].
 
 This project adheres to [Semantic Versioning].
 
 ## [Unreleased]
+
+## [4.0.0] - 2024-05-15
+
+Major rework of supported verbs and functionality.
+
+### Changed
+
+- Modify `upload` verb to accept either a CI token or an API token for use as the upload token. If neither the `--upload_token` option nor the `WALDO_UPLOAD_TOKEN` environment variable is specified, the API token specified by the most recent `waldo auth` invocation (if any) is used. Moreover, if the upload token is an API token, the `--app_id` option is _required_. Conversely, if the upload token is a CI token, the `--app_id` option is _not allowed_.
+
+### Removed
+
+- Remove `add`, `build`, `init`, `list`, `remove`, and `sync` verbs.
+- Remove recipe support from `upload` verb.
 
 ## [3.5.0] - 2024-04-15
 
@@ -29,7 +41,7 @@ This project adheres to [Semantic Versioning].
 
 ### Added
 
-- Add new `auth` verb to support authorizing with a user token.
+- Add new `auth` verb to support authenticating with a user token.
 
 ### Changed
 
@@ -57,8 +69,7 @@ This project adheres to [Semantic Versioning].
 
 ### Changed
 
-- Request confirmation on `add` verb before adding a new recipe to the
-  Waldo configuration.
+- Request confirmation on `add` verb before adding a new recipe to the Waldo configuration.
 
 ### Fixed
 
@@ -103,15 +114,13 @@ Initial public release of enhanced functionality.
 
 ### Changed
 
-- Enhance `sim_appcenter_build_and_upload.sh` Bash script to allow specifying
-  extra options on the underlying `xcodebuild build` invocation.
+- Enhance `sim_appcenter_build_and_upload.sh` Bash script to allow specifying extra options on the underlying `xcodebuild build` invocation.
 
 ## [2.0.2] - 2022-05-23
 
 ### Changed
 
-- Enhance `sim_appcenter_build_and_upload.sh` Bash script to allow specifying
-  extra options on the underlying `waldo upload` invocation.
+- Enhance `sim_appcenter_build_and_upload.sh` Bash script to allow specifying extra options on the underlying `waldo upload` invocation.
 
 ## [2.0.1] - 2022-04-27
 
@@ -148,16 +157,15 @@ Initial public release of enhanced functionality.
 
 ### Added
 
-- Add new `trigger` verb to support triggering a run of one or more test
-  flows for an app.
-- Add new `upload` verb to support uploading a build. This verb can be
-  omitted for backward compatibility with older scripts.
+- Add new `trigger` verb to support triggering a run of one or more test flows for an app.
+- Add new `upload` verb to support uploading a build. This verb can be omitted for backward compatibility with older scripts.
 
 ## [1.0.0] - 2021-11-05
 
 Initial public release.
 
-[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/3.5.0...HEAD
+[Unreleased]:   https://github.com/waldoapp/waldo-go-cli/compare/4.0.0...HEAD
+[4.0.0]:		https://github.com/waldoapp/waldo-go-cli/compare/3.5.0...4.0.0
 [3.5.0]:		https://github.com/waldoapp/waldo-go-cli/compare/3.4.0...3.5.0
 [3.4.0]:		https://github.com/waldoapp/waldo-go-cli/compare/3.3.0...3.4.0
 [3.3.0]:		https://github.com/waldoapp/waldo-go-cli/compare/3.2.1...3.3.0

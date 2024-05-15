@@ -3,5 +3,5 @@ package data
 const (
 	CLIName    = "Waldo CLI"
 	CLIPrefix  = "waldo"
-	CLIVersion = "3.5.0"
+	CLIVersion = "4.0.0"
 )

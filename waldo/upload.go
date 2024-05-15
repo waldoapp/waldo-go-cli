@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo/api"
@@ -13,11 +12,11 @@ import (
 
 type UploadOptions struct {
 	AppID         string
+	BuildPath     string
 	GitBranch     string
 	GitCommit     string
 	LegacyHelp    bool
 	LegacyVersion bool
-	Target        string
 	UploadToken   string
 	VariantName   string
 	Verbose       bool
@@ -28,11 +27,9 @@ type UploadAction struct {
 	options     *UploadOptions
 	runtimeInfo *lib.RuntimeInfo
 
-	appID      string
-	appToken   string
-	buildPath  string
-	recipeName string
-	userToken  string
+	appID       string
+	buildPath   string
+	uploadToken string
 }
 
 //-----------------------------------------------------------------------------
@@ -55,11 +52,7 @@ func (ua *UploadAction) Perform() error {
 		return nil
 	}
 
-	ciMode := ua.detectCIMode()
-
-	ud, recipe, err := ua.processOptions(ciMode)
-
-	if err != nil {
+	if err := ua.processOptions(); err != nil {
 		return err
 	}
 
@@ -78,65 +71,37 @@ func (ua *UploadAction) Perform() error {
 
 	defer ad.Cleanup()
 
-	if err := ua.executeAgent(path, ua.makeAgentArgs()); err != nil {
-		return err
-	}
-
-	if !ciMode && ud != nil && recipe != nil {
-		ua.updateMetadata(ud, recipe)
-	}
-
-	return nil
+	return ua.executeAgent(path, ua.makeAgentArgs())
 }
 
 //-----------------------------------------------------------------------------
 
-func (ua *UploadAction) detectAppID(required, allowed bool) (string, error) {
+func (ua *UploadAction) detectAppID() (string, error) {
 	appID := ua.options.AppID
 
-	if len(appID) > 0 && !allowed {
-		return "", fmt.Errorf("Option %q not allowed in this context", "--app_id")
+	var err error
+
+	if strings.HasPrefix(ua.uploadToken, "u-") {
+		err = data.ValidateAppID(appID)
+	} else if len(appID) > 0 {
+		err = fmt.Errorf("Option %q not allowed with CI token", "--app_id")
 	}
 
-	if len(appID) > 0 || required {
-		err := data.ValidateAppID(appID)
-
-		if err != nil {
-			return "", err
-		}
+	if err != nil {
+		return "", err
 	}
 
 	return appID, nil
 }
 
-func (ua *UploadAction) detectAppToken(required, allowed bool) (string, error) {
-	appToken := ua.options.UploadToken
+func (ua *UploadAction) detectBuildPath() (string, error) {
+	buildPath := ua.options.BuildPath
 
-	if len(appToken) > 0 && !allowed {
-		return "", fmt.Errorf("Option %q not allowed in this context", "--upload_token")
+	if len(buildPath) == 0 {
+		return "", fmt.Errorf("No build path specified")
 	}
 
-	if len(appToken) == 0 && allowed {
-		appToken = os.Getenv("WALDO_UPLOAD_TOKEN")
-	}
-
-	if len(appToken) > 0 || required {
-		err := data.ValidateAppToken(appToken)
-
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return appToken, nil
-}
-
-func (ua *UploadAction) detectCIMode() bool {
-	if ciMode := os.Getenv("CI"); ciMode == "true" || ciMode == "1" {
-		return true
-	}
-
-	return false
+	return buildPath, nil
 }
 
 func (ua *UploadAction) detectDownloadAssetVersion() string {
@@ -155,54 +120,26 @@ func (ua *UploadAction) detectDownloadVerbose() bool {
 	return false
 }
 
-func (ua *UploadAction) detectPersistedData() (*data.UserData, *data.Recipe) {
-	cfg, _, err := data.SetupConfiguration(data.CreateKindNever)
+func (ua *UploadAction) detectUploadToken() (string, error) {
+	uploadToken := ua.options.UploadToken
 
-	if err != nil {
-		return nil, nil
+	if len(uploadToken) == 0 {
+		uploadToken = os.Getenv("WALDO_UPLOAD_TOKEN")
 	}
 
-	ud := data.SetupUserData(cfg)
+	if len(uploadToken) == 0 {
+		profile, _, err := data.SetupProfile(data.CreateKindNever)
 
-	if ud == nil {
-		return nil, nil
-	}
-
-	recipe, err := cfg.FindRecipe(ua.recipeName)
-
-	if err != nil {
-		return nil, nil
-	}
-
-	return ud, recipe
-}
-
-func (ua *UploadAction) detectRecipeName(required, allowed bool) (string, error) {
-	recipeName := ua.options.Target
-
-	if len(recipeName) > 0 && !allowed {
-		return "", fmt.Errorf("Recipe name %q not allowed in this context", recipeName)
-	}
-
-	if len(recipeName) > 0 || required {
-		err := data.ValidateRecipeName(recipeName)
-
-		if err != nil {
-			return "", err
+		if err == nil {
+			uploadToken = profile.APIToken
 		}
 	}
 
-	return recipeName, nil
-}
-
-func (ua *UploadAction) detectUserToken() (string, error) {
-	profile, _, err := data.SetupProfile(data.CreateKindNever)
-
-	if err != nil {
-		return "", fmt.Errorf("Unable to authenticate user, error: %v", err)
+	if err := data.ValidateUploadToken(uploadToken); err != nil {
+		return "", err
 	}
 
-	return profile.UserToken, nil
+	return uploadToken, nil
 }
 
 func (ua *UploadAction) enrichEnvironment() lib.Environment {
@@ -233,23 +170,11 @@ func (ua *UploadAction) executeAgent(path string, args []string) error {
 	return task.Execute()
 }
 
-func (ua *UploadAction) isRecipeTarget() bool {
-	return !strings.Contains(ua.options.Target, ".")
-}
-
 func (ua *UploadAction) makeAgentArgs() []string {
 	args := []string{"upload"}
 
-	if len(ua.buildPath) > 0 {
-		args = append(args, ua.buildPath)
-	}
-
-	if len(ua.appToken) == 0 {
-		args = append(args, "--upload_token", ua.userToken)
+	if len(ua.appID) > 0 {
 		args = append(args, "--app_id", ua.appID)
-	} else {
-		args = append(args, "--upload_token", ua.appToken)
-
 	}
 
 	if len(ua.options.GitBranch) > 0 {
@@ -260,6 +185,10 @@ func (ua *UploadAction) makeAgentArgs() []string {
 		args = append(args, "--git_commit", ua.options.GitCommit)
 	}
 
+	if len(ua.uploadToken) > 0 {
+		args = append(args, "--upload_token", ua.uploadToken)
+	}
+
 	if len(ua.options.VariantName) > 0 {
 		args = append(args, "--variant_name", ua.options.VariantName)
 	}
@@ -268,129 +197,33 @@ func (ua *UploadAction) makeAgentArgs() []string {
 		args = append(args, "--verbose")
 	}
 
+	if len(ua.buildPath) > 0 {
+		args = append(args, ua.buildPath)
+	}
+
 	return args
 }
 
-func (ua *UploadAction) processOptions(ciMode bool) (*data.UserData, *data.Recipe, error) {
-	isRecipe := ua.isRecipeTarget()
-
+func (ua *UploadAction) processOptions() error {
 	var err error
 
-	//
-	// - An app token (formerly known as an “upload token”) is _allowed_
-	//   only if the target is _not_ a recipe name.
-	// - An app token is _required_ if and only if we are in CI Mode.
-	//
-	ua.appToken, err = ua.detectAppToken(ciMode, !isRecipe)
+	ua.buildPath, err = ua.detectBuildPath()
 
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 
-	if ciMode {
-		//
-		// In CI mode, the target _must not_ be a recipe name:
-		//
-		if isRecipe {
-			_, err = ua.detectRecipeName(false, false)
-
-			return nil, nil, err
-		} else {
-			ua.buildPath = ua.options.Target
-		}
-	} else if isRecipe {
-		//
-		// Otherwise, the target _may_ be a recipe name iff an app token has _not_
-		// been specified:
-		//
-		ua.recipeName, err = ua.detectRecipeName(false, len(ua.appToken) == 0)
-
-		if err != nil {
-			return nil, nil, err
-		}
-	} else {
-		ua.buildPath = ua.options.Target
-	}
-
-	//
-	// If we now have a build path and a valid app token, we are done:
-	//
-	if len(ua.appToken) > 0 && len(ua.buildPath) > 0 {
-		return nil, nil, nil
-	}
-
-	//
-	// Looks like we need a valid user token:
-	//
-	ua.userToken, err = ua.detectUserToken()
+	ua.uploadToken, err = ua.detectUploadToken()
 
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 
-	var (
-		ud     *data.UserData
-		recipe *data.Recipe
-	)
+	ua.appID, err = ua.detectAppID()
 
-	//
-	// If no build path yet, try to find a recipe (possibly defaulted):
-	//
-	if len(ua.buildPath) == 0 {
-		ud, recipe = ua.detectPersistedData()
-
-		if ud != nil && recipe != nil {
-			am, err := ud.FindMetadata(recipe)
-
-			if err != nil {
-				return nil, nil, err
-			}
-
-			if len(am.BuildPath) == 0 {
-				return nil, nil, fmt.Errorf("No build found for recipe %q", recipe.Name)
-			}
-
-			ua.appID = recipe.AppID
-			ua.buildPath = am.BuildPath
-		}
+	if err != nil {
+		return err
 	}
 
-	//
-	// If no build path yet, fail:
-	//
-	if len(ua.buildPath) == 0 {
-		return nil, nil, fmt.Errorf("No build path specified")
-	}
-
-	//
-	// If no app ID yet, require one:
-	//
-	if len(ua.appID) == 0 {
-		ua.appID, err = ua.detectAppID(true, true)
-
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
-	return ud, recipe, nil
-}
-
-func (ua *UploadAction) updateMetadata(ud *data.UserData, recipe *data.Recipe) {
-	am, _ := ud.FindMetadata(recipe)
-
-	if am != nil {
-		if len(ua.appToken) == 0 {
-			am.AppID = ua.appID
-			am.UploadToken = ua.userToken
-		} else {
-			am.UploadToken = ua.appToken
-		}
-
-		am.UploadTime = time.Now().UTC()
-
-		ud.MarkDirty()
-
-		ud.Save() // don’t care if save fails
-	}
+	return nil
 }
