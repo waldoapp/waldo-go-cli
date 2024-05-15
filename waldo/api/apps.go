@@ -1,17 +1,25 @@
 package api
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
+	"strings"
 
 	"github.com/waldoapp/waldo-go-cli/lib"
 	"github.com/waldoapp/waldo-go-cli/waldo/data"
-	"github.com/waldoapp/waldo-go-cli/waldo/tool"
 )
 
 //-----------------------------------------------------------------------------
+
+type AppInfo struct {
+	AppID    string
+	AppName  string
+	Platform lib.Platform
+}
 
 type FetchAppsResponse struct {
 	Items []*FetchedAppItem `json:"items"`
@@ -25,7 +33,7 @@ type FetchedAppItem struct {
 
 //-----------------------------------------------------------------------------
 
-func FetchApps(userToken string, platform lib.Platform, verbose bool, ios *lib.IOStreams) ([]*tool.AppInfo, error) {
+func FetchApps(apiToken string, platform lib.Platform, verbose bool, ios *lib.IOStreams) ([]*AppInfo, error) {
 	var far *FetchAppsResponse
 
 	client := &http.Client{}
@@ -36,7 +44,7 @@ func FetchApps(userToken string, platform lib.Platform, verbose bool, ios *lib.I
 		return nil, fmt.Errorf("Unable to fetch apps, error: %v", err)
 	}
 
-	req.Header.Add("Authorization", fmt.Sprintf("Token %v", userToken))
+	req.Header.Add("Authorization", fmt.Sprintf("Token %v", apiToken))
 	req.Header.Add("User-Agent", data.FullVersion())
 
 	if verbose {
@@ -67,15 +75,19 @@ func FetchApps(userToken string, platform lib.Platform, verbose bool, ios *lib.I
 		return nil, fmt.Errorf("Unable to fetch apps, error: %v", err)
 	}
 
-	apps := lib.CompactMap(far.Items, func(item *FetchedAppItem) (*tool.AppInfo, bool) {
+	apps := lib.CompactMap(far.Items, func(item *FetchedAppItem) (*AppInfo, bool) {
 		if len(item.AppID) > 0 && len(item.Name) > 0 {
-			return &tool.AppInfo{
+			return &AppInfo{
 				AppID:    item.AppID,
 				AppName:  item.Name,
 				Platform: lib.ParsePlatform(item.Type)}, true
 		}
 
 		return nil, false
+	})
+
+	slices.SortStableFunc(apps, func(a, b *AppInfo) int {
+		return cmp.Compare(strings.ToLower(a.AppName), strings.ToLower(b.AppName))
 	})
 
 	return apps, nil

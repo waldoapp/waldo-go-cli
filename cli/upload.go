@@ -11,7 +11,7 @@ func NewUploadCommand() *cobra.Command {
 	options := &waldo.UploadOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "upload [--git_branch <b>] [--git_commit <c>] [--upload_token <t>] [--variant_name <n>] [-v | --verbose ] <recipe-or-build-path>",
+		Use:   "upload [--app_id <a>] [--git_branch <b>] [--git_commit <c>] [--upload_token <t>] [--variant_name <n>] [-v | --verbose ] <build-path>",
 		Short: "Upload a build artifact to Waldo.",
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -21,7 +21,7 @@ func NewUploadCommand() *cobra.Command {
 				cmd.ErrOrStderr())
 
 			if len(args) > 0 {
-				options.Target = args[0]
+				options.BuildPath = args[0]
 			}
 
 			exitOnError(
@@ -31,7 +31,7 @@ func NewUploadCommand() *cobra.Command {
 					ioStreams).Perform())
 		}}
 
-	cmd.Flags().StringVar(&options.AppID, "app_id", "", "An app ID (if not using an app token).")
+	cmd.Flags().StringVar(&options.AppID, "app_id", "", "An app ID (if using an API token).")
 	cmd.Flags().StringVar(&options.GitBranch, "git_branch", "", "The originating git commit branch name.")
 	cmd.Flags().StringVar(&options.GitCommit, "git_commit", "", "The originating git commit hash.")
 	cmd.Flags().BoolVar(&options.LegacyHelp, "help", false, "Show available options and exit.")
@@ -41,13 +41,13 @@ func NewUploadCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&options.LegacyVersion, "version", false, "Show version information and exit.")
 
 	cmd.SetUsageTemplate(`
-USAGE: waldo upload [--app_id <a>] [--git_branch <b>] [--git_commit <c>] [--upload_token <t>] [--variant_name <n>] [-v | --verbose ] <recipe-or-build-path>
+USAGE: waldo upload [--app_id <a>] [--git_branch <b>] [--git_commit <c>] [--upload_token <t>] [--variant_name <n>] [-v | --verbose ] <build-path>
 
 ARGUMENTS:
-  <recipe-or-build-path>  The name of the recipe associated with, or the direct path to, the build artifact to upload.
+  <build-path>            The path to the build artifact to upload.
 
 OPTIONS:
-      --app_id <a>        An app ID (if not using an app token).
+      --app_id <a>        An app ID (if not in CI mode).
       --git_branch <b>    The originating git commit branch name.
       --git_commit <c>    The originating git commit hash.
       --upload_token <t>  The upload token (overrides WALDO_UPLOAD_TOKEN).

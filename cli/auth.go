@@ -11,8 +11,8 @@ func NewAuthCommand() *cobra.Command {
 	options := &waldo.AuthOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "auth [-v | --verbose] <user-token>",
-		Short: "Authenticate user to access Waldo.",
+		Use:   "auth [-v | --verbose] <api-token>",
+		Short: "Authenticate user access to Waldo.",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ioStreams := lib.NewIOStreams(
@@ -20,7 +20,7 @@ func NewAuthCommand() *cobra.Command {
 				cmd.OutOrStdout(),
 				cmd.ErrOrStderr())
 
-			options.UserToken = args[0]
+			options.APIToken = args[0]
 
 			exitOnError(
 				cmd,
@@ -32,10 +32,10 @@ func NewAuthCommand() *cobra.Command {
 	cmd.Flags().BoolVarP(&options.Verbose, "verbose", "v", false, "Show extra verbiage.")
 
 	cmd.SetUsageTemplate(`
-USAGE: waldo auth [-v | --verbose] <user-token>
+USAGE: waldo auth [-v | --verbose] <api-token>
 
 ARGUMENTS:
-  <user-token>            The user token to authenticate with.
+  <api-token>             The API token to authenticate with.
 
 OPTIONS:
   -v, --verbose           Show extra verbiage.

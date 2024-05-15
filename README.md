@@ -7,15 +7,9 @@
 
 [Waldo](https://www.waldo.com) provides fast, reliable, and maintainable testing for the most critical flows in your app. Waldo CLI is a command-line tool which allows you to interact with Waldo in several useful ways:
 
-- Add one or more recipes describing how to build a particular variant of your app from the command-line that is suitable for running on Waldo, and then actually build the app variant from a recipe. These recipes can be persisted to your repository alongside your app’s source code and thereby shared with your teammates. The following build tools are currently supported:
-  - Xcode (see [here](https://docs.waldo.com/docs/exporting-your-build-for-waldo) for details)
-  - Gradle
-  - React Native (Expo and non-Expo)
-  - Flutter
+- Authenticate user access to Waldo with an API token.
 - Upload an iOS or Android build to Waldo for processing. See [here](https://docs.waldo.com/docs/ios-uploading-your-simulator-build-to-waldo) and [here](https://docs.waldo.com/docs/android-uploading-your-emulator-build-to-waldo) for more details.
 - Trigger a run of of one or more test flows for your app. See [here](https://docs.waldo.com/docs/ci-run) for more details.
-
-> **Note:** Only the `upload` and `trigger` commands are fully supported when running in a CI environment.
 
 Type `waldo help` to see all that Waldo CLI can do for you!
 
@@ -33,7 +27,7 @@ TOKEN=u-xxxx bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/m
 
 The script attempts to install Waldo CLI to `~/.waldo/bin`.
 
-If you set environment variable `WALDO_USER_TOKEN` (or just `TOKEN`) to the value of your user token, the installer script will automatically run the `waldo auth` command upon successful installation of Waldo CLI. You can retrieve your user token by visiting the “Profile” tab of your Waldo account settings (https://app.waldo.com/settings/profile).
+If you set the `TOKEN` environment variable to the value of your API token, the installer script will automatically run the `waldo auth` command upon successful installation of Waldo CLI. You can retrieve your API token by visiting the “Profile” tab of your Waldo account settings (https://app.waldo.com/settings/profile).
 
 You can verify that you have installed Waldo CLI correctly with the `which waldo` and `waldo help` commands.
 
@@ -56,16 +50,15 @@ If you ever need to uninstall Waldo CLI, simply delete the executable from the i
 To install Waldo CLI, simply download and execute the installer script:
 
 ```bash
-curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh | bash
+bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
 ```
 
 By default, the script installs Waldo CLI to `/usr/local/bin`.
 
-If you wish to install Waldo CLI to a different location, simply define the `WALDO_CLI_BIN` environment variable _before_ invoking the installer script:
+If you wish to install Waldo CLI to a different location, simply set the `WALDO_CLI_BIN` environment variable before invoking the installer script:
 
 ```bash
-export WALDO_CLI_BIN=/path/to/binary
-curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh | bash
+WALDO_CLI_BIN=/path/to/binary bash -c "$(curl -fLs https://github.com/waldoapp/waldo-go-cli/raw/master/install-waldo.sh)"
 ```
 
 You can verify that you have installed Waldo CLI correctly with the `which waldo` and `waldo help` commands.

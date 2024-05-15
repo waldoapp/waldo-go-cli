@@ -9,18 +9,20 @@ import (
 )
 
 type TriggerOptions struct {
-	GitCommit   string
-	Help        bool
-	RuleName    string
-	UploadToken string
-	Verbose     bool
-	Version     bool
+	GitCommit     string
+	LegacyHelp    bool
+	LegacyVersion bool
+	RuleName      string
+	UploadToken   string
+	Verbose       bool
 }
 
 type TriggerAction struct {
 	ioStreams   *lib.IOStreams
 	options     *TriggerOptions
 	runtimeInfo *lib.RuntimeInfo
+
+	uploadToken string
 }
 
 //-----------------------------------------------------------------------------
@@ -37,10 +39,22 @@ func NewTriggerAction(options *TriggerOptions, ioStreams *lib.IOStreams) *Trigge
 //-----------------------------------------------------------------------------
 
 func (ta *TriggerAction) Perform() error {
-	assetVersion := ta.detectAssetVersion()
-	verbose := ta.detectVerbose()
+	if ta.options.LegacyVersion {
+		ta.ioStreams.Printf("\n%v\n", data.FullVersion())
 
-	ad := api.NewAgentDownloader(assetVersion, data.CLIPrefix, verbose, ta.ioStreams, ta.runtimeInfo)
+		return nil
+	}
+
+	if err := ta.processOptions(); err != nil {
+		return err
+	}
+
+	ad := api.NewAgentDownloader(
+		ta.detectDownloadAssetVersion(),
+		data.CLIPrefix,
+		ta.detectDownloadVerbose(),
+		ta.ioStreams,
+		ta.runtimeInfo)
 
 	path, err := ad.Download()
 
@@ -50,12 +64,12 @@ func (ta *TriggerAction) Perform() error {
 
 	defer ad.Cleanup()
 
-	return ta.executeAgent(path, os.Args[1:])
+	return ta.executeAgent(path, ta.makeAgentArgs())
 }
 
 //-----------------------------------------------------------------------------
 
-func (ta *TriggerAction) detectAssetVersion() string {
+func (ta *TriggerAction) detectDownloadAssetVersion() string {
 	if version := os.Getenv("WALDO_CLI_ASSET_VERSION"); len(version) > 0 {
 		return version
 	}
@@ -63,12 +77,30 @@ func (ta *TriggerAction) detectAssetVersion() string {
 	return "latest"
 }
 
-func (ta *TriggerAction) detectVerbose() bool {
+func (ta *TriggerAction) detectDownloadVerbose() bool {
 	if verbose := os.Getenv("WALDO_CLI_VERBOSE"); verbose == "1" {
 		return true
 	}
 
 	return false
+}
+
+func (ta *TriggerAction) detectUploadToken() (string, error) {
+	uploadToken := ta.options.UploadToken
+
+	var err error
+
+	if len(uploadToken) == 0 {
+		uploadToken = os.Getenv("WALDO_UPLOAD_TOKEN")
+	}
+
+	err = data.ValidateCIToken(uploadToken)
+
+	if err != nil {
+		return "", err
+	}
+
+	return uploadToken, nil
 }
 
 func (ta *TriggerAction) enrichEnvironment() lib.Environment {
@@ -97,4 +129,38 @@ func (ta *TriggerAction) executeAgent(path string, args []string) error {
 	task.IOStreams = ta.ioStreams
 
 	return task.Execute()
+}
+
+func (ta *TriggerAction) makeAgentArgs() []string {
+	args := []string{"trigger"}
+
+	if len(ta.options.GitCommit) > 0 {
+		args = append(args, "--git_commit", ta.options.GitCommit)
+	}
+
+	if len(ta.options.RuleName) > 0 {
+		args = append(args, "--rule_name", ta.options.RuleName)
+	}
+
+	if len(ta.uploadToken) > 0 {
+		args = append(args, "--upload_token", ta.uploadToken)
+	}
+
+	if ta.options.Verbose {
+		args = append(args, "--verbose")
+	}
+
+	return args
+}
+
+func (ta *TriggerAction) processOptions() error {
+	var err error
+
+	ta.uploadToken, err = ta.detectUploadToken()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
