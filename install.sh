@@ -112,7 +112,13 @@ function detect_ci_mode() {
     local _ci_mode=${CI:-}
 
     if [[ $_ci_mode == true || $_ci_mode == 1 ]]; then
-        fail "CI environment detected -- please use ‘install-waldo.sh’ instead"
+        echo ""
+        echo "    +--------------------------------------------------+"
+        echo "    |            CI environment detected:              |"
+        echo "    | If you intend to use Waldo CLI from a CI script, |"
+        echo "    |      please use ‘install-waldo.sh’ instead       |"
+        echo "    +--------------------------------------------------+"
+        echo ""
     fi
 }
 
