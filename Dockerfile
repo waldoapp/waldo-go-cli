@@ -16,7 +16,7 @@
 # $ docker run -it -v $(pwd):/app:ro linux-waldo-go-cli
 # ```
 
-FROM alpine:latest
+FROM alpine:3.23.3
 
 RUN apk add --no-cache bash curl git
 
